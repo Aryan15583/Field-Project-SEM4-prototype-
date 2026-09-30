@@ -3,6 +3,7 @@
 import { animate, AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme";
+import Codi from "./Codi";
 
 /* ------------------------------------------------------------------ icons */
 const paths = {
@@ -36,36 +37,9 @@ export function Icon({ name, className = "h-5 w-5", title }) {
 }
 
 /* ------------------------------------------------------------------ mascot */
-/** Codi - a friendly bracket-bot. mood: happy | sad | think */
-export function Mascot({ size = 120, mood = "happy", className = "" }) {
-  return (
-    <svg viewBox="0 0 120 120" width={size} height={size} className={className} role="img" aria-label="Codi the Codeingo mascot">
-      <ellipse cx="60" cy="112" rx="34" ry="5" className="fill-ink/10" />
-      <rect x="18" y="22" width="84" height="80" rx="30" className="fill-primary" />
-      <rect x="18" y="22" width="84" height="80" rx="30" fill="none" strokeWidth="4" className="stroke-primary-strong" />
-      <path d="M44 12 L52 24 M76 12 L68 24" strokeWidth="5" strokeLinecap="round" className="stroke-primary-strong" />
-      <circle cx="43" cy="11" r="5" className="fill-gold" />
-      <circle cx="77" cy="11" r="5" className="fill-gold" />
-      <circle cx="44" cy="52" r="15" fill="#fff" />
-      <circle cx="76" cy="52" r="15" fill="#fff" />
-      {mood === "sad" ? (
-        <>
-          <path d="M36 54 q8 -6 16 0" stroke="#0a0a0a" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M68 54 q8 -6 16 0" stroke="#0a0a0a" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      ) : (
-        <>
-          <circle cx={mood === "think" ? 49 : 46} cy={mood === "think" ? 48 : 54} r="7" fill="#0a0a0a" />
-          <circle cx={mood === "think" ? 81 : 78} cy={mood === "think" ? 48 : 54} r="7" fill="#0a0a0a" />
-          <circle cx={mood === "think" ? 51 : 48} cy={mood === "think" ? 46 : 51} r="2.5" fill="#fff" />
-          <circle cx={mood === "think" ? 83 : 80} cy={mood === "think" ? 46 : 51} r="2.5" fill="#fff" />
-        </>
-      )}
-      <text x="60" y="92" textAnchor="middle" fontFamily="ui-monospace, monospace" fontWeight="800" fontSize="20" className="fill-on-primary">
-        {mood === "sad" ? "</ >" : mood === "think" ? "{ ? }" : "</>"}
-      </text>
-    </svg>
-  );
+/** Codi, the pixel-art mascot - see components/Codi.jsx. mood: idle | happy | sad | think | celebrate | wave */
+export function Mascot(props) {
+  return <Codi {...props} />;
 }
 
 export function Logo({ className = "", compact = false }) {
@@ -98,7 +72,7 @@ export function ThemeToggle({ className = "" }) {
 export function Spinner({ label = "Loading" }) {
   return (
     <div className="grid place-items-center py-16" role="status">
-      <Mascot size={80} mood="think" className="animate-bob" />
+      <Mascot size={80} mood="think" interactive={false} />
       <span className="mt-3 text-sm font-bold text-muted">{label}…</span>
     </div>
   );

@@ -93,7 +93,7 @@ function Finished({ result, elapsed, accuracy, onContinue }) {
       <Confetti colors={colors} />
       <div className="flex flex-1 flex-col items-center justify-center">
         <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 14 }}>
-          <Mascot size={160} className="animate-bob" />
+          <Mascot size={170} mood="celebrate" />
         </motion.div>
         <motion.h1
           className="mt-6 text-3xl font-black text-gold sm:text-4xl"
@@ -326,7 +326,7 @@ export default function Lesson({ id }) {
               <p className="label mb-2">{session.lesson.course_title} · New concept</p>
               <h1 className="mb-6 text-3xl font-black">{session.lesson.title}</h1>
               <div className="flex items-start gap-4">
-                <Mascot size={84} className="hidden shrink-0 animate-bob sm:block" />
+                <Mascot size={96} mood="wave" className="hidden shrink-0 sm:block" />
                 <pre className="code flex-1">{session.lesson.intro}</pre>
               </div>
             </motion.div>
@@ -353,7 +353,7 @@ export default function Lesson({ id }) {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           transition={{ type: "spring", stiffness: 420, damping: 30 }}
                         >
-                          <Mascot size={52} mood="think" className="shrink-0" />
+                          <Mascot size={60} mood={hint.loading ? "think" : "idle"} className="shrink-0" />
                           <div className="card relative flex-1 p-4 text-sm font-semibold">
                             {hint.loading ? <span className="animate-pulse">Codi is thinking…</span> : hint.hint}
                             {hint.source === "ai" && <span className="mt-2 block text-[11px] font-bold uppercase text-muted">AI hint</span>}
@@ -418,12 +418,15 @@ export default function Lesson({ id }) {
               <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:py-7">
                 <div className={`flex items-start gap-3 ${feedback.correct ? "text-ok" : "text-bad"}`}>
                   <motion.span
-                    className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-raised"
-                    initial={{ scale: 0.4, rotate: -30 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 600, damping: 14, delay: 0.05 }}
+                    className="relative shrink-0"
+                    initial={{ scale: 0.4, y: 12 }}
+                    animate={{ scale: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 16, delay: 0.05 }}
                   >
-                    <Icon name={feedback.correct ? "check" : "x"} className="h-8 w-8" />
+                    <Mascot size={72} mood={feedback.correct ? "happy" : "sad"} interactive={false} />
+                    <span className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-raised shadow">
+                      <Icon name={feedback.correct ? "check" : "x"} className="h-5 w-5" />
+                    </span>
                   </motion.span>
                   <div className="min-w-0">
                     <p className="text-2xl font-black">{feedback.correct ? feedback.praise : "Not quite"}</p>

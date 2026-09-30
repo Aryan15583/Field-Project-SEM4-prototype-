@@ -32,6 +32,11 @@ export default function Landing() {
   const [dev, setDev] = useState({ email: "", name: "" });
   const [error, setError] = useState(params.get("error") ? "Sign-in failed or was cancelled. Please try again." : "");
   const [busy, setBusy] = useState(false);
+  const [greeting, setGreeting] = useState(true); // Codi waves hello, then watches your cursor
+  useEffect(() => {
+    const t = setTimeout(() => setGreeting(false), 1600);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     api("/api/auth/config").then(setConfig).catch(() => {});
@@ -62,7 +67,7 @@ export default function Landing() {
         <div className="order-2 flex justify-center md:order-1">
           <div className="relative">
             <div className="absolute inset-0 -z-10 rounded-full bg-primary/15 blur-3xl" />
-            <Mascot size={280} className="animate-bob" />
+            <Mascot size={300} mood={greeting ? "wave" : "idle"} />
           </div>
         </div>
         <div className="order-1 text-center md:order-2 md:text-left">

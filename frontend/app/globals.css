@@ -19,6 +19,9 @@
   --bad-strong: 178 30 30;
   --gold: 245 176 11;
   --flame: 255 122 0;
+  --codi-screen: 255 255 255;
+  --codi-eye: 10 10 10;
+  --codi-shine: 219 228 245;
   color-scheme: light;
 }
 
@@ -39,6 +42,9 @@
   --bad-strong: 185 40 40;
   --gold: 250 204 21;
   --flame: 255 140 30;
+  --codi-screen: 4 18 9;       /* dark terminal screen */
+  --codi-eye: 74 222 128;      /* glowing green eyes */
+  --codi-shine: 32 58 40;
   color-scheme: dark;
 }
 
@@ -109,6 +115,23 @@ button, a { touch-action: manipulation; } /* no 300ms tap delay, no double-tap z
 }
 
 @keyframes pulse-soft { 50% { opacity: .45; } }
+
+/* ---- Codi the mascot (components/Codi.jsx). Units are grid pixels: in SVG, CSS px = user units. ---- */
+.codi { overflow: visible; -webkit-tap-highlight-color: transparent; }
+.codi g, .codi path, .codi rect { transform-box: fill-box; transform-origin: center; }
+.codi-bob { animation: codi-bob 1.1s steps(2, jump-none) infinite; }
+.codi-blink { animation: codi-blink 4.2s infinite; }
+.codi-glow { animation: codi-glow 1.6s ease-in-out infinite; }
+.codi-arm-l { animation: codi-arm 0.36s steps(2, jump-none) infinite; }
+.codi-arm-r { animation: codi-arm 0.36s steps(2, jump-none) infinite reverse; }
+.codi-dot { animation: codi-dot 1s ease-in-out infinite; }
+.codi-spark { animation: codi-spark 1.1s ease-out infinite; }
+@keyframes codi-bob { from { transform: translateY(0); } to { transform: translateY(-1px); } }
+@keyframes codi-blink { 0%, 93%, 100% { transform: scaleY(1); } 95%, 97% { transform: scaleY(0.12); } }
+@keyframes codi-glow { 50% { opacity: 0.45; } }
+@keyframes codi-arm { from { transform: translateY(0); } to { transform: translateY(-2px); } }
+@keyframes codi-dot { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-1px); opacity: 1; } }
+@keyframes codi-spark { 0% { transform: scale(0); opacity: 1; } 70% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.2); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

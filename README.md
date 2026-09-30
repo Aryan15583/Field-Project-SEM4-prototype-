@@ -34,6 +34,8 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **Progress dashboard** - XP over time and lessons per language (Recharts), achievements.
 - **Admin panel** - edit lessons/exercises (validated server-side), enable/disable users, security audit log.
 - **Responsive** - desktop sidebar, mobile bottom navigation; light/dark/system theme.
+- **Codi, the pixel-art mascot** - blue in light mode, green-on-terminal in dark mode; bobs, blinks, follows your
+  cursor, reacts to right/wrong answers, thinks while a hint loads, celebrates finished lessons and hops when tapped.
 - **Duolingo-style feel at 60 fps** - springy 3D buttons, tap-to-open lesson popovers, sticky unit banners,
   word-bank tiles that fly into place, sliding exercise cards, slide-up feedback sheet, "N in a row" combos,
   heart-loss and XP count-up animations, confetti finish, sound effects & haptics (toggle in Profile).

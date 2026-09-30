@@ -111,7 +111,7 @@ export function TwoFactorSetup() {
     return (
       <Shell>
         <div className="mb-4 flex justify-center">
-          <Mascot size={90} />
+          <Mascot size={100} mood="celebrate" />
         </div>
         <h1 className="text-center text-2xl font-black">You're protected!</h1>
         <p className="mb-5 mt-2 text-center text-muted">

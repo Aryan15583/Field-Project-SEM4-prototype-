@@ -246,14 +246,14 @@ export default function Learn() {
                       );
                     })}
                     {/* Codi hangs out beside the path */}
-                    <Mascot size={96} mood={ui % 2 ? "think" : "happy"} className={`pointer-events-none absolute top-6 hidden animate-bob sm:block ${ui % 2 ? "left-[8%]" : "right-[8%]"}`} />
+                    <Mascot size={104} className={`absolute top-6 hidden sm:block ${ui % 2 ? "left-[8%]" : "right-[8%]"}`} />
                   </div>
                 </section>
               );
             })}
             {all.length > 0 && all.every((l) => l.status === "completed") && (
               <div className="card flex flex-col items-center p-8 text-center">
-                <Mascot size={100} />
+                <Mascot size={110} mood="celebrate" />
                 <h3 className="mt-3 text-xl font-black">Course complete! 🎉</h3>
                 <p className="font-semibold text-muted">Pick another language above or replay lessons for practice XP.</p>
               </div>
