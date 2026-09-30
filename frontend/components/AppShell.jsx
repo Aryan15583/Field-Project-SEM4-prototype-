@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { Icon, Logo, StatPill, ThemeToggle } from "./ui";
@@ -13,19 +14,23 @@ const NAV = [
   { to: "/profile", label: "Profile", icon: "user" },
 ];
 
-function NavLink({ to, className, children }) {
+function NavLink({ to, className, children, pill }) {
   const pathname = usePathname();
   const isActive = pathname === to || pathname.startsWith(`${to}/`);
   return (
-    <Link href={to} className={className({ isActive })} aria-current={isActive ? "page" : undefined}>
-      {children}
+    <Link href={to} className={`relative ${className({ isActive })}`} aria-current={isActive ? "page" : undefined}>
+      {isActive && pill && (
+        // one highlight that glides between items (shared layout animation, transform-only)
+        <motion.span layoutId={pill} className="absolute inset-0 rounded-2xl border-2 border-primary/50 bg-primary/10" transition={{ type: "spring", stiffness: 500, damping: 38 }} />
+      )}
+      {pill ? <span className="relative flex items-center gap-4">{children}</span> : children}
     </Link>
   );
 }
 
 function navClass({ isActive }) {
-  return `flex items-center gap-4 rounded-2xl border-2 px-4 py-3 text-sm font-extrabold uppercase tracking-wide transition ${
-    isActive ? "border-primary/50 bg-primary/10 text-primary" : "border-transparent text-muted hover:bg-surface hover:text-ink"
+  return `flex items-center gap-4 rounded-2xl px-4 py-3 text-sm font-extrabold uppercase tracking-wide transition-colors ${
+    isActive ? "text-primary" : "text-muted hover:bg-surface hover:text-ink"
   }`;
 }
 
@@ -52,7 +57,7 @@ export default function AppShell({ children }) {
         <Logo className="mb-8 px-3" />
         <nav className="flex flex-1 flex-col gap-2" aria-label="Main">
           {items.map((n) => (
-            <NavLink key={n.to} to={n.to} className={navClass}>
+            <NavLink key={n.to} to={n.to} className={navClass} pill="side-pill">
               <Icon name={n.icon} className="h-6 w-6" />
               {n.label}
             </NavLink>

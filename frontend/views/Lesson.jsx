@@ -1,31 +1,169 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Confetti from "@/components/Confetti";
+import Exercise, { initialValue, isAnswered } from "@/components/Exercise";
+import { AnimatedNumber, ErrorNote, Icon, Mascot, Modal, ProgressBar } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import Exercise, { initialValue, isAnswered } from "@/components/Exercise";
-import { ErrorNote, Icon, Mascot, Modal, ProgressBar, Spinner } from "@/components/ui";
+import { sfx } from "@/lib/feedback";
+import { useTheme } from "@/lib/theme";
 
-const PRAISE = ["Nice!", "Great job!", "Awesome!", "You got it!", "Correct!", "Brilliant!"];
+const PRAISE = ["Nice!", "Great job!", "Awesome!", "You got it!", "Correct!", "Brilliant!", "Amazing!"];
+const EASE = [0.2, 0.8, 0.2, 1];
+const SHEET_SPRING = { type: "spring", stiffness: 520, damping: 40 };
 
+function formatTime(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/* ---------------------------------------------------------------- header */
+function Hearts({ hearts }) {
+  const prev = useRef(hearts);
+  const lost = hearts < prev.current;
+  useEffect(() => {
+    prev.current = hearts;
+  }, [hearts]);
+  return (
+    <span className="relative flex items-center gap-1 text-lg font-black text-bad" aria-label={`${hearts} hearts left`}>
+      <motion.span
+        key={hearts}
+        initial={lost ? { scale: 1.5, rotate: -12 } : false}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 500, damping: 12 }}
+      >
+        <Icon name="heart" className="h-7 w-7" />
+      </motion.span>
+      <AnimatedNumber value={hearts} duration={0.3} />
+      <AnimatePresence>
+        {lost && (
+          <motion.span
+            key={`lost-${hearts}`}
+            className="pointer-events-none absolute -top-2 left-1"
+            initial={{ y: 0, opacity: 1, scale: 1 }}
+            animate={{ y: -34, opacity: 0, scale: 0.7 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            <Icon name="heart" className="h-5 w-5" />
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </span>
+  );
+}
+
+function Combo({ count }) {
+  return (
+    <AnimatePresence>
+      {count >= 3 && (
+        <motion.span
+          key={count}
+          className="absolute -top-7 left-1/2 whitespace-nowrap text-sm font-black uppercase tracking-wide text-flame"
+          initial={{ x: "-50%", y: 8, scale: 0.6, opacity: 0 }}
+          animate={{ x: "-50%", y: 0, scale: 1, opacity: 1 }}
+          exit={{ x: "-50%", opacity: 0 }}
+          transition={{ type: "spring", stiffness: 600, damping: 18 }}
+        >
+          🔥 {count} in a row!
+        </motion.span>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ---------------------------------------------------------------- finished screen */
+function Finished({ result, elapsed, accuracy, onContinue }) {
+  const { dark } = useTheme();
+  const colors = useMemo(
+    () => (dark ? ["#22c55e", "#16a34a", "#facc15", "#e8f5ec", "#ff8c1e"] : ["#1d6ff2", "#60a5fa", "#f5b00b", "#0a0a0a", "#ff7a00"]),
+    [dark],
+  );
+  useEffect(() => sfx.complete(), []);
+  const stats = [
+    { label: "Total XP", tone: "bg-gold", text: "text-gold", icon: "bolt", value: <AnimatedNumber value={result.xp_awarded} duration={1} />, prefix: "+" },
+    { label: result.perfect ? "Perfect!" : "Accuracy", tone: "bg-primary", text: "text-primary", icon: "target", value: `${accuracy}%` },
+    { label: "Time", tone: "bg-flame", text: "text-flame", icon: "star", value: formatTime(elapsed) },
+  ];
+  return (
+    <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col px-4 pb-8 pt-10 text-center">
+      <Confetti colors={colors} />
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 14 }}>
+          <Mascot size={160} className="animate-bob" />
+        </motion.div>
+        <motion.h1
+          className="mt-6 text-3xl font-black text-gold sm:text-4xl"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.25, duration: 0.35, ease: EASE }}
+        >
+          {result.perfect ? "Perfect lesson!" : "Lesson complete!"}
+        </motion.h1>
+        <div className="mt-8 grid w-full grid-cols-3 gap-3">
+          {stats.map((s, i) => (
+            <motion.div
+              key={s.label}
+              className={`overflow-hidden rounded-2xl border-2 ${s.tone} border-transparent`}
+              initial={{ y: 30, opacity: 0, scale: 0.9 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              transition={{ delay: 0.45 + i * 0.12, type: "spring", stiffness: 420, damping: 22 }}
+            >
+              <p className="py-1 text-[11px] font-black uppercase text-white">{s.label}</p>
+              <p className={`m-[2px] mt-0 flex items-center justify-center gap-1 rounded-xl bg-bg py-3 text-xl font-black ${s.text}`}>
+                <Icon name={s.icon} className="h-5 w-5" />
+                <span>
+                  {s.prefix}
+                  {s.value}
+                </span>
+              </p>
+            </motion.div>
+          ))}
+        </div>
+        {result.new_badges.length > 0 && (
+          <motion.div className="card mt-5 w-full p-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
+            <p className="label mb-2">New badge{result.new_badges.length > 1 && "s"} unlocked!</p>
+            {result.new_badges.map((b) => (
+              <p key={b.key} className="font-extrabold">
+                <span aria-hidden="true">{b.icon}</span> {b.name} <span className="text-sm font-semibold text-muted">- {b.desc}</span>
+              </p>
+            ))}
+          </motion.div>
+        )}
+      </div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
+        <button className="btn-primary w-full" onClick={onContinue} autoFocus>
+          Continue
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- lesson */
 export default function Lesson({ id }) {
   const router = useRouter();
-  const navigate = router.push;
   const { reload } = useAuth();
   const [session, setSession] = useState(null); // { attempt_id, lesson, exercises, hearts }
   const [phase, setPhase] = useState("loading"); // loading | intro | play | done | error
   const [queue, setQueue] = useState([]);
+  const [round, setRound] = useState(0); // bumps on every new card so re-queued items animate in again
   const [solved, setSolved] = useState(0);
   const [value, setValue] = useState(null);
-  const [feedback, setFeedback] = useState(null); // { correct, correct_answer, explanation }
+  const [feedback, setFeedback] = useState(null);
   const [hearts, setHearts] = useState(5);
+  const [combo, setCombo] = useState(0);
+  const [stats, setStats] = useState({ answers: 0, firstTry: 0 });
   const [hint, setHint] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmExit, setConfirmExit] = useState(false);
   const [outOfHearts, setOutOfHearts] = useState(false);
+  const startedAt = useRef(0);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     api(`/api/lessons/${encodeURIComponent(id)}/start`, { method: "POST" })
@@ -35,6 +173,7 @@ export default function Lesson({ id }) {
         setHearts(s.hearts);
         setValue(initialValue(s.exercises[0]));
         setPhase(s.lesson.intro ? "intro" : "play");
+        startedAt.current = Date.now();
       })
       .catch((e) => {
         setError(e.message);
@@ -49,6 +188,7 @@ export default function Lesson({ id }) {
     setBusy(true);
     try {
       const res = await api(`/api/attempts/${session.attempt_id}/complete`, { method: "POST" });
+      setElapsed(Date.now() - startedAt.current);
       setResult(res);
       setPhase("done");
       reload();
@@ -65,8 +205,11 @@ export default function Lesson({ id }) {
     setError("");
     try {
       const res = await api(`/api/attempts/${session.attempt_id}/answer`, { method: "POST", body: { exercise_id: current.id, answer: value } });
+      (res.correct ? sfx.correct : sfx.wrong)();
       setFeedback({ ...res, praise: PRAISE[Math.floor(Math.random() * PRAISE.length)] });
       setHearts(res.hearts);
+      setCombo((c) => (res.correct ? c + 1 : 0));
+      setStats((s) => ({ answers: s.answers + 1, firstTry: s.firstTry + (res.correct ? 1 : 0) }));
       if (res.correct) setSolved((n) => n + 1);
     } catch (e) {
       setError(e.message);
@@ -76,7 +219,7 @@ export default function Lesson({ id }) {
   }, [current, busy, feedback, value, session]);
 
   const next = useCallback(() => {
-    if (!feedback) return;
+    if (!feedback || busy) return;
     if (feedback.out_of_hearts) {
       setOutOfHearts(true);
       return;
@@ -86,18 +229,17 @@ export default function Lesson({ id }) {
     setFeedback(null);
     setHint(null);
     if (rest.length === 0) {
-      setQueue([]);
       finish();
       return;
     }
     setQueue(rest);
+    setRound((r) => r + 1);
     setValue(initialValue(rest[0]));
-  }, [feedback, queue, finish]);
+  }, [feedback, busy, queue, finish]);
 
-  // Enter = check / continue
+  // Enter = check / continue (buttons handle their own Enter; textareas need it for newlines)
   useEffect(() => {
     const onKey = (e) => {
-      // Buttons handle Enter themselves (native click) - handling it here too would double-fire.
       if (e.key !== "Enter" || e.shiftKey || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) return;
       if (phase === "intro") setPhase("play");
       else if (phase === "play") feedback ? next() : check();
@@ -116,15 +258,31 @@ export default function Lesson({ id }) {
     }
   };
 
-  if (phase === "loading") return <Spinner label="Preparing your lesson" />;
+  if (phase === "loading")
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-6" aria-busy="true">
+        <div className="flex items-center gap-4">
+          <div className="skeleton h-7 w-7 rounded-lg" />
+          <div className="skeleton h-4 flex-1 rounded-full" />
+          <div className="skeleton h-7 w-12 rounded-lg" />
+        </div>
+        <div className="skeleton mt-12 h-4 w-40" />
+        <div className="skeleton mt-4 h-9 w-3/4" />
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="skeleton h-16" />
+          ))}
+        </div>
+      </div>
+    );
 
   if (phase === "error")
     return (
-      <div className="mx-auto grid min-h-screen max-w-md place-items-center p-6 text-center">
+      <div className="mx-auto grid min-h-[100dvh] max-w-md place-items-center p-6 text-center">
         <div>
           <Mascot size={110} mood="sad" className="mx-auto" />
           <p className="my-5 text-lg font-bold">{error}</p>
-          <button className="btn-primary" onClick={() => navigate("/learn")}>
+          <button className="btn-primary" onClick={() => router.push("/learn")}>
             Back to learning
           </button>
         </div>
@@ -133,159 +291,177 @@ export default function Lesson({ id }) {
 
   if (phase === "done")
     return (
-      <div className="mx-auto grid min-h-screen max-w-md place-items-center p-6 text-center">
-        <div className="w-full animate-pop">
-          <Mascot size={150} className="mx-auto animate-bob" />
-          <h1 className="mt-4 text-3xl font-black text-primary">{result.perfect ? "Perfect lesson!" : "Lesson complete!"}</h1>
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            {[
-              ["Total XP", `+${result.xp_awarded}`, "text-gold", "bolt"],
-              ["Streak", result.streak, "text-flame", "flame"],
-              ["Mistakes", result.mistakes, "text-primary", "target"],
-            ].map(([label, val, tone, icon]) => (
-              <div key={label} className="card overflow-hidden">
-                <p className={`py-1 text-[11px] font-black uppercase ${tone}`}>{label}</p>
-                <p className={`flex items-center justify-center gap-1 py-3 text-xl font-black ${tone}`}>
-                  <Icon name={icon} className="h-5 w-5" />
-                  {val}
-                </p>
-              </div>
-            ))}
-          </div>
-          {result.new_badges.length > 0 && (
-            <div className="card mt-5 p-4">
-              <p className="label mb-2">New badge{result.new_badges.length > 1 && "s"} unlocked!</p>
-              {result.new_badges.map((b) => (
-                <p key={b.key} className="font-extrabold">
-                  <span aria-hidden="true">{b.icon}</span> {b.name} <span className="text-sm font-normal text-muted">- {b.desc}</span>
-                </p>
-              ))}
-            </div>
-          )}
-          <button className="btn-primary mt-8 w-full" onClick={() => navigate("/learn")}>
-            Continue
-          </button>
-        </div>
-      </div>
+      <Finished
+        result={result}
+        elapsed={elapsed}
+        accuracy={stats.answers ? Math.round((stats.firstTry / stats.answers) * 100) : 100}
+        onContinue={() => router.push("/learn")}
+      />
     );
 
+  const verdict = feedback ? (feedback.correct ? "right" : "wrong") : null;
+
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-ink">
+    <div className="flex min-h-[100dvh] flex-col bg-bg text-ink">
       {/* header */}
-      <div className="mx-auto flex w-full max-w-3xl items-center gap-4 px-4 py-5">
-        <button className="text-muted hover:text-ink" onClick={() => setConfirmExit(true)} aria-label="Quit lesson">
+      <div className="mx-auto flex w-full max-w-3xl items-center gap-4 px-4 pb-2 pt-9">
+        <button className="text-muted transition-colors hover:text-ink" onClick={() => setConfirmExit(true)} aria-label="Quit lesson">
           <Icon name="x" className="h-7 w-7" />
         </button>
-        <ProgressBar value={solved} max={total} className="flex-1" />
-        <span className="chip text-bad" aria-label={`${hearts} hearts left`}>
-          <Icon name="heart" className="h-6 w-6" /> {hearts}
-        </span>
+        <div className="relative flex-1">
+          <Combo count={combo} />
+          <ProgressBar value={solved} max={total} />
+        </div>
+        <Hearts hearts={hearts} />
       </div>
 
       {/* body */}
-      <div className="mx-auto w-full max-w-3xl flex-1 px-4 pb-48 pt-4">
-        {phase === "intro" ? (
-          <div className="animate-pop">
-            <p className="label mb-2">
-              {session.lesson.course_title} · New concept
-            </p>
-            <h1 className="mb-5 text-3xl font-black">{session.lesson.title}</h1>
-            <div className="flex items-start gap-4">
-              <Mascot size={84} className="hidden shrink-0 sm:block" />
-              <pre className="code flex-1">{session.lesson.intro}</pre>
-            </div>
-          </div>
-        ) : (
-          current && (
-            <div key={`${current.id}-${queue.length}`}>
-              <Exercise exercise={current} value={value} onChange={setValue} locked={!!feedback} />
-              {!feedback && (
-                <div className="mt-6">
-                  {hint ? (
-                    <div className="flex items-start gap-3 animate-pop">
-                      <Mascot size={52} mood="think" className="shrink-0" />
-                      <div className="card relative flex-1 p-4 text-sm">
-                        {hint.loading ? "Codi is thinking…" : hint.hint}
-                        {hint.source === "ai" && <span className="mt-2 block text-[11px] font-bold uppercase text-muted">AI hint</span>}
-                      </div>
-                    </div>
-                  ) : (
-                    <button type="button" className="btn-link inline-flex items-center gap-1 text-sm" onClick={askHint}>
-                      <Icon name="bulb" className="h-4 w-4" /> Stuck? Ask Codi for a hint
-                    </button>
-                  )}
-                </div>
-              )}
-              <div className="mt-4">
-                <ErrorNote>{error}</ErrorNote>
+      <div className="mx-auto w-full max-w-3xl flex-1 overflow-x-hidden px-4 pb-56 pt-6">
+        <AnimatePresence mode="wait" initial={false}>
+          {phase === "intro" ? (
+            <motion.div key="intro" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -48 }} transition={{ duration: 0.22, ease: EASE }}>
+              <p className="label mb-2">{session.lesson.course_title} · New concept</p>
+              <h1 className="mb-6 text-3xl font-black">{session.lesson.title}</h1>
+              <div className="flex items-start gap-4">
+                <Mascot size={84} className="hidden shrink-0 animate-bob sm:block" />
+                <pre className="code flex-1">{session.lesson.intro}</pre>
               </div>
-            </div>
-          )
-        )}
+            </motion.div>
+          ) : (
+            current && (
+              <motion.div
+                key={`${current.id}-${round}`}
+                initial={{ opacity: 0, x: 56 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -56 }}
+                transition={{ duration: 0.22, ease: EASE }}
+              >
+                <motion.div animate={verdict === "wrong" ? { x: [0, -10, 10, -6, 6, 0] } : { x: 0 }} transition={{ duration: 0.35 }}>
+                  <Exercise exercise={current} value={value} onChange={setValue} result={verdict} />
+                </motion.div>
+                {!feedback && (
+                  <div className="mt-8">
+                    <AnimatePresence mode="wait" initial={false}>
+                      {hint ? (
+                        <motion.div
+                          key="hint"
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, y: 10, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ type: "spring", stiffness: 420, damping: 30 }}
+                        >
+                          <Mascot size={52} mood="think" className="shrink-0" />
+                          <div className="card relative flex-1 p-4 text-sm font-semibold">
+                            {hint.loading ? <span className="animate-pulse">Codi is thinking…</span> : hint.hint}
+                            {hint.source === "ai" && <span className="mt-2 block text-[11px] font-bold uppercase text-muted">AI hint</span>}
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.button key="ask" type="button" className="btn-link inline-flex items-center gap-1 text-sm" onClick={askHint} exit={{ opacity: 0 }}>
+                          <Icon name="bulb" className="h-4 w-4" /> Stuck? Ask Codi for a hint
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+                <div className="mt-4">
+                  <ErrorNote>{error}</ErrorNote>
+                </div>
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* footer / feedback */}
-      <div
-        className={`fixed inset-x-0 bottom-0 border-t-2 ${
-          feedback ? (feedback.correct ? "animate-rise border-transparent bg-ok/15" : "animate-rise border-transparent bg-bad/15") : "border-line bg-bg"
-        }`}
-      >
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
-          {feedback ? (
-            <div className={`flex items-start gap-3 ${feedback.correct ? "text-ok" : "text-bad animate-shake"}`} aria-live="polite">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-raised">
-                <Icon name={feedback.correct ? "check" : "x"} className="h-7 w-7" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-xl font-black">{feedback.correct ? feedback.praise : "Not quite"}</p>
-                {!feedback.correct && (
-                  <>
-                    <p className="text-sm font-bold">Correct answer:</p>
-                    <pre className="whitespace-pre-wrap break-words font-mono text-sm">{feedback.correct_answer}</pre>
-                  </>
-                )}
-                {feedback.explanation && <p className="mt-1 text-sm text-ink/80">{feedback.explanation}</p>}
-              </div>
-            </div>
-          ) : (
-            <span className="hidden sm:block" />
-          )}
+      {/* footer: Check bar, with the feedback sheet sliding up over it */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t-2 border-line bg-bg pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-5 sm:py-7">
           {phase === "intro" ? (
-            <button className="btn-primary sm:w-48" onClick={() => setPhase("play")}>
-              Let's go
-            </button>
-          ) : feedback ? (
-            <button className={`${feedback.correct ? "btn-ok" : "btn-bad"} sm:w-48`} onClick={next} disabled={busy} autoFocus>
-              Continue
-            </button>
+            <>
+              <span className="hidden sm:block" />
+              <button className="btn-primary w-full sm:w-48" onClick={() => setPhase("play")}>
+                Let's go
+              </button>
+            </>
           ) : (
-            <button className="btn-primary sm:w-48" onClick={check} disabled={busy || !current || !isAnswered(current.kind, value)}>
-              Check
-            </button>
+            <>
+              <button className="btn-ghost hidden sm:inline-flex" onClick={askHint} disabled={!!hint || !!feedback}>
+                Hint
+              </button>
+              <button
+                className={current && isAnswered(current.kind, value) ? "btn-primary w-full sm:w-48" : "btn-disabled w-full sm:w-48"}
+                onClick={check}
+                disabled={busy || !current || !isAnswered(current.kind, value)}
+              >
+                Check
+              </button>
+            </>
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {feedback && (
+          <motion.div
+            key="sheet"
+            className="fixed inset-x-0 bottom-0 z-30 bg-bg"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={SHEET_SPRING}
+            aria-live="polite"
+          >
+            <div className={`pb-[env(safe-area-inset-bottom)] ${feedback.correct ? "bg-ok/15" : "bg-bad/15"}`}>
+              <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:py-7">
+                <div className={`flex items-start gap-3 ${feedback.correct ? "text-ok" : "text-bad"}`}>
+                  <motion.span
+                    className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-raised"
+                    initial={{ scale: 0.4, rotate: -30 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 14, delay: 0.05 }}
+                  >
+                    <Icon name={feedback.correct ? "check" : "x"} className="h-8 w-8" />
+                  </motion.span>
+                  <div className="min-w-0">
+                    <p className="text-2xl font-black">{feedback.correct ? feedback.praise : "Not quite"}</p>
+                    {!feedback.correct && (
+                      <>
+                        <p className="text-sm font-extrabold">Correct answer:</p>
+                        <pre className="whitespace-pre-wrap break-words font-mono text-sm">{feedback.correct_answer}</pre>
+                      </>
+                    )}
+                    {feedback.explanation && <p className="mt-1 text-sm font-semibold text-ink/80">{feedback.explanation}</p>}
+                  </div>
+                </div>
+                <button className={`${feedback.correct ? "btn-ok" : "btn-bad"} w-full sm:w-48`} onClick={next} disabled={busy} autoFocus>
+                  Continue
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Modal open={confirmExit} onClose={() => setConfirmExit(false)} label="Quit lesson?">
         <div className="text-center">
           <Mascot size={90} mood="sad" className="mx-auto" />
           <h2 className="mt-3 text-xl font-black">Wait, don't go!</h2>
-          <p className="mb-6 mt-1 text-muted">You'll lose your progress in this lesson.</p>
+          <p className="mb-6 mt-1 font-semibold text-muted">You'll lose your progress in this lesson.</p>
           <button className="btn-primary w-full" onClick={() => setConfirmExit(false)}>
             Keep learning
           </button>
-          <button className="btn-link mt-4 text-bad" onClick={() => navigate("/learn")}>
+          <button className="btn-link mt-4 text-bad" onClick={() => router.push("/learn")}>
             End session
           </button>
         </div>
       </Modal>
 
-      <Modal open={outOfHearts} onClose={() => navigate("/learn")} label="Out of hearts">
+      <Modal open={outOfHearts} onClose={() => router.push("/learn")} label="Out of hearts">
         <div className="text-center">
           <Mascot size={90} mood="sad" className="mx-auto" />
           <h2 className="mt-3 text-xl font-black">You ran out of hearts</h2>
-          <p className="mb-6 mt-1 text-muted">Hearts refill over time (one every 30 minutes). Practising completed lessons is always free.</p>
-          <button className="btn-primary w-full" onClick={() => (reload(), navigate("/learn"))}>
+          <p className="mb-6 mt-1 font-semibold text-muted">Hearts refill over time (one every 30 minutes). Practising completed lessons is always free.</p>
+          <button className="btn-primary w-full" onClick={() => (reload(), router.push("/learn"))}>
             Back to path
           </button>
         </div>

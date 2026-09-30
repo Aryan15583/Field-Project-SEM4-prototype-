@@ -25,7 +25,7 @@ module.exports = {
         flame: v("flame"),
       },
       fontFamily: {
-        sans: ["ui-rounded", '"SF Pro Rounded"', '"Segoe UI"', "system-ui", "-apple-system", "sans-serif"],
+        sans: ["var(--font-nunito)", "ui-rounded", '"Segoe UI"', "system-ui", "sans-serif"],
         mono: ["ui-monospace", '"JetBrains Mono"', "SFMono-Regular", "Menlo", "Consolas", "monospace"],
       },
       keyframes: {

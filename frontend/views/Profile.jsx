@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { ErrorNote, Icon, Modal } from "@/components/ui";
+import { setSoundEnabled, sfx, soundEnabled } from "@/lib/feedback";
 import { useTheme } from "@/lib/theme";
 import { RecoveryCodes } from "./TwoFactor";
 
@@ -18,6 +19,8 @@ const GOALS = [
 export default function Profile() {
   const { user, setUser, logout } = useAuth();
   const { mode, setMode } = useTheme();
+  const [sound, setSound] = useState(true);
+  useEffect(() => setSound(soundEnabled()), []);
   const router = useRouter();
   const [name, setName] = useState(user.name);
   const [msg, setMsg] = useState("");
@@ -100,6 +103,23 @@ export default function Profile() {
             ))}
           </div>
         </div>
+        <label className="flex cursor-pointer items-center justify-between gap-4">
+          <span>
+            <span className="label block">Sound effects & haptics</span>
+            <span className="text-sm font-semibold text-muted">Chimes and vibration on answers</span>
+          </span>
+          <input
+            type="checkbox"
+            className="peer sr-only"
+            checked={sound}
+            onChange={(e) => {
+              setSound(e.target.checked);
+              setSoundEnabled(e.target.checked);
+              if (e.target.checked) sfx.correct();
+            }}
+          />
+          <span className="relative h-8 w-14 shrink-0 rounded-full bg-line transition-colors peer-checked:bg-primary peer-focus-visible:ring-4 peer-focus-visible:ring-primary/30 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-6" />
+        </label>
         {msg && <p className="text-sm font-bold text-primary">{msg}</p>}
         <ErrorNote>{!regen && error}</ErrorNote>
       </section>

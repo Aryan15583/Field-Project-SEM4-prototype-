@@ -1,3 +1,4 @@
+import { Nunito } from "next/font/google";
 import { headers } from "next/headers";
 import Providers from "./providers";
 import "./globals.css";
@@ -9,7 +10,10 @@ export const metadata = {
   referrer: "strict-origin-when-cross-origin",
 };
 
-export const viewport = { width: "device-width", initialScale: 1 };
+export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
+
+// Rounded, friendly type (self-hosted by Next at build time - no runtime request to Google).
+const nunito = Nunito({ subsets: ["latin"], weight: ["600", "700", "800", "900"], display: "swap", variable: "--font-nunito" });
 
 // Applies the saved/system theme before first paint (no light->dark flash).
 const THEME_BOOTSTRAP = `(function(){var t=null;try{t=localStorage.getItem("cg_theme")}catch(e){}
@@ -20,7 +24,7 @@ export default async function RootLayout({ children }) {
   // Reading the request makes every page dynamically rendered, which the per-request CSP nonce requires.
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={nunito.variable} suppressHydrationWarning>
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>

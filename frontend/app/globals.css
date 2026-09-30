@@ -42,22 +42,38 @@
   color-scheme: dark;
 }
 
-html, body, #root { min-height: 100%; }
-body { font-feature-settings: "ss01"; -webkit-font-smoothing: antialiased; }
+html, body { min-height: 100%; }
+html { -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+body {
+  font-family: var(--font-nunito), ui-rounded, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+button, a { touch-action: manipulation; } /* no 300ms tap delay, no double-tap zoom on controls */
 
+/*
+ * 60 fps rule for this file: anything that animates changes only `transform` / `opacity`
+ * (compositor-only). Pressing a 3D button swaps a static box-shadow and moves the button with
+ * a transform - no layout, no animated paint.
+ */
 @layer components {
-  /* Chunky, tactile "3D" buttons in the Duolingo spirit */
+  /* Chunky, tactile "3D" buttons - press = sink into the lip */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold uppercase tracking-wide
-      text-sm transition-[transform,filter] duration-75 select-none disabled:cursor-not-allowed disabled:opacity-50
+    @apply relative inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-5 py-3 text-[15px] font-extrabold
+      uppercase tracking-wide select-none disabled:cursor-not-allowed disabled:opacity-50
       focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40;
+    transition: transform 80ms ease-out, filter 120ms ease-out;
+    --lip: 4px;
   }
-  .btn:not(:disabled):active { transform: translateY(3px); box-shadow: none !important; }
-  .btn-primary { @apply btn bg-primary text-on-primary hover:brightness-110; box-shadow: 0 4px 0 rgb(var(--primary-strong)); }
-  .btn-ok { @apply btn bg-ok text-on-primary hover:brightness-110; box-shadow: 0 4px 0 rgb(var(--ok-strong)); }
-  .btn-bad { @apply btn bg-bad text-white hover:brightness-110; box-shadow: 0 4px 0 rgb(var(--bad-strong)); }
-  .btn-ghost { @apply btn border-2 border-line bg-raised text-ink hover:bg-surface; box-shadow: 0 4px 0 rgb(var(--line)); }
-  .btn-link { @apply font-bold text-primary hover:underline underline-offset-4; }
+  .btn:not(:disabled):hover { filter: brightness(1.06); }
+  .btn:not(:disabled):active { transform: translateY(var(--lip)); box-shadow: none !important; }
+  .btn-primary { @apply btn bg-primary text-on-primary; box-shadow: 0 var(--lip) 0 rgb(var(--primary-strong)); }
+  .btn-ok { @apply btn bg-ok text-on-primary; box-shadow: 0 var(--lip) 0 rgb(var(--ok-strong)); }
+  .btn-bad { @apply btn bg-bad text-white; box-shadow: 0 var(--lip) 0 rgb(var(--bad-strong)); }
+  .btn-ghost { @apply btn border-2 border-line bg-raised text-primary; box-shadow: 0 var(--lip) 0 rgb(var(--line)); }
+  .btn-disabled { @apply btn bg-line text-muted; box-shadow: none; }
+  .btn-link { @apply font-extrabold text-primary hover:underline underline-offset-4; }
 
   .card { @apply rounded-3xl border-2 border-line bg-raised; }
   .input {
@@ -66,14 +82,33 @@ body { font-feature-settings: "ss01"; -webkit-font-smoothing: antialiased; }
   }
   .chip { @apply inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-extrabold; }
   .code { @apply rounded-2xl border-2 border-line bg-surface p-4 font-mono text-[15px] leading-relaxed text-ink whitespace-pre-wrap break-words; }
+
+  /* Answer tiles (choices, word bank) */
   .tile {
-    @apply rounded-2xl border-2 border-line bg-raised px-4 py-3 text-left font-semibold text-ink transition
-      hover:bg-surface focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/30;
-    box-shadow: 0 3px 0 rgb(var(--line));
+    @apply rounded-2xl border-2 border-b-4 border-line bg-raised px-4 py-3 text-left font-bold text-ink select-none
+      focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/30;
+    transition: transform 80ms ease-out, background-color 120ms, border-color 120ms, color 120ms;
   }
-  .tile-selected { @apply border-primary bg-primary/10 text-primary; box-shadow: 0 3px 0 rgb(var(--primary) / .6); }
+  .tile:not(:disabled):hover { @apply bg-surface; }
+  .tile:not(:disabled):active { transform: translateY(2px); }
+  .tile-selected { @apply border-primary bg-primary/10 text-primary; }
+  .tile-right { @apply border-ok bg-ok/15 text-ok; }
+  .tile-wrong { @apply border-bad bg-bad/10 text-bad; }
   .label { @apply text-xs font-extrabold uppercase tracking-widest text-muted; }
+
+  /* Lesson-path node: circular 3D button */
+  .node {
+    @apply relative grid h-[70px] w-[76px] place-items-center rounded-[50%] select-none focus:outline-none
+      focus-visible:ring-8 focus-visible:ring-primary/30;
+    transition: transform 90ms ease-out;
+    box-shadow: 0 8px 0 var(--node-lip);
+  }
+  .node:not(:disabled):active { transform: translateY(8px); box-shadow: none; }
+
+  .skeleton { @apply rounded-2xl bg-line; animation: pulse-soft 1.2s ease-in-out infinite; }
 }
+
+@keyframes pulse-soft { 50% { opacity: .45; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

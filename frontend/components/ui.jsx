@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { animate, AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme";
 
 /* ------------------------------------------------------------------ icons */
@@ -103,29 +104,61 @@ export function Spinner({ label = "Loading" }) {
   );
 }
 
+/** Spring-animated bar. The fill scales on X (compositor-only) instead of animating width. */
 export function ProgressBar({ value, max = 100, className = "" }) {
-  const pct = Math.max(0, Math.min(100, (value / Math.max(1, max)) * 100));
+  const pct = Math.max(0, Math.min(1, value / Math.max(1, max)));
   return (
     <div
-      className={`h-4 overflow-hidden rounded-full bg-line ${className}`}
+      className={`relative h-4 overflow-hidden rounded-full bg-line ${className}`}
       role="progressbar"
-      aria-valuenow={Math.round(pct)}
+      aria-valuenow={Math.round(pct * 100)}
       aria-valuemin={0}
       aria-valuemax={100}
     >
-      <div className="relative h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }}>
+      <motion.div
+        className="absolute inset-0 origin-left rounded-full bg-primary"
+        initial={false}
+        animate={{ scaleX: pct }}
+        transition={{ type: "spring", stiffness: 260, damping: 26 }}
+      >
         <div className="absolute inset-x-2 top-1 h-1 rounded-full bg-white/30" />
-      </div>
+      </motion.div>
     </div>
   );
+}
+
+/** Counts up/down to `value`, writing text directly to the DOM (no React re-render per frame). */
+export function AnimatedNumber({ value, duration = 0.6 }) {
+  const ref = useRef(null);
+  const prev = useRef(value);
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (reduce || prev.current === value) {
+      el.textContent = String(value);
+      prev.current = value;
+      return;
+    }
+    const controls = animate(prev.current, value, {
+      duration,
+      ease: [0.2, 0.8, 0.2, 1],
+      onUpdate: (v) => (el.textContent = String(Math.round(v))),
+    });
+    prev.current = value;
+    return () => controls.stop();
+  }, [value, duration, reduce]);
+  return <span ref={ref}>{value}</span>;
 }
 
 export function StatPill({ icon, value, tone, label }) {
   const tones = { flame: "text-flame", bad: "text-bad", primary: "text-primary", gold: "text-gold" };
   return (
     <span className={`chip ${tones[tone]}`} title={label} aria-label={`${label}: ${value}`}>
-      <Icon name={icon} className="h-5 w-5" />
-      <span>{value}</span>
+      <motion.span key={value} initial={{ scale: 1.35 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 15 }}>
+        <Icon name={icon} className="h-5 w-5" />
+      </motion.span>
+      <AnimatedNumber value={value} />
     </span>
   );
 }
@@ -137,13 +170,33 @@ export function Modal({ open, onClose, children, label }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label={label} onClick={onClose}>
-      <div className="card w-full max-w-md animate-pop p-6" onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
-    </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={label}
+          onClick={onClose}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          <motion.div
+            className="card w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ scale: 0.9, y: 20, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.95, y: 10, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

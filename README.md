@@ -13,6 +13,8 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 | ![Learning path, light](docs/screenshots/learn-light.png) | ![Learning path, dark](docs/screenshots/learn-dark.png) |
 | ![Lesson feedback](docs/screenshots/lesson-light.png) | ![Progress dashboard](docs/screenshots/progress-dark.png) |
 | ![Mandatory 2-step verification](docs/screenshots/2fa-setup.png) | ![Wrong answer feedback](docs/screenshots/lesson-wrong.png) |
+| ![Lesson popover on the path](docs/screenshots/path-popover.png) | ![Word bank](docs/screenshots/word-bank.png) |
+| ![Lesson complete with confetti](docs/screenshots/lesson-complete.png) | ![Mobile](docs/screenshots/mobile.png) |
 
 ---
 
@@ -27,6 +29,11 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **Progress dashboard** - XP over time and lessons per language (Recharts), achievements.
 - **Admin panel** - edit lessons/exercises (validated server-side), enable/disable users, security audit log.
 - **Responsive** - desktop sidebar, mobile bottom navigation; light/dark/system theme.
+- **Duolingo-style feel at 60 fps** - springy 3D buttons, tap-to-open lesson popovers, sticky unit banners,
+  word-bank tiles that fly into place, sliding exercise cards, slide-up feedback sheet, "N in a row" combos,
+  heart-loss and XP count-up animations, confetti finish, sound effects & haptics (toggle in Profile).
+  Every animation moves only `transform`/`opacity` (compositor-only) via [Motion](https://motion.dev), respects
+  `prefers-reduced-motion`, and measured a steady 60 fps in a headless-Chromium frame-timing run.
 
 ## Security
 
