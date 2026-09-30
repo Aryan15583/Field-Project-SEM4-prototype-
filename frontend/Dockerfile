@@ -1,13 +1,19 @@
+# ---- build ----
 FROM node:22-alpine AS build
 WORKDIR /web
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine
-COPY --from=build /web/dist /usr/share/nginx/html
-# "deploy" is an extra build context (see docker-compose.yml) pointing at ../deploy
-COPY --from=deploy nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=deploy proxy.conf security-headers.conf /etc/nginx/snippets/
-EXPOSE 8080
+# ---- run: Next.js standalone server, non-root ----
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+COPY --from=build --chown=node:node /web/.next/standalone ./
+COPY --from=build --chown=node:node /web/.next/static ./.next/static
+COPY --from=build --chown=node:node /web/public ./public
+USER node
+EXPOSE 3000
+CMD ["node", "server.js"]

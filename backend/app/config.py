@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # --- general ---
     env: str = Field("development", description="development | test | production")
     app_name: str = "Codeingo"
-    public_url: str = "http://localhost:5173"  # where the SPA is served (used for redirects + CORS)
+    public_url: str = "http://localhost:3000"  # where the SPA is served (used for redirects + CORS)
     allowed_hosts: list[str] = ["localhost", "127.0.0.1", "testserver"]
 
     # --- secrets ---
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # --- Google OAuth (OpenID Connect) ---
     google_client_id: str = ""
     google_client_secret: str = ""
-    google_redirect_uri: str = "http://localhost:5173/api/auth/google/callback"
+    google_redirect_uri: str = "http://localhost:3000/api/auth/google/callback"
     # Optionally restrict sign-in to Google Workspace domains, e.g. ["myschool.edu"]
     allowed_email_domains: list[str] = []
     admin_emails: list[str] = []

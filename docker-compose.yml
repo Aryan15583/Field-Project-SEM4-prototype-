@@ -1,4 +1,4 @@
-# Production stack:  internet -> caddy (TLS) -> web (nginx: SPA + rate limits) -> api (FastAPI) -> db / redis
+# Production stack:  internet -> caddy (TLS) -> edge (nginx: rate limits) -> web (Next.js) / api (FastAPI) -> db / redis
 # Only caddy publishes ports. Everything else is on a private network.
 services:
   caddy:
@@ -11,21 +11,29 @@ services:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-    depends_on: [web]
+    depends_on: [edge]
     networks: [edge]
 
-  web:
-    build:
-      context: ./frontend
-      additional_contexts:
-        deploy: ./deploy
+  edge:
+    image: nginxinc/nginx-unprivileged:1.27-alpine
     restart: unless-stopped
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     read_only: true
     tmpfs: [/tmp]
     security_opt: ["no-new-privileges:true"]
     cap_drop: [ALL]
-    depends_on: [api]
+    depends_on: [web, api]
     networks: [edge, internal]
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp, /app/.next/cache]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    networks: [internal]
 
   api:
     build: ./backend

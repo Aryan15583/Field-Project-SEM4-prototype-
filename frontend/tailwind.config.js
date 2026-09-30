@@ -2,8 +2,8 @@
  *  and dark (black/green) themes swap with a single class on <html>. */
 const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 
-export default {
-  content: ["./index.html", "./src/**/*.{js,jsx}"],
+module.exports = {
+  content: ["./app/**/*.{js,jsx}", "./components/**/*.{js,jsx}", "./views/**/*.{js,jsx}"],
   darkMode: "class",
   theme: {
     extend: {

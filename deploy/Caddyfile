@@ -1,6 +1,6 @@
 # Automatic HTTPS (Let's Encrypt) + HTTP->HTTPS redirect + HTTP/2/3.
 {$DOMAIN} {
     encode gzip
-    reverse_proxy web:8080
+    reverse_proxy edge:8080
     header -Server
 }

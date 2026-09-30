@@ -26,7 +26,7 @@ This document lists the threats Codeingo defends against and where each control 
 | Threat | Control |
 |---|---|
 | CSRF | SameSite=Strict cookies **and** double-submit `X-CSRF-Token` header **and** Origin check on every POST/PUT/PATCH/DELETE (`security/middleware.py`). The token is rotated at login. |
-| XSS | React escapes all output; no `dangerouslySetInnerHTML`; strict CSP `script-src 'self'` (the theme bootstrap is an external file so inline scripts stay forbidden); lesson content is rendered as text. |
+| XSS | React escapes all output; lesson content is rendered as text. Next.js `proxy.js` issues a **fresh random nonce per request** and a CSP of `script-src 'self' 'nonce-…' 'strict-dynamic'`, so only scripts the server emitted (framework scripts and the theme bootstrap) can run - injected scripts are refused. `X-Powered-By` is disabled. |
 | Clickjacking | `X-Frame-Options: DENY` + `frame-ancestors 'none'`. |
 | SQL injection | SQLAlchemy ORM / bound parameters only. |
 | Host-header attacks | `TrustedHostMiddleware` with an explicit host list. |
@@ -43,7 +43,7 @@ Layered, cheapest first:
 
 1. **CDN / WAF (recommended)** - Cloudflare or similar absorbs volumetric L3/L4/L7 floods. Origin should only accept traffic from the CDN.
 2. **Caddy** - TLS termination, HTTP/2/3.
-3. **nginx** (`deploy/nginx.conf`) - per-IP `limit_req` (API 15 r/s, auth 2 r/s with small bursts), `limit_conn` 30 per IP, 64 KB body cap, 10 s header/body timeouts (slowloris), small header buffers.
+3. **nginx** (`deploy/nginx.conf`) - per-IP `limit_req` (pages 20 r/s, API 15 r/s, auth 2 r/s with small bursts), `limit_conn` 30 per IP, 64 KB body cap, 10 s header/body timeouts (slowloris), small header buffers.
 4. **FastAPI** - Redis-backed per-IP global limit (240/min), stricter per-route limits (auth, answers, lesson starts, daily challenge, AI), streaming body-size limit, uvicorn `--limit-concurrency` and short keep-alive.
 5. **Database** - bounded connection pool, 5 s `statement_timeout`, Postgres/Redis unreachable from the internet.
 

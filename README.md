@@ -4,7 +4,7 @@
 instant feedback, XP, streaks, hearts, badges, daily challenges, a weekly leaderboard and AI hints,
 across **Python, JavaScript, Java, C++, C, SQL and HTML/CSS**.
 
-Built to the Codeingo project specification (Chapters 1–3): **React + Vite + Tailwind + Recharts**
+Built to the Codeingo project specification (Chapters 1–3): **Next.js (App Router, React 19) + Tailwind + Recharts**
 frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tutor
 (OpenAI / Mistral / Llama 3 through any OpenAI-compatible API).
 
@@ -36,7 +36,7 @@ See **[SECURITY.md](SECURITY.md)** for the full threat model. Highlights:
 - Short-lived JWT access tokens (15 min) + **rotating refresh tokens with theft/reuse detection**; "log out of all devices" revokes everything instantly.
 - Cookies are `HttpOnly`, `Secure`, `SameSite=Strict`; **CSRF** double-submit token + Origin check.
 - **Rate limiting at two layers** (nginx `limit_req`/`limit_conn` + Redis-backed app limits), request-size caps, slowloris timeouts, bounded DB pool and statement timeouts → application-layer DDoS resistance. Put Cloudflare (or similar) in front for volumetric DDoS.
-- Strict **Content-Security-Policy**, HSTS, `X-Frame-Options: DENY`, `nosniff`, COOP, Permissions-Policy.
+- Strict **Content-Security-Policy with a fresh nonce per request** (Next.js `proxy.js`), HSTS, `X-Frame-Options: DENY`, `nosniff`, COOP, Permissions-Policy.
 - Answers are graded **server-side only** and never sent to the browser before answering; user code is **never executed** (pattern-matched with ReDoS-safe timeouts).
 - ORM-only DB access (no SQL injection), strict Pydantic validation, no stack traces leaked, audit log of security events.
 - Production **refuses to start** with weak secrets, dev login enabled, non-HTTPS URL, or SQLite.
@@ -50,9 +50,12 @@ backend/            FastAPI app
   app/services/     Google OAuth, grading, gamification, AI tutor
   app/seed.py       starter curriculum (7 languages)
   tests/            pytest suite (security + learning flows)
-frontend/           React + Vite + Tailwind + Recharts SPA
+frontend/           Next.js 16 app (App Router) + Tailwind + Recharts
+  app/              routes: /, /2fa/*, /learn, /lesson/[id], /daily, /leaderboard, /stats, /profile, /admin
+  proxy.js          per-request CSP nonce + security headers
+  views/            page components   components/  shared UI   lib/  API client, auth, theme
 deploy/             nginx (edge limits, headers), Caddy (automatic HTTPS)
-docker-compose.yml  caddy -> nginx -> api -> postgres/redis
+docker-compose.yml  caddy -> nginx -> Next.js / FastAPI -> postgres/redis
 ```
 
 ## Run locally (development)
@@ -68,21 +71,21 @@ cat > .env <<'EOF'
 ENV=development
 DEV_LOGIN_ENABLED=true            # password-less dev login (still requires 2FA). Never in production.
 ADMIN_EMAILS=["you@example.com"]
-PUBLIC_URL=http://localhost:5173
+PUBLIC_URL=http://localhost:3000
 # Optional: real Google sign-in locally
 # GOOGLE_CLIENT_ID=...
 # GOOGLE_CLIENT_SECRET=...
-# GOOGLE_REDIRECT_URI=http://localhost:5173/api/auth/google/callback
+# GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
 EOF
 uvicorn app.main:app --reload --port 8000
 
 # 2. Web (new terminal)
 cd frontend
 npm install
-npm run dev          # http://localhost:5173  (proxies /api to :8000)
+npm run dev          # http://localhost:3000  (Next rewrites /api to :8000)
 ```
 
-Open http://localhost:5173, use **Developer login**, scan the QR code with an authenticator app and start learning.
+Open http://localhost:3000, use **Developer login**, scan the QR code with an authenticator app and start learning.
 
 Run the tests:
 
