@@ -8,3 +8,7 @@ dist/
 .DS_Store
 .next/
 next-env.d.ts
+
+# copied from node_modules by scripts/copy-runtimes.mjs
+frontend/public/pyodide/
+frontend/public/sqljs/

@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     ai_model: str = ""
     ai_timeout_seconds: float = 15.0
 
+    # --- optional sandboxed code runner for Java/C/C++ (self-hosted Piston, private network only) ---
+    code_runner_url: str = ""
+    rate_limit_run_per_minute: int = 12
+
     # --- gamification ---
     max_hearts: int = 5
     heart_refill_minutes: int = 30

@@ -106,6 +106,7 @@ class Unit(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
+    key: Mapped[str | None] = mapped_column(String(80), unique=True)  # stable id for built-in curriculum
     title: Mapped[str] = mapped_column(String(120))
     position: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -120,6 +121,9 @@ class Lesson(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     unit_id: Mapped[int] = mapped_column(ForeignKey("units.id", ondelete="CASCADE"), index=True)
+    key: Mapped[str | None] = mapped_column(String(80), unique=True)  # stable id for built-in curriculum
+    # hash of the built-in content this lesson was seeded from; None once an admin customises it
+    content_hash: Mapped[str | None] = mapped_column(String(64))
     title: Mapped[str] = mapped_column(String(120))
     intro: Mapped[str] = mapped_column(Text, default="")
     position: Mapped[int] = mapped_column(Integer, default=0)
@@ -132,7 +136,7 @@ class Lesson(Base):
 
 
 class Exercise(Base):
-    """kind: mcq | fill | order | code.  `solution` never leaves the server before answering."""
+    """kind: mcq | fill | order | code | run.  `solution` never leaves the server before answering."""
 
     __tablename__ = "exercises"
 

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from .models import Exercise, User
-from .services import gamification, grading
+from .services import code_runner, gamification, grading
 
 
 class MeOut(BaseModel):
@@ -49,4 +49,6 @@ def public_exercise(ex: Exercise) -> dict:
     if ex.kind == "order":
         # Stored in the correct order; only ever sent shuffled.
         data["lines"] = grading.shuffled_lines(ex)
+    if ex.kind == "run" and data.get("language") in code_runner.SERVER_LANGS:
+        data["server_runner"] = code_runner.configured()
     return {"id": ex.id, "kind": ex.kind, "prompt": ex.prompt, "code": ex.code, "data": data, "has_hint": bool(ex.hint)}

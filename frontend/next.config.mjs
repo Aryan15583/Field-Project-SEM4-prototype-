@@ -13,7 +13,20 @@ const nextConfig = {
   },
   // Static security headers for every response (CSP with a per-request nonce is set in proxy.js).
   async headers() {
+    // Code-runner workers get their OWN, very tight CSP (a worker's policy comes from its script's
+    // response): learner JavaScript may not make any network request at all; the Python/SQL
+    // runtimes may only fetch their own files from this origin. 'unsafe-eval' / 'wasm-unsafe-eval'
+    // are needed to execute code and WebAssembly - inside the worker only, never on the page.
+    const worker = (extra) => [
+      { key: "Content-Security-Policy", value: `default-src 'none'; ${extra}` },
+      { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+    ];
     return [
+      { source: "/runners/js-worker.mjs", headers: worker("script-src 'self' 'unsafe-eval'; connect-src 'none'") },
+      { source: "/runners/py-worker.mjs", headers: worker("script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src 'self'") },
+      { source: "/runners/sql-worker.mjs", headers: worker("script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'") },
+      // runtimes never change for a given build -> cache hard
+      { source: "/:dir(pyodide|sqljs)/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=604800" }] },
       {
         source: "/:path*",
         headers: [

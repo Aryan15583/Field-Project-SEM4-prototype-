@@ -17,6 +17,10 @@ export function proxy(request) {
     "img-src 'self' data: blob: https://lh3.googleusercontent.com",
     "font-src 'self'",
     `connect-src 'self'${isDev ? " ws:" : ""}`,
+    // code runners (see lib/runners.js) - each worker script carries its own stricter CSP
+    "worker-src 'self'",
+    // HTML/CSS exercises: sandboxed, script-less preview frames built from srcdoc
+    "frame-src 'self'",
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'self' https://accounts.google.com",
@@ -38,7 +42,7 @@ export const config = {
   matcher: [
     {
       // pages only - not the API (FastAPI sets its own headers) or immutable static assets
-      source: "/((?!api|_next/static|_next/image|favicon.svg).*)",
+      source: "/((?!api|_next/static|_next/image|favicon.svg|runners/|pyodide/|sqljs/).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

@@ -14,7 +14,9 @@ from ..models import Course, DailyChallengeClaim, Exercise, Lesson, LessonAttemp
 from ..schemas import public_exercise
 from ..security.deps import get_current_user
 from ..security.ratelimit import limit
-from ..services import gamification, grading
+from ..config import get_settings
+from ..security.ratelimit import check
+from ..services import code_runner, gamification, grading
 
 router = APIRouter(prefix="/api", tags=["learn"])
 
@@ -26,10 +28,25 @@ MIN_SECONDS_PER_EXERCISE = 2  # anti-automation: a lesson can't be "completed" i
 DAILY_BONUS_XP = 20
 
 
+class RunAnswer(BaseModel):
+    """A `run` exercise answer: the learner's code plus (browser languages) what each test printed."""
+
+    code: str = Field(max_length=grading.MAX_CODE_CHARS)
+    outputs: list[Annotated[str, Field(max_length=code_runner.MAX_OUTPUT)]] | None = Field(None, max_length=grading.MAX_TESTS)
+
+
 class AnswerIn(BaseModel):
     exercise_id: int
-    # int (mcq) | str (fill / code) | list[int] (order); size-limited here and in grading
-    answer: int | Annotated[str, Field(max_length=grading.MAX_CODE_CHARS)] | Annotated[list[int], Field(max_length=50)]
+    # int (mcq) | str (fill / code) | list[int] (order) | RunAnswer (run); size-limited here and in grading
+    answer: int | Annotated[str, Field(max_length=2000)] | Annotated[list[int], Field(max_length=50)] | RunAnswer
+
+    def value(self):
+        return self.answer.model_dump() if isinstance(self.answer, RunAnswer) else self.answer
+
+
+class RunIn(BaseModel):
+    exercise_id: int
+    code: str = Field(max_length=grading.MAX_CODE_CHARS)
 
 
 def _ordered_lessons(course: Course) -> list[Lesson]:
@@ -134,7 +151,7 @@ def answer(attempt_id: str, body: AnswerIn, user: CurrentUser, db: DB):
     ex = db.get(Exercise, body.exercise_id)
     if ex is None or ex.lesson_id != attempt.lesson_id:
         raise HTTPException(404, "Exercise not found")
-    correct = grading.grade(ex, body.answer)
+    correct = grading.grade(ex, body.value())
     # Replaying a finished lesson is free practice: mistakes there don't cost hearts.
     practice = db.scalar(select(UserLesson.id).where(UserLesson.user_id == user.id, UserLesson.lesson_id == ex.lesson_id)) is not None
     if correct:
@@ -216,7 +233,7 @@ def daily_answer(body: AnswerIn, user: CurrentUser, db: DB):
     today = gamification.today()
     if db.scalar(select(DailyChallengeClaim.id).where(DailyChallengeClaim.user_id == user.id, DailyChallengeClaim.day == today)):
         raise HTTPException(409, "You've already answered today's challenge")
-    correct = grading.grade(ex, body.answer)
+    correct = grading.grade(ex, body.value())
     db.add(DailyChallengeClaim(user_id=user.id, day=today, correct=correct))
     try:
         db.flush()  # unique (user, day) constraint stops double-claims from parallel requests
@@ -234,3 +251,30 @@ def daily_answer(body: AnswerIn, user: CurrentUser, db: DB):
         "new_badges": [{"key": k, **gamification.BADGES[k]} for k in new_badges],
     }
 
+
+
+# ------------------------------------------------------------------ sandboxed runs (Java / C / C++)
+@router.post("/run")
+def run_code(body: RunIn, user: CurrentUser, db: DB):
+    """Compile + run learner code in the isolated sandbox and report pass/fail per test.
+    Expected outputs are never returned - only whether each test passed."""
+    allowed, retry = check(f"run:u{user.id}", get_settings().rate_limit_run_per_minute, 60)
+    if not allowed:
+        raise HTTPException(429, "You're running code very fast - wait a few seconds.", headers={"Retry-After": str(retry)})
+    ex = db.get(Exercise, body.exercise_id)
+    lang = (ex.data or {}).get("language") if ex else None
+    if ex is None or ex.kind != "run" or lang not in code_runner.SERVER_LANGS:
+        raise HTTPException(404, "Exercise not found")
+    tests = ex.data.get("tests", [])
+    expected = [grading.norm_output(e) for e in (ex.solution or {}).get("expected", [])]
+    try:
+        results = code_runner.run_tests(lang, body.code, tests)
+    except code_runner.RunnerUnavailable:
+        raise HTTPException(503, "The code runner isn't available right now. You can still check your answer.")
+    return {
+        "results": [
+            {"name": t.get("name", f"Test {i + 1}"), "stdout": r["stdout"], "stderr": r["stderr"],
+             "passed": r["ok"] and i < len(expected) and grading.norm_output(r["stdout"]) == expected[i]}
+            for i, (t, r) in enumerate(zip(tests, results))
+        ]
+    }

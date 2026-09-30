@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Confetti from "@/components/Confetti";
 import Exercise, { initialValue, isAnswered } from "@/components/Exercise";
+import { prepareRunAnswer } from "@/components/RunExercise";
 import { AnimatedNumber, ErrorNote, Icon, Mascot, Modal, ProgressBar } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -204,7 +205,9 @@ export default function Lesson({ id }) {
     setBusy(true);
     setError("");
     try {
-      const res = await api(`/api/attempts/${session.attempt_id}/answer`, { method: "POST", body: { exercise_id: current.id, answer: value } });
+      // Programs are executed first (in the browser, or by the server's sandbox) and graded on their output.
+      const answer = current.kind === "run" ? await prepareRunAnswer(current, value, setValue) : value;
+      const res = await api(`/api/attempts/${session.attempt_id}/answer`, { method: "POST", body: { exercise_id: current.id, answer } });
       (res.correct ? sfx.correct : sfx.wrong)();
       setFeedback({ ...res, praise: PRAISE[Math.floor(Math.random() * PRAISE.length)] });
       setHearts(res.hearts);
@@ -251,7 +254,7 @@ export default function Lesson({ id }) {
   const askHint = async () => {
     setHint({ loading: true });
     try {
-      const attempt = typeof value === "string" ? value : undefined;
+      const attempt = typeof value === "string" ? value : typeof value?.code === "string" ? value.code : undefined;
       setHint(await api("/api/ai/hint", { method: "POST", body: { exercise_id: current.id, attempt } }));
     } catch (e) {
       setHint({ hint: e.message, source: "error" });

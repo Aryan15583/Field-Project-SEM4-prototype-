@@ -55,6 +55,27 @@ services:
       redis: { condition: service_started }
     networks: [internal, egress]   # egress: Google OAuth token/JWKS endpoints + optional AI API
 
+  # OPTIONAL sandbox for Java / C / C++ exercises (Python, JS, SQL, HTML run in the learner's browser).
+  # Start with:  docker compose --profile runner up -d   then install the runtimes once:
+  #   docker compose exec runner piston ppm install java c c++   (see README)
+  # and set CODE_RUNNER_URL=http://runner:2000 in .env. Without it, those exercises use pattern checks.
+  # Piston needs a privileged container to build its per-run isolation (cgroups/namespaces); it is kept
+  # unpublished (reachable only by the API); each submitted program runs with networking disabled.
+  runner:
+    image: ghcr.io/engineer-man/piston
+    profiles: ["runner"]
+    restart: unless-stopped
+    privileged: true
+    tmpfs: [/piston/jobs:exec,uid=1000,gid=1000,mode=711]
+    volumes: [piston_packages:/piston/packages]
+    environment:
+      PISTON_RUN_TIMEOUT: "3000"
+      PISTON_COMPILE_TIMEOUT: "10000"
+      PISTON_OUTPUT_MAX_SIZE: "4096"
+      PISTON_MAX_PROCESS_COUNT: "64"
+      PISTON_DISABLE_NETWORKING: "true"   # submitted programs run with no network at all
+    networks: [internal, egress]          # egress only so the API process can download language packages
+
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -81,6 +102,7 @@ networks:
   internal: { internal: true }   # db & redis: no internet access at all
 
 volumes:
+  piston_packages: {}
   pgdata: {}
   caddy_data: {}
   caddy_config: {}

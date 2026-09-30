@@ -22,8 +22,13 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 
 - **Sign in with Google (Gmail)** - OpenID Connect with PKCE, `state` and `nonce`; ID tokens verified against Google's keys.
 - **Mandatory 2-step verification** for every account - TOTP (Google Authenticator, Authy, 1Password…), 10 single-use recovery codes.
+- **Full beginner courses** - 7 languages × 8 units × 3 lessons = **168 lessons / 840 exercises**, from "Hello, World" to
+  functions, OOP, pointers, joins, flexbox and accessibility (see the table below).
+- **Real code, really run** - every lesson ends with a program the learner writes and runs:
+  Python (Pyodide/WebAssembly), JavaScript, SQL (SQLite/WebAssembly) and HTML/CSS run **in the browser**;
+  Java, C and C++ run in an optional **sandboxed server runner** (Piston) - or fall back to pattern checks.
 - **Learning path** - courses → units → lessons, unlocked in order, winding Duolingo-style map.
-- **4 exercise types** - multiple choice, fill-in-the-blank, arrange-the-code, write-the-code.
+- **5 exercise types** - multiple choice, fill-in-the-blank, arrange-the-code, write-a-snippet, write-and-run a program.
 - **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 8 badges, daily challenge, weekly league.
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).
 - **Progress dashboard** - XP over time and lessons per language (Recharts), achievements.
@@ -48,6 +53,38 @@ See **[SECURITY.md](SECURITY.md)** for the full threat model. Highlights:
 - ORM-only DB access (no SQL injection), strict Pydantic validation, no stack traces leaked, audit log of security events.
 - Production **refuses to start** with weak secrets, dev login enabled, non-HTTPS URL, or SQLite.
 
+## Curriculum
+
+| Course | Units (3 lessons each) |
+|---|---|
+| Python | First steps · Variables & input · Text · Decisions · Loops · Lists · Dicts, tuples & sets · Functions & errors |
+| JavaScript | First steps · Variables & types · Decisions · Loops · Functions · Arrays (map/filter/reduce) · Objects & JSON · Strings, classes & errors |
+| Java | First programs · Types · Decisions · Loops · Methods · Arrays & ArrayList · Classes & objects · Inheritance, interfaces & exceptions |
+| C++ | First programs · Types & strings · Input & decisions · Loops · Functions & references · Vectors & algorithms · Classes · Pointers, maps & smart pointers |
+| C | First programs · Types & printf · scanf & decisions · Loops · Functions & recursion · Arrays & strings · Pointers · Structs & malloc |
+| SQL | SELECT · WHERE · ORDER BY & NULL · Aggregates · HAVING & CASE · Joins · INSERT/UPDATE/DELETE · Schema, constraints & subqueries |
+| HTML & CSS | HTML basics · Links, images & lists · Semantic structure, tables & forms · Selectors & text · Box model · Flexbox & Grid · Styling & positioning · Responsive & accessible |
+
+Each lesson: a short concept intro, quick-check exercises, and a program to write. Lessons live in
+`backend/app/curriculum/<language>.py` and are synced into the database at start-up (new lessons are
+added, changed ones updated in place, admin-edited ones left alone).
+
+**Every runnable exercise is verified by execution** - `python backend/scripts/validate_curriculum.py`
+runs each reference solution with the real toolchain (python3, Node + the browser runners' own code,
+sql.js, Chromium, javac, gcc, g++), checks it prints exactly the expected output, and checks the
+starter code does *not* pass. CI runs it on every push.
+
+### How code is run and graded
+
+- **Browser languages** run in the learner's own browser inside Web Workers (never on the page's
+  main thread, so the UI stays at 60 fps) with a time limit, no network access and their own tight CSP.
+  The browser reports what the program printed; the **server compares it with expected output it
+  never sends to the browser**, plus optional structure checks (e.g. "must use a loop").
+- **Java / C / C++** go to a self-hosted [Piston](https://github.com/engineer-man/piston) sandbox if
+  `CODE_RUNNER_URL` is set (`docker compose --profile runner up -d`, then
+  `docker compose exec runner piston ppm install java c c++`). Otherwise they're graded with patterns.
+- The API server itself **never executes learner code**.
+
 ## Project layout
 
 ```
@@ -55,11 +92,15 @@ backend/            FastAPI app
   app/security/     tokens, 2FA, CSRF, rate limiting, headers
   app/routers/      auth, learn, stats, ai, admin
   app/services/     Google OAuth, grading, gamification, AI tutor
-  app/seed.py       starter curriculum (7 languages)
+  app/curriculum/   the 7 courses (one module per language)
+  app/seed.py       idempotent curriculum sync
+  scripts/validate_curriculum.py   runs every reference solution
   tests/            pytest suite (security + learning flows)
 frontend/           Next.js 16 app (App Router) + Tailwind + Recharts
   app/              routes: /, /2fa/*, /learn, /lesson/[id], /daily, /leaderboard, /stats, /profile, /admin
   proxy.js          per-request CSP nonce + security headers
+  public/runners/   sandboxed code-runner workers (Python/JS/SQL) + shared output formatting
+  lib/runners.js    starts/kills runner workers, renders HTML/CSS checks
   views/            page components   components/  shared UI   lib/  API client, auth, theme
 deploy/             nginx (edge limits, headers), Caddy (automatic HTTPS)
 docker-compose.yml  caddy -> nginx -> Next.js / FastAPI -> postgres/redis
@@ -121,8 +162,9 @@ Sign in with an email listed in `ADMIN_EMAILS` → **Admin → Content**. Lesson
 | `fill` | - (use `___` in `code`) | `{"accepted": ["print"]}` |
 | `order` | `{"lines": [... in correct order ...]}` | `{}` (lines are shuffled when served) |
 | `code` | `{"starter": ""}` | `{"patterns": ["regex", ...], "forbid": [], "example": "..."}` |
+| `run` | `{"language": "python", "starter": "", "tests": [{"name", "stdin"/"append"/"selector"+"prop"}], "setup": "(sql)"}` | `{"expected": ["output per test"], "example": "reference", "require": [], "forbid": [], "fallback": [] (java/c/cpp)}` |
 
 ## Roadmap (from the specification)
 
-Interview-prep tracks, collaborative coding & real-time contests (WebSockets), sandboxed code execution
-(e.g. isolated Judge0/Piston workers), personalised recommendations (scikit-learn / PyTorch), WebAuthn passkeys.
+Intermediate/advanced units, interview-prep tracks, collaborative coding & real-time contests (WebSockets),
+personalised recommendations (scikit-learn / PyTorch), WebAuthn passkeys.

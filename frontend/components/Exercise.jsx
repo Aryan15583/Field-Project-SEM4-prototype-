@@ -3,12 +3,14 @@
 import { LayoutGroup, motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/feedback";
+import RunExercise, { runInitialValue } from "./RunExercise";
 
 const TITLES = {
   mcq: "Select the correct answer",
   fill: "Fill in the blank",
   order: "Tap the lines in the right order",
   code: "Write the code",
+  run: "Write a program",
 };
 
 // Snappy spring used for tiles flying between the word bank and the answer row.
@@ -28,6 +30,7 @@ export default function Exercise({ exercise, value, onChange, result }) {
       {exercise.kind === "fill" && <Fill exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
       {exercise.kind === "order" && <Order exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
       {exercise.kind === "code" && <Code value={value} onChange={onChange} locked={locked} result={result} />}
+      {exercise.kind === "run" && <RunExercise exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
     </div>
   );
 }
@@ -35,11 +38,13 @@ export default function Exercise({ exercise, value, onChange, result }) {
 export function isAnswered(kind, value) {
   if (kind === "mcq") return Number.isInteger(value);
   if (kind === "order") return Array.isArray(value) && value.length > 0;
+  if (kind === "run") return typeof value?.code === "string" && value.code.trim().length > 0;
   return typeof value === "string" && value.trim().length > 0;
 }
 
 export function initialValue(exercise) {
   if (exercise.kind === "order") return [];
+  if (exercise.kind === "run") return runInitialValue(exercise);
   if (exercise.kind === "code") return exercise.data?.starter || "";
   if (exercise.kind === "fill") return "";
   return null;

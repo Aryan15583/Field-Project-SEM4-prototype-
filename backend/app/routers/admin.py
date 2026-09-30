@@ -11,6 +11,7 @@ from ..db import get_db
 from ..models import AuditLog, Course, Exercise, Lesson, Unit, User
 from ..security import tokens
 from ..security.deps import audit, require_admin
+from ..services import grading
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -21,9 +22,9 @@ Short = Annotated[str, Field(min_length=1, max_length=200)]
 
 
 class ExerciseIn(BaseModel):
-    kind: Literal["mcq", "fill", "order", "code"]
+    kind: Literal["mcq", "fill", "order", "code", "run"]
     prompt: str = Field(min_length=1, max_length=1000)
-    code: str | None = Field(None, max_length=2000)
+    code: str | None = Field(None, max_length=4000)
     data: dict = Field(default_factory=dict)
     solution: dict = Field(default_factory=dict)
     explanation: str = Field("", max_length=1000)
@@ -57,7 +58,41 @@ class ExerciseIn(BaseModel):
                     regex.compile(p)
                 except regex.error as exc:
                     raise ValueError(f"invalid regex {p!r}: {exc}") from exc
+        elif self.kind == "run":
+            _check_run(d, s)
         return self
+
+
+RUN_LANGS = {"python", "javascript", "sql", "html", "java", "c", "cpp"}
+TEST_KEYS = {"name", "stdin", "append", "selector", "prop"}
+
+
+def _check_run(d: dict, s: dict) -> None:
+    if d.get("language") not in RUN_LANGS:
+        raise ValueError(f"run.language must be one of {sorted(RUN_LANGS)}")
+    tests = d.get("tests")
+    if not (isinstance(tests, list) and 1 <= len(tests) <= grading.MAX_TESTS):
+        raise ValueError(f"run needs 1-{grading.MAX_TESTS} tests")
+    for t in tests:
+        if not isinstance(t, dict) or not set(t) <= TEST_KEYS or not all(isinstance(v, str) and len(v) <= 2000 for v in t.values()):
+            raise ValueError(f"each test is an object with string keys from {sorted(TEST_KEYS)}")
+        if d["language"] == "html" and not (t.get("selector") and t.get("prop")):
+            raise ValueError("html tests need selector and prop")
+    expected = s.get("expected")
+    if not (isinstance(expected, list) and len(expected) == len(tests) and all(isinstance(e, str) for e in expected)):
+        raise ValueError("run solution.expected must list one output string per test")
+    for key in ("require", "forbid", "fallback"):
+        for p in s.get(key, []):
+            if not isinstance(p, str) or len(p) > 300:
+                raise ValueError(f"{key} patterns must be strings under 300 chars")
+            try:
+                regex.compile(p)
+            except regex.error as exc:
+                raise ValueError(f"invalid regex {p!r}: {exc}") from exc
+    if d["language"] in {"java", "c", "cpp"} and not s.get("fallback"):
+        raise ValueError("java/c/cpp run exercises need solution.fallback patterns (used when no sandbox runner)")
+    if not isinstance(d.get("setup", ""), str) or len(d.get("setup", "")) > 4000:
+        raise ValueError("setup must be a string under 4000 chars")
 
 
 class LessonIn(BaseModel):
@@ -162,6 +197,7 @@ def update_lesson(lesson_id: int, body: LessonIn, request: Request, admin: Admin
         raise HTTPException(404, "Lesson not found")
     lesson.title, lesson.intro, lesson.xp_reward = body.title, body.intro, body.xp_reward
     _apply_exercises(lesson, body.exercises)
+    lesson.content_hash = None  # customised: curriculum sync will no longer overwrite it
     audit(db, request, "admin_lesson_update", admin.id, str(lesson_id))
     db.commit()
     return {"id": lesson.id}

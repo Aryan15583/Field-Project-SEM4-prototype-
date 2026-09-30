@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from .config import get_settings
@@ -34,3 +34,26 @@ def get_db() -> Iterator[Session]:
         yield db
     finally:
         db.close()
+
+
+# Columns added after the first release. create_all() only creates missing tables, so add missing
+# columns to existing ones (tiny forward-only migration; use Alembic if the schema grows further).
+_ADDED_COLUMNS = {
+    "units": {"key": "VARCHAR(80)"},
+    "lessons": {"key": "VARCHAR(80)", "content_hash": "VARCHAR(64)"},
+}
+
+
+def ensure_columns() -> None:
+    insp = inspect(engine)
+    with engine.begin() as conn:
+        for table, cols in _ADDED_COLUMNS.items():
+            if not insp.has_table(table):
+                continue
+            have = {c["name"] for c in insp.get_columns(table)}
+            for name, ddl in cols.items():
+                if name not in have:
+                    # identifiers come from the constant above, never from user input
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+                    if name == "key":
+                        conn.execute(text(f"CREATE UNIQUE INDEX IF NOT EXISTS ix_{table}_key_u ON {table} (key)"))

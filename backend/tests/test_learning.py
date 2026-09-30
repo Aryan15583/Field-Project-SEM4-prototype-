@@ -13,6 +13,9 @@ def _first_lesson(client, slug="python"):
 
 
 def _answer_for(ex: Exercise):
+    if ex.kind == "run":
+        # browser languages report outputs; compiled ones fall back to patterns (no runner in tests)
+        return {"code": ex.solution["example"], "outputs": ex.solution["expected"]}
     if ex.kind == "mcq":
         return ex.solution["index"]
     if ex.kind == "fill":
@@ -104,11 +107,71 @@ def test_daily_challenge_single_claim(client):
     assert client.post("/api/daily/answer", json={"exercise_id": ex_id, "answer": ans}).status_code == 409
 
 
-def test_every_seeded_exercise_accepts_its_own_answer():
+def test_every_seeded_exercise_accepts_its_own_answer(client):
     with SessionLocal() as db:
-        for ex in db.query(Exercise).all():
+        exercises = db.query(Exercise).all()
+        assert len(exercises) >= 800
+        for ex in exercises:
             assert grading.grade(ex, _answer_for(ex)), f"{ex.id}: {ex.prompt}"
             assert not grading.grade(ex, "definitely wrong"), ex.prompt
+
+
+def test_run_exercise_grading_uses_hidden_expected_output(client):
+    enroll(client)
+    with SessionLocal() as db:
+        ex = next(e for e in db.query(Exercise).all() if e.kind == "run" and e.data["language"] == "python")
+        good = {"code": ex.solution["example"], "outputs": ex.solution["expected"]}
+        assert grading.grade(ex, good)
+        # right code, wrong printed output -> rejected
+        assert not grading.grade(ex, {**good, "outputs": ["nope"] * len(ex.solution["expected"])})
+        # wrong number of outputs -> rejected
+        assert not grading.grade(ex, {**good, "outputs": []})
+        lesson_id = ex.lesson_id
+    # the expected output is never sent to the browser
+    start = client.post(f"/api/lessons/{lesson_id}/start")
+    assert start.status_code in (200, 403)
+    from app.schemas import public_exercise
+
+    with SessionLocal() as db:
+        pub = str(public_exercise(db.get(Exercise, ex.id)))
+        assert "expected" not in pub and "example" not in pub and "require" not in pub
+
+
+def test_require_patterns_block_print_the_answer(client):
+    with SessionLocal() as db:
+        ex = next(e for e in db.query(Exercise).all() if e.kind == "run" and e.solution.get("require") and e.data["language"] == "python")
+        cheat = {"code": "print(" + repr(ex.solution["expected"][0]) + ")", "outputs": ex.solution["expected"]}
+        assert not grading.grade(ex, cheat)
+
+
+def test_compiled_language_without_runner_uses_fallback_patterns(client):
+    with SessionLocal() as db:
+        ex = next(e for e in db.query(Exercise).all() if e.kind == "run" and e.data["language"] == "java")
+        assert grading.grade(ex, {"code": ex.solution["example"]})
+        assert not grading.grade(ex, {"code": ex.data["starter"]})
+
+
+def test_run_endpoint_reports_runner_unavailable(client):
+    enroll(client)
+    with SessionLocal() as db:
+        ex = next(e for e in db.query(Exercise).all() if e.kind == "run" and e.data["language"] == "c")
+    r = client.post("/api/run", json={"exercise_id": ex.id, "code": ex.solution["example"]})
+    assert r.status_code == 503
+
+
+def test_curriculum_sync_is_idempotent_and_respects_admin_edits(client):
+    from app.models import Lesson
+    from app.seed import sync_curriculum
+
+    with SessionLocal() as db:
+        before = db.query(Exercise).count()
+        lesson = db.query(Lesson).filter(Lesson.key == "python/1/1").one()
+        lesson.title = "Custom by admin"
+        lesson.content_hash = None
+        db.commit()
+        sync_curriculum(db)
+        assert db.query(Exercise).count() == before
+        assert db.query(Lesson).filter(Lesson.key == "python/1/1").one().title == "Custom by admin"
 
 
 def test_code_grading_is_whitespace_tolerant_and_bounded():

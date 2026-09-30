@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .config import get_settings
-from .db import Base, SessionLocal, engine
+from .db import Base, SessionLocal, engine, ensure_columns
 from .routers import admin, ai, auth, learn, stats
 from .security.middleware import (
     BodySizeLimitMiddleware,
@@ -15,7 +15,7 @@ from .security.middleware import (
     GlobalRateLimitMiddleware,
     SecurityHeadersMiddleware,
 )
-from .seed import seed_if_empty
+from .seed import sync_curriculum
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("codeingo")
@@ -24,8 +24,9 @@ log = logging.getLogger("codeingo")
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(engine)
+    ensure_columns()
     with SessionLocal() as db:
-        seed_if_empty(db)
+        sync_curriculum(db)
     yield
 
 
