@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light theme: white background, blue accents, black text */
+:root {
+  --bg: 255 255 255;
+  --surface: 244 247 255;
+  --raised: 255 255 255;
+  --line: 219 228 245;
+  --ink: 10 10 10;
+  --muted: 82 91 110;
+  --primary: 29 111 242;
+  --primary-strong: 20 83 184;
+  --on-primary: 255 255 255;
+  --ok: 29 111 242;
+  --ok-strong: 20 83 184;
+  --bad: 234 43 43;
+  --bad-strong: 178 30 30;
+  --gold: 245 176 11;
+  --flame: 255 122 0;
+  color-scheme: light;
+}
+
+/* Dark theme: black background, green accents */
+.dark {
+  --bg: 0 0 0;
+  --surface: 10 15 12;
+  --raised: 16 23 18;
+  --line: 32 48 37;
+  --ink: 232 245 236;
+  --muted: 138 165 150;
+  --primary: 34 197 94;
+  --primary-strong: 21 128 61;
+  --on-primary: 0 0 0;
+  --ok: 34 197 94;
+  --ok-strong: 21 128 61;
+  --bad: 255 84 84;
+  --bad-strong: 185 40 40;
+  --gold: 250 204 21;
+  --flame: 255 140 30;
+  color-scheme: dark;
+}
+
+html, body, #root { min-height: 100%; }
+body { font-feature-settings: "ss01"; -webkit-font-smoothing: antialiased; }
+
+@layer components {
+  /* Chunky, tactile "3D" buttons in the Duolingo spirit */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold uppercase tracking-wide
+      text-sm transition-[transform,filter] duration-75 select-none disabled:cursor-not-allowed disabled:opacity-50
+      focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40;
+  }
+  .btn:not(:disabled):active { transform: translateY(3px); box-shadow: none !important; }
+  .btn-primary { @apply btn bg-primary text-on-primary hover:brightness-110; box-shadow: 0 4px 0 rgb(var(--primary-strong)); }
+  .btn-ok { @apply btn bg-ok text-on-primary hover:brightness-110; box-shadow: 0 4px 0 rgb(var(--ok-strong)); }
+  .btn-bad { @apply btn bg-bad text-white hover:brightness-110; box-shadow: 0 4px 0 rgb(var(--bad-strong)); }
+  .btn-ghost { @apply btn border-2 border-line bg-raised text-ink hover:bg-surface; box-shadow: 0 4px 0 rgb(var(--line)); }
+  .btn-link { @apply font-bold text-primary hover:underline underline-offset-4; }
+
+  .card { @apply rounded-3xl border-2 border-line bg-raised; }
+  .input {
+    @apply w-full rounded-2xl border-2 border-line bg-surface px-4 py-3 text-ink placeholder:text-muted
+      focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20;
+  }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-extrabold; }
+  .code { @apply rounded-2xl border-2 border-line bg-surface p-4 font-mono text-[15px] leading-relaxed text-ink whitespace-pre-wrap break-words; }
+  .tile {
+    @apply rounded-2xl border-2 border-line bg-raised px-4 py-3 text-left font-semibold text-ink transition
+      hover:bg-surface focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/30;
+    box-shadow: 0 3px 0 rgb(var(--line));
+  }
+  .tile-selected { @apply border-primary bg-primary/10 text-primary; box-shadow: 0 3px 0 rgb(var(--primary) / .6); }
+  .label { @apply text-xs font-extrabold uppercase tracking-widest text-muted; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
