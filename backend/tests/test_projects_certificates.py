@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 
+from app.curriculum import CURRICULUM
 from app.db import SessionLocal
 from app.models import Certificate, Course, Lesson, User, UserLesson, UserTest
 from app.services import progress
@@ -13,9 +14,11 @@ from .test_checkpoints import _path, _take_test
 def test_every_course_has_a_project_per_section(client):
     with SessionLocal() as db:
         projects = db.scalars(select(Lesson).where(Lesson.is_project.is_(True))).all()
-        assert len(projects) == 21
+        assert len(projects) == 3 * len(CURRICULUM)
         for p in projects:
-            assert p.unit.position in (7, 11, 15) and p.xp_reward == 30
+            # the last unit of each section: 8/12/16 in the 16-unit courses, 4/6/8 in the 8-unit ones
+            last = {u.section: u.position for u in sorted(p.unit.course.units, key=lambda u: u.position)}
+            assert p.unit.position in last.values() and p.xp_reward == 30
             steps = sorted(p.exercises, key=lambda e: e.position)
             assert len(steps) == 3 and all(e.kind == "run" for e in steps)
             # later steps continue from the learner's own code (the SQL report queries are independent)

@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 
+from app.curriculum import CURRICULUM
 from app.db import SessionLocal
 from app.models import Exercise, PracticeAttempt, ReviewItem, User
 
@@ -149,6 +150,6 @@ def test_overview_lists_every_course(client):
     enroll(client)
     _first_lesson_with_mistake(client)
     o = client.get("/api/practice/overview").json()
-    assert o["all"]["due"] == 1 and len(o["courses"]) == 7
+    assert o["all"]["due"] == 1 and len(o["courses"]) == len(CURRICULUM)
     py = next(c for c in o["courses"] if c["slug"] == "python")
     assert py["due"] == 1 and all(c["total"] == 0 for c in o["courses"] if c["slug"] != "python")

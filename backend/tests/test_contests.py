@@ -4,6 +4,7 @@ from sqlalchemy import select
 
 from app.db import SessionLocal
 from app.models import Contest, ContestEntry, Exercise, User
+from app.curriculum import CURRICULUM
 from app.services import contests
 
 from .conftest import enroll
@@ -42,7 +43,7 @@ def test_every_course_has_a_weekly_contest_with_the_same_questions(client):
     enroll(client)
     data = client.get("/api/contests").json()
     assert data["questions"] == 10 and data["minutes"] == 10
-    assert len(data["current"]) == 7 and all(c["live"] and c["me"]["status"] == "open" for c in data["current"])
+    assert len(data["current"]) == len(CURRICULUM) and all(c["live"] and c["me"]["status"] == "open" for c in data["current"])
     c = _python(client)
     first = client.post(f"/api/contests/{c['id']}/enter").json()
     assert len(first["questions"]) == 10 and len({q["id"] for q in first["questions"]}) == 10

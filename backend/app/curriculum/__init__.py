@@ -16,6 +16,7 @@ import importlib
 
 from .c import COURSE as C
 from .cpp import COURSE as CPP
+from .dsa import COURSE as DSA
 from .htmlcss import COURSE as HTMLCSS
 from .java import COURSE as JAVA
 from .javascript import COURSE as JAVASCRIPT
@@ -25,7 +26,8 @@ from .sql import COURSE as SQL
 
 
 def _with_projects(course: dict, module: str) -> dict:
-    """Append each section's project as the last lesson of units 8, 12 and 16 (keeps existing keys stable)."""
+    """Append each section's project as the last lesson of the section's final unit (units 8, 12 and 16 in the
+    16-unit courses; 4, 6 and 8 in the 8-unit ones) - keeps existing lesson keys stable."""
     try:
         projects = importlib.import_module(f".{module}", __name__).PROJECTS
     except ModuleNotFoundError:
@@ -43,4 +45,5 @@ CURRICULUM = [
     _with_projects(C, "projects_c"),
     _with_projects(SQL, "projects_sql"),
     _with_projects(HTMLCSS, "projects_htmlcss"),
+    _with_projects(DSA, "projects_dsa"),
 ]
