@@ -107,6 +107,7 @@ class Unit(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
     key: Mapped[str | None] = mapped_column(String(80), unique=True)  # stable id for built-in curriculum
+    section: Mapped[str] = mapped_column(String(40), default="Beginner")  # Beginner / Intermediate / Advanced
     title: Mapped[str] = mapped_column(String(120))
     position: Mapped[int] = mapped_column(Integer, default=0)
 

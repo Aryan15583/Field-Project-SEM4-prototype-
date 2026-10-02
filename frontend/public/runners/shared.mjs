@@ -62,4 +62,61 @@ export function lockDown(scope) {
   }
 }
 
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+const errText = (ex) => `${ex && ex.name ? ex.name : "Error"}: ${ex && ex.message ? ex.message : String(ex)}\n`;
+
+/**
+ * Runs one JavaScript test: the learner's code + the test's `append` code, as an async function
+ * (so top-level `await` works). setTimeout is tracked so async programs can finish before we
+ * report; delays are compressed 10x (order preserved) so "wait 1 second" lessons stay snappy.
+ * Used by BOTH the browser worker and the curriculum validator, so outputs always match.
+ * Sloppy mode on purpose: beginners' `x = 5` should work, as it does in a browser console.
+ */
+export async function runJsProgram(code, t, { settleMs = 3000 } = {}) {
+  let out = "";
+  let err = "";
+  const write = (isErr) => (...args) => {
+    const line = args.map((a) => formatJs(a)).join(" ") + "\n";
+    if (isErr) err += line;
+    else out += line;
+  };
+  const con = { log: write(false), info: write(false), warn: write(true), error: write(true), table: write(false) };
+  const lines = t.stdin ? t.stdin.split("\n") : [];
+  const input = () => (lines.length ? lines.shift() : null);
+
+  const timers = new Map();
+  let nextId = 1;
+  const fakeSetTimeout = (fn, ms = 0, ...args) => {
+    const id = nextId++;
+    const real = setTimeout(() => {
+      timers.delete(id);
+      try {
+        fn(...args);
+      } catch (ex) {
+        err += errText(ex);
+      }
+    }, Math.min(Math.max(+ms || 0, 0), 1000) / 10);
+    timers.set(id, real);
+    return id;
+  };
+  const fakeClearTimeout = (id) => {
+    if (timers.has(id)) {
+      clearTimeout(timers.get(id));
+      timers.delete(id);
+    }
+  };
+
+  try {
+    const fn = new AsyncFunction("console", "input", "prompt", "alert", "setTimeout", "clearTimeout", `${code}\n;\n${t.append || ""}`);
+    await fn(con, input, input, () => {}, fakeSetTimeout, fakeClearTimeout);
+  } catch (ex) {
+    err += errText(ex);
+  }
+  // let pending timers and promise callbacks finish (bounded)
+  const deadline = Date.now() + settleMs;
+  while (timers.size && Date.now() < deadline) await new Promise((r) => setTimeout(r, 2));
+  await new Promise((r) => setTimeout(r, 0));
+  return { stdout: out, stderr: err };
+}
+
 export const cap = (s) => (s.length > OUTPUT_CAP ? s.slice(0, OUTPUT_CAP) + "\n…(output truncated)" : s);

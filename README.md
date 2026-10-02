@@ -22,12 +22,14 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 
 - **Sign in with Google (Gmail)** - OpenID Connect with PKCE, `state` and `nonce`; ID tokens verified against Google's keys.
 - **Mandatory 2-step verification** for every account - TOTP (Google Authenticator, Authy, 1Password…), 10 single-use recovery codes.
-- **Full beginner courses** - 7 languages × 8 units × 3 lessons = **168 lessons / 840 exercises**, from "Hello, World" to
-  functions, OOP, pointers, joins, flexbox and accessibility (see the table below).
+- **Beginner → Intermediate → Advanced** - 7 languages × 16 units × 3 lessons = **336 lessons / 1,680 exercises**, from
+  "Hello, World" to generators, async/await, generics, templates & move semantics, linked structures, window functions,
+  recursive CTEs, `:has()` and ARIA (see the tables below).
 - **Real code, really run** - every lesson ends with a program the learner writes and runs:
   Python (Pyodide/WebAssembly), JavaScript, SQL (SQLite/WebAssembly) and HTML/CSS run **in the browser**;
   Java, C and C++ run in an optional **sandboxed server runner** (Piston) - or fall back to pattern checks.
-- **Learning path** - courses → units → lessons, unlocked in order, winding Duolingo-style map.
+- **Learning path** - courses → sections → units → lessons, unlocked in order, on a winding Duolingo-style map with
+  section headers, per-section progress and quick jumps between sections.
 - **5 exercise types** - multiple choice, fill-in-the-blank, arrange-the-code, write-a-snippet, write-and-run a program.
 - **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 8 badges, daily challenge, weekly league.
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).
@@ -58,6 +60,10 @@ See **[SECURITY.md](SECURITY.md)** for the full threat model. Highlights:
 
 ## Curriculum
 
+Every course has three sections: **Beginner** (units 1-8), **Intermediate** (9-12) and **Advanced** (13-16).
+
+### Beginner
+
 | Course | Units (3 lessons each) |
 |---|---|
 | Python | First steps · Variables & input · Text · Decisions · Loops · Lists · Dicts, tuples & sets · Functions & errors |
@@ -68,9 +74,22 @@ See **[SECURITY.md](SECURITY.md)** for the full threat model. Highlights:
 | SQL | SELECT · WHERE · ORDER BY & NULL · Aggregates · HAVING & CASE · Joins · INSERT/UPDATE/DELETE · Schema, constraints & subqueries |
 | HTML & CSS | HTML basics · Links, images & lists · Semantic structure, tables & forms · Selectors & text · Box model · Flexbox & Grid · Styling & positioning · Responsive & accessible |
 
+### Intermediate & Advanced
+
+| Course | Intermediate (units 9-12) | Advanced (units 13-16) |
+|---|---|---|
+| Python | Comprehensions & iteration · Functions in depth · Modules & files · Object-oriented Python | Pythonic objects · Iterators & generators · Functional tools & decorators · Professional Python |
+| JavaScript | Modern syntax · Functions as values · Arrays & objects in depth · Classes in depth | Asynchronous JavaScript · Errors, iterators & generators · Functional patterns · Data structures & algorithms |
+| Java | Strings & utilities · Collections · Polymorphism & interfaces · Exceptions in depth | Generics · Lambdas & streams · Modern Java · Algorithms & concurrency |
+| C++ | STL containers · References & memory · Classes in depth · Streams & strings | Templates · Modern C++ · STL algorithms · Algorithms |
+| C | Safer strings · Pointers in depth · Dynamic memory in depth · Types & sorting | Linked data structures · Bits & bytes · Preprocessor & program structure · Algorithms in C |
+| SQL | Functions · Combining queries · Subqueries & CTEs · Window functions | Schema design · Indexes, views & performance · Transactions & triggers · Advanced querying |
+| HTML & CSS | Forms in depth · Selectors & the cascade · Layout in depth · Responsive design | Custom properties & theming · Motion · Modern CSS · Accessibility & production |
+
 Each lesson: a short concept intro, quick-check exercises, and a program to write. Lessons live in
 `backend/app/curriculum/<language>.py` and are synced into the database at start-up (new lessons are
-added, changed ones updated in place, admin-edited ones left alone).
+added, changed ones updated in place, admin-edited ones left alone). Intermediate and advanced units
+live in `<language>_adv.py`; learners' existing progress is kept when new units are added.
 
 **Every runnable exercise is verified by execution** - `python backend/scripts/validate_curriculum.py`
 runs each reference solution with the real toolchain (python3, Node + the browser runners' own code,
@@ -169,5 +188,5 @@ Sign in with an email listed in `ADMIN_EMAILS` → **Admin → Content**. Lesson
 
 ## Roadmap (from the specification)
 
-Intermediate/advanced units, interview-prep tracks, collaborative coding & real-time contests (WebSockets),
+Interview-prep tracks, "jump ahead" placement tests, collaborative coding & real-time contests (WebSockets),
 personalised recommendations (scikit-learn / PyTorch), WebAuthn passkeys.

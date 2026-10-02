@@ -97,7 +97,7 @@ def course_path(slug: Annotated[str, Field(max_length=40)], user: CurrentUser, d
         "slug": course.slug, "title": course.title, "icon": course.icon, "description": course.description,
         "units": [
             {
-                "id": u.id, "title": u.title,
+                "id": u.id, "title": u.title, "section": u.section or "Beginner",
                 "lessons": [
                     {"id": l.id, "title": l.title, "xp": l.xp_reward,
                      "status": "completed" if l.id in done else ("unlocked" if _is_unlocked(l, ordered, done) else "locked")}

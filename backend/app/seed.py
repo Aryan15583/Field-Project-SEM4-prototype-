@@ -45,7 +45,7 @@ def sync_curriculum(db: Session) -> None:
             if unit is None:
                 unit = Unit(course_id=course.id, key=ukey)
                 db.add(unit)
-            unit.title, unit.position = uspec["title"], ui
+            unit.title, unit.position, unit.section = uspec["title"], ui, uspec.get("section", "Beginner")
             db.flush()
             for li, lspec in enumerate(uspec["lessons"]):
                 lkey = lspec.get("key") or f"{ukey}/{li + 1}"

@@ -7,7 +7,7 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { formatJs, formatSqlResult, htmlOutput } from "../public/runners/shared.mjs";
+import { formatSqlResult, htmlOutput, runJsProgram } from "../public/runners/shared.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const jobs = JSON.parse(await new Promise((r) => {
@@ -15,25 +15,6 @@ const jobs = JSON.parse(await new Promise((r) => {
   process.stdin.on("data", (d) => (s += d));
   process.stdin.on("end", () => r(s));
 }));
-
-function runJs(code, t) {
-  let out = "";
-  let err = "";
-  const w = (isErr) => (...a) => {
-    const line = a.map((x) => formatJs(x)).join(" ") + "\n";
-    if (isErr) err += line;
-    else out += line;
-  };
-  const con = { log: w(false), info: w(false), warn: w(true), error: w(true), table: w(false) };
-  const lines = t.stdin ? t.stdin.split("\n") : [];
-  const input = () => (lines.length ? lines.shift() : null);
-  try {
-    new Function("console", "input", "prompt", "alert", `${code}\n;\n${t.append || ""}`)(con, input, input, () => {});
-  } catch (ex) {
-    err += `${ex.name}: ${ex.message}\n`;
-  }
-  return { stdout: out, stderr: err };
-}
 
 let SQL;
 async function runSql(code, t, setup) {
@@ -73,10 +54,22 @@ async function runHtml(code, tests) {
   return outs.map((o) => ({ stdout: o, stderr: "" }));
 }
 
+// same behaviour as the browser worker: un-awaited promise rejections are reported, not fatal
+let stray = "";
+process.on("unhandledRejection", (r) => (stray += `${r && r.name ? r.name : "Error"}: ${r && r.message ? r.message : String(r)}\n`));
+
 const results = [];
 for (const job of jobs) {
   try {
-    if (job.lang === "javascript") results.push(job.tests.map((t) => runJs(job.code, t)));
+    if (job.lang === "javascript") {
+      const outs = [];
+      for (const t of job.tests) {
+        stray = "";
+        const r = await runJsProgram(job.code, t);
+        outs.push({ stdout: r.stdout, stderr: r.stderr + stray });
+      }
+      results.push(outs);
+    }
     else if (job.lang === "sql") results.push(await Promise.all(job.tests.map((t) => runSql(job.code, t, job.setup))));
     else if (job.lang === "html") results.push(await runHtml(job.code, job.tests));
     else results.push({ error: `unsupported ${job.lang}` });

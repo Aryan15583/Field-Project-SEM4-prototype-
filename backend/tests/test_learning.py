@@ -186,3 +186,13 @@ def test_ai_hint_falls_back_to_author_hint(client):
     ex = client.post(f"/api/lessons/{lesson['id']}/start").json()["exercises"][0]
     r = client.post("/api/ai/hint", json={"exercise_id": ex["id"]}).json()
     assert r["source"] == "author" and r["hint"]
+
+
+def test_course_path_is_split_into_sections(client):
+    enroll(client)
+    for slug in ("python", "javascript", "java", "cpp", "c", "sql", "html-css"):
+        units = client.get(f"/api/courses/{slug}").json()["units"]
+        sections = [u["section"] for u in units]
+        assert sections == ["Beginner"] * 8 + ["Intermediate"] * 4 + ["Advanced"] * 4, slug
+        assert all(len(u["lessons"]) == 3 for u in units)
+        assert units[-1]["lessons"][-1]["status"] == "locked"

@@ -81,7 +81,7 @@ export default function AppShell({ children }) {
         </div>
       </header>
 
-      <main className="overflow-x-hidden px-4 pb-28 pt-6 lg:ml-64 lg:pb-10">
+      <main className="overflow-x-clip px-4 pb-28 pt-6 lg:ml-64 lg:pb-10">
         <div className="mx-auto max-w-5xl 3xl:max-w-6xl">
           {children}
         </div>
