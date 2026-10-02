@@ -62,12 +62,16 @@ class GlobalRateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+# Authorised by a signed token in the URL instead of cookies, and posted by mail clients (RFC 8058 one-click).
+CSRF_EXEMPT = {"/api/public/unsubscribe"}
+
+
 class CSRFMiddleware(BaseHTTPMiddleware):
     """Double-submit cookie + Origin check for every state-changing API request.
     (Auth cookies are also SameSite=Strict, so this is defence in depth.)"""
 
     async def dispatch(self, request: Request, call_next):
-        if request.method in UNSAFE_METHODS and request.url.path.startswith("/api/"):
+        if request.method in UNSAFE_METHODS and request.url.path.startswith("/api/") and request.url.path not in CSRF_EXEMPT:
             origin = request.headers.get("origin")
             if origin and not _same_origin(origin):
                 return JSONResponse({"detail": "Cross-origin request blocked"}, status_code=403)

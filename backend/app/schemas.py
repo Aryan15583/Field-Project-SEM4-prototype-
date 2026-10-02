@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from .models import Exercise, User
-from .services import code_runner, gamification, grading
+from .services import code_runner, gamification, grading, social
 
 
 class MeOut(BaseModel):
@@ -20,6 +20,8 @@ class MeOut(BaseModel):
     max_hearts: int
     badges: list[str]
     mfa_method: str
+    friend_code: str
+    reminder_emails: bool
 
 
 def me_out(db: Session, user: User) -> dict:
@@ -42,6 +44,8 @@ def me_out(db: Session, user: User) -> dict:
         max_hearts=get_settings().max_hearts,
         badges=[b.badge for b in user.badges],
         mfa_method=user.mfa_method,
+        friend_code=social.ensure_code(db, user),
+        reminder_emails=bool(user.reminder_emails),
     ).model_dump()
 
 

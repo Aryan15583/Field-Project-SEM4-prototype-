@@ -84,6 +84,11 @@ class Settings(BaseSettings):
     max_hearts: int = 5
     heart_refill_minutes: int = 30
 
+    # --- streak reminder emails (sent to learners whose streak would end tonight) ---
+    streak_reminders: bool = True
+    streak_reminder_hour_utc: int = Field(17, ge=0, le=23)  # don't send before this hour (UTC)
+    streak_reminder_check_minutes: int = Field(15, ge=1)
+
     @property
     def is_production(self) -> bool:
         return self.env == "production"

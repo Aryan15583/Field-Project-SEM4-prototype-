@@ -27,7 +27,7 @@ This document lists the threats Codeingo defends against and where each control 
 
 | Threat | Control |
 |---|---|
-| CSRF | SameSite=Strict cookies **and** double-submit `X-CSRF-Token` header **and** Origin check on every POST/PUT/PATCH/DELETE (`security/middleware.py`). The token is rotated at login. |
+| CSRF | SameSite=Strict cookies **and** double-submit `X-CSRF-Token` header **and** Origin check on every POST/PUT/PATCH/DELETE (`security/middleware.py`). The token is rotated at login. The one exemption is the one-click email unsubscribe (`/api/public/unsubscribe`, posted by mail clients per RFC 8058), which uses no cookies and is authorised by an HMAC-signed link instead. |
 | XSS | React escapes all output; lesson content is rendered as text. Next.js `proxy.js` issues a **fresh random nonce per request** and a CSP of `script-src 'self' 'nonce-…' 'strict-dynamic'`, so only scripts the server emitted (framework scripts and the theme bootstrap) can run - injected scripts are refused. `X-Powered-By` is disabled. |
 | Clickjacking | `X-Frame-Options: DENY` + `frame-ancestors 'none'`. |
 | SQL injection | SQLAlchemy ORM / bound parameters only. |

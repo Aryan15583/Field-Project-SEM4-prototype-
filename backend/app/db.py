@@ -51,6 +51,9 @@ _ADDED_COLUMNS = {
         "email_code_attempts": "INTEGER DEFAULT 0",
         "email_code_window_start": "TIMESTAMP WITH TIME ZONE",
         "email_code_window_count": "INTEGER DEFAULT 0",
+        "friend_code": "VARCHAR(12)",
+        "reminder_emails": "BOOLEAN DEFAULT TRUE",
+        "last_reminder_on": "DATE",
     },
 }
 
@@ -66,5 +69,7 @@ def ensure_columns() -> None:
                 if name not in have:
                     # identifiers come from the constant above, never from user input
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+                    if name == "friend_code":
+                        conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_friend_code ON users (friend_code)"))
                     if name == "key":
                         conn.execute(text(f"CREATE UNIQUE INDEX IF NOT EXISTS ix_{table}_key_u ON {table} (key)"))

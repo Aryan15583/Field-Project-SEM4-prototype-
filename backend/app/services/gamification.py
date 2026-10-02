@@ -20,6 +20,7 @@ BADGES: dict[str, dict] = {
     "checkpoint": {"name": "Checkpoint", "icon": "🏁", "desc": "Pass a chapter test"},
     "jumper": {"name": "Fast Track", "icon": "🚀", "desc": "Pass a readiness test to jump ahead"},
     "practice": {"name": "Sharpened", "icon": "🧠", "desc": "Finish a practice session"},
+    "friend": {"name": "Friendly", "icon": "🤝", "desc": "Follow a friend"},
 }
 
 

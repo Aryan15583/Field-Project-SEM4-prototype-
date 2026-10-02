@@ -12,6 +12,7 @@ os.environ.update(
     PUBLIC_URL="http://testserver",
     REDIS_URL="",
     AI_API_KEY="",
+    STREAK_REMINDERS="false",  # tests call reminders.run_once() directly
 )
 
 import pyotp  # noqa: E402

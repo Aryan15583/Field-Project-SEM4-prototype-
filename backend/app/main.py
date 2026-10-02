@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 import logging
 from contextlib import asynccontextmanager
 
@@ -8,7 +10,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .config import get_settings
 from .db import Base, SessionLocal, engine, ensure_columns
-from .routers import admin, ai, auth, checkpoints, learn, practice, stats
+from .routers import admin, ai, auth, checkpoints, learn, practice, social, stats
 from .security.middleware import (
     BodySizeLimitMiddleware,
     CSRFMiddleware,
@@ -16,6 +18,7 @@ from .security.middleware import (
     SecurityHeadersMiddleware,
 )
 from .seed import sync_curriculum
+from .services import reminders
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("codeingo")
@@ -27,7 +30,12 @@ async def lifespan(_: FastAPI):
     ensure_columns()
     with SessionLocal() as db:
         sync_curriculum(db)
+    task = asyncio.create_task(reminders.loop()) if get_settings().streak_reminders else None
     yield
+    if task:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
 
 
 def create_app() -> FastAPI:
@@ -50,7 +58,7 @@ def create_app() -> FastAPI:
     # No CORSMiddleware on purpose: the SPA is served from the same origin, so browsers
     # block every cross-origin read of the API by default.
 
-    for r in (auth.router, learn.router, checkpoints.router, practice.router, stats.router, ai.router, admin.router):
+    for r in (auth.router, learn.router, checkpoints.router, practice.router, social.router, stats.router, ai.router, admin.router):
         app.include_router(r)
 
     @app.get("/api/health")

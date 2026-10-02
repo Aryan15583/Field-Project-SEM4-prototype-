@@ -1,6 +1,6 @@
 """Dashboard statistics, leaderboard and profile settings."""
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -11,7 +11,7 @@ from ..db import get_db
 from ..models import Course, Lesson, Unit, User, UserLesson, XpEvent
 from ..schemas import me_out
 from ..security.deps import get_current_user
-from ..services import gamification
+from ..services import gamification, social
 
 router = APIRouter(prefix="/api", tags=["stats"])
 
@@ -57,28 +57,15 @@ def stats(user: CurrentUser, db: DB):
 
 
 @router.get("/leaderboard")
-def leaderboard(user: CurrentUser, db: DB):
-    """Weekly XP league. Only display names/avatars are exposed - never emails."""
-    today = gamification.today()
-    week_start = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time(), tzinfo=timezone.utc)
-    rows = db.execute(
-        select(User.id, User.name, User.avatar_url, func.sum(XpEvent.amount).label("xp"))
-        .join(XpEvent, XpEvent.user_id == User.id)
-        .where(XpEvent.created_at >= week_start, User.is_active.is_(True))
-        .group_by(User.id, User.name, User.avatar_url)
-        .order_by(func.sum(XpEvent.amount).desc(), User.id)
-        .limit(50)
-    ).all()
-    board = [
-        {"rank": i + 1, "name": name, "avatar_url": avatar, "xp": int(xp), "me": uid == user.id}
-        for i, (uid, name, avatar, xp) in enumerate(rows)
-    ]
-    return {"week_start": week_start.date().isoformat(), "entries": board}
+def leaderboard(user: CurrentUser, db: DB, scope: Literal["global", "friends"] = "global"):
+    """Weekly XP league - everyone, or just you and the people you follow."""
+    return {"week_start": social.week_start().date().isoformat(), "scope": scope, "entries": social.league(db, user, scope)}
 
 
 class ProfileIn(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=60, pattern=r"^[^<>]*$")
     daily_goal: int | None = Field(None, ge=10, le=200)
+    reminder_emails: bool | None = None
 
 
 @router.patch("/profile")
@@ -87,5 +74,7 @@ def update_profile(body: ProfileIn, user: CurrentUser, db: DB):
         user.name = body.name.strip()
     if body.daily_goal is not None:
         user.daily_goal = body.daily_goal
+    if body.reminder_emails is not None:
+        user.reminder_emails = body.reminder_emails
     db.commit()
     return me_out(db, user)

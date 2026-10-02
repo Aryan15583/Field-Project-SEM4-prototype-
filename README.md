@@ -43,7 +43,11 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **Certificates** - finish every lesson, project and chapter test of a course to get a certificate with a public,
   printable verify page (`/certificate/<code>`, no sign-in needed) - listed on your profile.
 - **5 exercise types** - multiple choice, fill-in-the-blank, arrange-the-code, write-a-snippet, write-and-run a program.
-- **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 8 badges, daily challenge, weekly league.
+- **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 12 badges, daily challenge, weekly league.
+- **Friends** - everyone gets a friend code (`ABCD-2345`) and an invite link (`/leaderboard?add=CODE`); follow friends
+  (or anyone from the league) to race them in your own **friends league**. Only display names are ever shown.
+- **Streak reminder emails** - one evening email when your streak would end tonight (at most once a day, never if
+  you already practised). Turn them off in your profile or with the signed one-click unsubscribe link in each email.
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).
 - **Progress dashboard** - XP over time and lessons per language (Recharts), achievements.
 - **Admin panel** - edit lessons/exercises (validated server-side), enable/disable users, security audit log.

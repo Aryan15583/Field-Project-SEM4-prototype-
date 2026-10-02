@@ -1,4 +1,4 @@
-"""Outgoing email over SMTP (TLS required). Used for sign-in codes."""
+"""Outgoing email over SMTP (TLS required). Used for sign-in codes and streak reminders."""
 import logging
 import smtplib
 import ssl
@@ -14,7 +14,7 @@ class MailError(Exception):
     pass
 
 
-def send(to: str, subject: str, text: str, html: str | None = None) -> None:
+def send(to: str, subject: str, text: str, html: str | None = None, headers: dict[str, str] | None = None) -> None:
     s = get_settings()
     if not s.email_configured:
         if s.is_production:
@@ -29,6 +29,8 @@ def send(to: str, subject: str, text: str, html: str | None = None) -> None:
     msg["To"] = to  # EmailMessage rejects CR/LF in headers, so no header injection
     msg["Subject"] = subject
     msg["Message-ID"] = make_msgid(domain=sender.rsplit("@", 1)[-1].strip(">") or None)
+    for name, value in (headers or {}).items():
+        msg[name] = value
     msg.set_content(text)
     if html:
         msg.add_alternative(html, subtype="html")

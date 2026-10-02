@@ -150,6 +150,14 @@ export default function Profile() {
           />
           <span className="relative h-8 w-14 shrink-0 rounded-full bg-line transition-colors peer-checked:bg-primary peer-focus-visible:ring-4 peer-focus-visible:ring-primary/30 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-6" />
         </label>
+        <label className="flex cursor-pointer items-center justify-between gap-4">
+          <span>
+            <span className="label block">Streak reminder emails</span>
+            <span className="text-sm font-semibold text-muted">One email on evenings your streak is about to end</span>
+          </span>
+          <input type="checkbox" className="peer sr-only" checked={user.reminder_emails} onChange={(e) => save({ reminder_emails: e.target.checked })} />
+          <span className="relative h-8 w-14 shrink-0 rounded-full bg-line transition-colors peer-checked:bg-primary peer-focus-visible:ring-4 peer-focus-visible:ring-primary/30 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-6" />
+        </label>
         {msg && <p className="text-sm font-bold text-primary">{msg}</p>}
         <ErrorNote>{!regen && error}</ErrorNote>
       </section>

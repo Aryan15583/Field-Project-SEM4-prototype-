@@ -65,6 +65,11 @@ class User(Base):
     hearts_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     daily_goal: Mapped[int] = mapped_column(Integer, default=30)
 
+    # --- social + reminders ---
+    friend_code: Mapped[str | None] = mapped_column(String(12), unique=True, index=True)  # shareable, not secret
+    reminder_emails: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_reminder_on: Mapped[date | None] = mapped_column(Date)  # at most one streak reminder a day
+
     badges: Mapped[list["UserBadge"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
@@ -255,6 +260,18 @@ class Certificate(Base):
     course_title: Mapped[str] = mapped_column(String(120))
     lessons: Mapped[int] = mapped_column(Integer)
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Follow(Base):
+    """One-way follow (like Duolingo friends): the follower sees the followee in their friends league."""
+
+    __tablename__ = "follows"
+    __table_args__ = (UniqueConstraint("follower_id", "followee_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    follower_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    followee_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class UserTest(Base):
