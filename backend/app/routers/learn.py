@@ -16,7 +16,7 @@ from ..security.deps import get_current_user
 from ..security.ratelimit import limit
 from ..config import get_settings
 from ..security.ratelimit import check
-from ..services import code_runner, gamification, grading, progress
+from ..services import code_runner, gamification, grading, progress, review
 
 router = APIRouter(prefix="/api", tags=["learn"])
 
@@ -153,6 +153,7 @@ def answer(attempt_id: str, body: AnswerIn, user: CurrentUser, db: DB):
     if ex is None or ex.lesson_id != attempt.lesson_id:
         raise HTTPException(404, "Exercise not found")
     correct = grading.grade(ex, body.value())
+    review.record(db, user, ex, correct)
     # Replaying a finished lesson is free practice: mistakes there don't cost hearts.
     practice = db.scalar(select(UserLesson.id).where(UserLesson.user_id == user.id, UserLesson.lesson_id == ex.lesson_id)) is not None
     if correct:
@@ -235,6 +236,7 @@ def daily_answer(body: AnswerIn, user: CurrentUser, db: DB):
     if db.scalar(select(DailyChallengeClaim.id).where(DailyChallengeClaim.user_id == user.id, DailyChallengeClaim.day == today)):
         raise HTTPException(409, "You've already answered today's challenge")
     correct = grading.grade(ex, body.value())
+    review.record(db, user, ex, correct)
     db.add(DailyChallengeClaim(user_id=user.id, day=today, correct=correct))
     try:
         db.flush()  # unique (user, day) constraint stops double-claims from parallel requests

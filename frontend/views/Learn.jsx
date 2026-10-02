@@ -335,6 +335,7 @@ export default function Learn() {
   const [slug, setSlug] = useState(null);
   const [path, setPath] = useState(null);
   const [daily, setDaily] = useState(null);
+  const [practice, setPractice] = useState(null);
   const [open, setOpen] = useState(null);
   const [error, setError] = useState("");
   const currentRef = useRef(null);
@@ -359,6 +360,10 @@ export default function Learn() {
       /* ignore */
     }
     let alive = true;
+    setPractice(null);
+    api(`/api/practice/summary?course=${encodeURIComponent(slug)}`)
+      .then((p) => alive && setPractice(p))
+      .catch(() => {});
     api(`/api/courses/${encodeURIComponent(slug)}`)
       .then((p) => alive && setPath(p))
       .catch((e) =>
@@ -550,6 +555,29 @@ export default function Learn() {
               : "Complete a lesson to start a streak."}
           </p>
         </div>
+
+        {practice && (
+          <div className="card p-5">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 font-extrabold">
+                <Icon name="review" className="h-5 w-5 text-flame" /> Practice
+              </h3>
+              {practice.due > 0 && <span className="chip border-2 border-flame text-flame">{practice.due} due</span>}
+            </div>
+            <p className="mb-4 text-sm font-semibold text-muted">
+              {practice.total < 3
+                ? "Finish a lesson - questions you miss will come back here."
+                : practice.due > 0
+                  ? `${practice.mistakes} mistake${practice.mistakes === 1 ? "" : "s"} to fix. Practice earns XP and a heart back.`
+                  : "All caught up! A quick round keeps it fresh."}
+            </p>
+            {practice.total >= 3 && (
+              <Link href={`/review?course=${encodeURIComponent(slug)}`} className={practice.due > 0 ? "btn-primary w-full" : "btn-ghost w-full"}>
+                Practise +{practice.xp} XP
+              </Link>
+            )}
+          </div>
+        )}
 
         {daily?.exercise && (
           <div className="card p-5">

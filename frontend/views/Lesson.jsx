@@ -468,8 +468,13 @@ export default function Lesson({ id }) {
         <div className="text-center">
           <Mascot size={90} mood="sad" className="mx-auto" />
           <h2 className="mt-3 text-xl font-black">You ran out of hearts</h2>
-          <p className="mb-6 mt-1 font-semibold text-muted">Hearts refill over time (one every 30 minutes). Practising completed lessons is always free.</p>
-          <button className="btn-primary w-full" onClick={() => (reload(), router.push("/learn"))}>
+          <p className="mb-6 mt-1 font-semibold text-muted">
+            Finish a practice session to earn one back right away - or wait, they refill over time (one every 30 minutes).
+          </p>
+          <button className="btn-primary w-full" onClick={() => (reload(), router.push("/review"))}>
+            Practise to earn a heart
+          </button>
+          <button className="btn-link mt-4" onClick={() => (reload(), router.push("/learn"))}>
             Back to path
           </button>
         </div>

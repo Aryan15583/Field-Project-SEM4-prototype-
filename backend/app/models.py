@@ -211,6 +211,36 @@ class TestAttempt(Base):
     xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class ReviewItem(Base):
+    """Spaced-repetition state of one exercise for one learner (Leitner boxes 0-5)."""
+
+    __tablename__ = "review_items"
+    __table_args__ = (UniqueConstraint("user_id", "exercise_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id", ondelete="CASCADE"))
+    box: Mapped[int] = mapped_column(Integer, default=0)  # 0 = just missed ... 5 = well known
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    lapses: Mapped[int] = mapped_column(Integer, default=0)  # times answered wrong
+    reviews: Mapped[int] = mapped_column(Integer, default=0)  # times practised
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class PracticeAttempt(Base):
+    __tablename__ = "practice_attempts"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    course_id: Mapped[int | None] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"))
+    exercise_ids: Mapped[list] = mapped_column(JSON, default=list)
+    results: Mapped[dict] = mapped_column(JSON, default=dict)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
+    heart_awarded: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class UserTest(Base):
     """Best result per test - a passed unit test unlocks the next unit."""
 

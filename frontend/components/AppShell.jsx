@@ -9,6 +9,7 @@ import { Icon, Logo, StatPill, ThemeToggle } from "./ui";
 const NAV = [
   { to: "/learn", label: "Learn", icon: "learn" },
   { to: "/daily", label: "Daily", icon: "target" },
+  { to: "/practice", label: "Practice", icon: "review" },
   { to: "/leaderboard", label: "Leagues", icon: "trophy" },
   { to: "/stats", label: "Progress", icon: "chart" },
   { to: "/profile", label: "Profile", icon: "user" },

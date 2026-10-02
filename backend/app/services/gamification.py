@@ -19,6 +19,7 @@ BADGES: dict[str, dict] = {
     "daily": {"name": "Challenger", "icon": "🎯", "desc": "Solve a daily challenge"},
     "checkpoint": {"name": "Checkpoint", "icon": "🏁", "desc": "Pass a chapter test"},
     "jumper": {"name": "Fast Track", "icon": "🚀", "desc": "Pass a readiness test to jump ahead"},
+    "practice": {"name": "Sharpened", "icon": "🧠", "desc": "Finish a practice session"},
 }
 
 
@@ -69,7 +70,9 @@ def grant_badge(db: Session, user: User, key: str, earned: list[str]) -> None:
         earned.append(key)
 
 
-def check_badges(db: Session, user: User, *, perfect: bool = False, daily: bool = False, test: str | None = None) -> list[str]:
+def check_badges(
+    db: Session, user: User, *, perfect: bool = False, daily: bool = False, test: str | None = None, practice: bool = False
+) -> list[str]:
     earned: list[str] = []
     db.flush()
     # lessons actually played (rows from testing out have completed_count 0)
@@ -85,6 +88,8 @@ def check_badges(db: Session, user: User, *, perfect: bool = False, daily: bool 
         grant_badge(db, user, "checkpoint", earned)
     if test == "section":
         grant_badge(db, user, "jumper", earned)
+    if practice:
+        grant_badge(db, user, "practice", earned)
     if user.streak_current >= 3:
         grant_badge(db, user, "streak_3", earned)
     if user.streak_current >= 7:

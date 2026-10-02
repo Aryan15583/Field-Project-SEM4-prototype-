@@ -17,7 +17,7 @@ from ..models import Course, Exercise, Lesson, TestAttempt, Unit, User, UserLess
 from ..schemas import public_exercise
 from ..security.deps import get_current_user
 from ..security.ratelimit import limit
-from ..services import gamification, grading, progress
+from ..services import gamification, grading, progress, review
 from .learn import AnswerIn
 
 router = APIRouter(prefix="/api/tests", tags=["tests"])
@@ -107,6 +107,7 @@ def answer(attempt_id: str, body: AnswerIn, user: CurrentUser, db: DB):
         raise HTTPException(409, "You've already answered this question")
     ex = db.get(Exercise, body.exercise_id)
     correct = grading.grade(ex, body.value())
+    review.record(db, user, ex, correct)
     attempt.results = {**attempt.results, key: correct}
     db.commit()
     return {

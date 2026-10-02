@@ -34,6 +34,9 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **Chapter tests** - every unit ends with an 8-question test (6 to pass) drawn from its lessons; passing unlocks the
   next unit. **Readiness tests** - 15 questions (12 to pass) on everything before Intermediate or Advanced: pass to
   jump straight there. Tests are graded on the server, never cost hearts, allow no hints and give new questions each try.
+- **Practice (spaced repetition)** - every question you miss in a lesson, test or daily challenge goes on your review
+  list; questions you know come back after 1, 3, 7, 16 and 35 days (Leitner boxes). 10-question sessions serve what's
+  due first, then your weakest items; they earn +10 XP (5 sessions a day) and a heart back, and never cost hearts.
 - **5 exercise types** - multiple choice, fill-in-the-blank, arrange-the-code, write-a-snippet, write-and-run a program.
 - **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 8 badges, daily challenge, weekly league.
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).
