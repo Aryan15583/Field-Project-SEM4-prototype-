@@ -291,6 +291,37 @@ class WebAuthnChallenge(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class Contest(Base):
+    """A weekly timed contest for one course (created on first visit each week)."""
+
+    __tablename__ = "contests"
+    __table_args__ = (UniqueConstraint("course_id", "week"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
+    week: Mapped[str] = mapped_column(String(10))  # ISO week, e.g. 2026-W40
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    exercise_ids: Mapped[list] = mapped_column(JSON, default=list)  # the same questions for everyone
+
+
+class ContestEntry(Base):
+    """One learner's single timed run at a contest."""
+
+    __tablename__ = "contest_entries"
+    __table_args__ = (UniqueConstraint("contest_id", "user_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    contest_id: Mapped[int] = mapped_column(ForeignKey("contests.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    results: Mapped[dict] = mapped_column(JSON, default=dict)  # {exercise id: correct}
+    score: Mapped[int] = mapped_column(Integer, default=0)
+    time_ms: Mapped[int] = mapped_column(Integer, default=0)
+    xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class Follow(Base):
     """One-way follow (like Duolingo friends): the follower sees the followee in their friends league."""
 

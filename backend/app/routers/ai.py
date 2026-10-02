@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..db import get_db
-from ..models import Exercise, TestAttempt, User
+from ..models import Contest, ContestEntry, Exercise, TestAttempt, User
 from ..security.deps import get_current_user
 from ..security.ratelimit import check
 from ..services import ai_tutor
@@ -31,7 +31,7 @@ async def get_hint(body: HintIn, user: Annotated[User, Depends(get_current_user)
     if ex is None:
         raise HTTPException(404, "Exercise not found")
     if _in_open_test(db, user, ex.id):
-        raise HTTPException(403, "Hints aren't available during a test - you've got this!")
+        raise HTTPException(403, "Hints aren't available during a test or contest - you've got this!")
     text, source = await ai_tutor.hint(ex, body.attempt)
     return {"hint": text, "source": source}
 
@@ -48,4 +48,12 @@ def _in_open_test(db: Session, user: User, exercise_id: int) -> bool:
             TestAttempt.user_id == user.id, TestAttempt.completed_at.is_(None), TestAttempt.started_at >= since
         )
     )
-    return any(exercise_id in ids for ids in open_tests)
+    if any(exercise_id in ids for ids in open_tests):
+        return True
+    # a contest run that is still in progress
+    open_runs = db.scalars(
+        select(Contest.exercise_ids)
+        .join(ContestEntry, ContestEntry.contest_id == Contest.id)
+        .where(ContestEntry.user_id == user.id, ContestEntry.finished_at.is_(None), ContestEntry.started_at >= since)
+    )
+    return any(exercise_id in ids for ids in open_runs)

@@ -12,6 +12,7 @@ const NAV = [
   { to: "/daily", label: "Daily", icon: "target" },
   { to: "/practice", label: "Practice", icon: "review" },
   { to: "/leaderboard", label: "Leagues", icon: "trophy" },
+  { to: "/contests", label: "Contests", icon: "bolt", desktopOnly: true }, // phones reach it from Leagues
   { to: "/stats", label: "Progress", icon: "chart" },
   { to: "/profile", label: "Profile", icon: "user" },
 ];
@@ -102,7 +103,7 @@ export default function AppShell({ children }) {
 
       {/* mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t-2 border-line bg-bg py-2 lg:hidden" aria-label="Main">
-        {items.map((n) => (
+        {items.filter((n) => !n.desktopOnly).map((n) => (
           <NavLink
             key={n.to}
             to={n.to}

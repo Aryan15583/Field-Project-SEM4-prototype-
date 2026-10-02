@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { ErrorNote, Icon, Spinner } from "@/components/ui";
@@ -217,6 +218,17 @@ export default function Leaderboard() {
         <h1 className="text-2xl font-black">Weekly League</h1>
         <p className="text-sm text-muted">Earn XP this week to climb the ranks. Resets every Monday.</p>
       </div>
+
+      <Link href="/contests" className="card mb-5 flex items-center gap-4 p-4 transition-colors hover:bg-surface">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gold/15 text-gold">
+          <Icon name="bolt" className="h-6 w-6" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-extrabold">Weekly contests</span>
+          <span className="block text-sm font-semibold text-muted">10 questions, 10 minutes, a live leaderboard for every language.</span>
+        </span>
+        <span className="text-xl font-black text-muted" aria-hidden="true">›</span>
+      </Link>
 
       <div className="mb-4 flex justify-center gap-2" role="tablist" aria-label="League">
         {TABS.map(([key, label]) => (

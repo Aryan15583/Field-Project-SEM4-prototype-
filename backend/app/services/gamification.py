@@ -21,6 +21,8 @@ BADGES: dict[str, dict] = {
     "jumper": {"name": "Fast Track", "icon": "🚀", "desc": "Pass a readiness test to jump ahead"},
     "practice": {"name": "Sharpened", "icon": "🧠", "desc": "Finish a practice session"},
     "friend": {"name": "Friendly", "icon": "🤝", "desc": "Follow a friend"},
+    "contender": {"name": "Contender", "icon": "⏱️", "desc": "Finish a weekly contest"},
+    "podium": {"name": "Podium", "icon": "🥇", "desc": "Finish a weekly contest in the top 3"},
 }
 
 

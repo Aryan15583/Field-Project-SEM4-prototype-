@@ -48,9 +48,12 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **Certificates** - finish every lesson, project and chapter test of a course to get a certificate with a public,
   printable verify page (`/certificate/<code>`, no sign-in needed) - listed on your profile.
 - **5 exercise types** - multiple choice, fill-in-the-blank, arrange-the-code, write-a-snippet, write-and-run a program.
-- **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 12 badges, daily challenge, weekly league.
+- **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 14 badges, daily challenge, weekly league.
 - **Friends** - everyone gets a friend code (`ABCD-2345`) and an invite link (`/leaderboard?add=CODE`); follow friends
   (or anyone from the league) to race them in your own **friends league**. Only display names are ever shown.
+- **Weekly contests** - every language gets a new contest each Monday: the same 10 questions for everyone, one
+  10-minute timed run each, ranked by score then speed, with a **live leaderboard** (shows who's answering right now).
+  Graded on the server; only right/wrong is shown while it's live; no hints; +3 XP per correct answer.
 - **Streak reminder emails** - one evening email when your streak would end tonight (at most once a day, never if
   you already practised). Turn them off in your profile or with the signed one-click unsubscribe link in each email.
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).
@@ -228,5 +231,5 @@ Sign in with an email listed in `ADMIN_EMAILS` → **Admin → Content**. Lesson
 
 ## Roadmap (from the specification)
 
-Interview-prep tracks, collaborative coding & real-time contests (WebSockets),
-personalised recommendations (scikit-learn / PyTorch), WebAuthn passkeys.
+Interview-prep tracks, collaborative coding, WebSocket push for contests (they poll today),
+personalised recommendations (scikit-learn / PyTorch).

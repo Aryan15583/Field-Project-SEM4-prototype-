@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Exercise, { initialValue, isAnswered } from "@/components/Exercise";
 import { ErrorNote, Icon, Mascot, Modal, NoCopy, ProgressBar } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -38,16 +38,38 @@ export function QuizMessage({ message, mood = "sad", action, onAction }) {
   );
 }
 
+/** mm:ss left until `deadline` (ISO string), ticking every second; 0 when time is up. */
+function useCountdown(deadline, running) {
+  const [left, setLeft] = useState(() => (deadline ? Math.max(0, Date.parse(deadline) - Date.now()) : null));
+  useEffect(() => {
+    if (!deadline || !running) return;
+    const tick = () => setLeft(Math.max(0, Date.parse(deadline) - Date.now()));
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [deadline, running]);
+  return left;
+}
+
+const mmss = (ms) => {
+  const s = Math.ceil(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
 /**
- * Plays a fixed list of questions once each (tests, practice): Check -> feedback sheet -> next,
- * then calls `${basePath}/${attempt_id}/complete` and hands the result to `onFinished`.
+ * Plays a fixed list of questions once each (tests, practice, contests): Check -> feedback sheet -> next,
+ * then calls `${basePath}/${attempt_id}/${completePath}` and hands the result to `onFinished`.
+ * With a `deadline` (contests) a countdown replaces the counter and the run finishes itself at 0:00.
  */
-export default function QuizRunner({ session, basePath, intro, startLabel, icon = "trophy", footerNote, quit, onExit, onFinished }) {
-  const [phase, setPhase] = useState("intro"); // intro | play
+export default function QuizRunner({
+  session, basePath, intro, startLabel, icon = "trophy", footerNote, quit, onExit, onFinished,
+  completePath = "complete", deadline = null, startPlaying = false, initialScore = 0,
+}) {
+  const [phase, setPhase] = useState(startPlaying ? "play" : "intro"); // intro | play
   const [index, setIndex] = useState(0);
   const [value, setValue] = useState(() => initialValue(session.questions[0]));
   const [feedback, setFeedback] = useState(null);
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState(initialScore);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmExit, setConfirmExit] = useState(false);
@@ -56,23 +78,36 @@ export default function QuizRunner({ session, basePath, intro, startLabel, icon 
   const total = session.questions.length;
   const url = `${basePath}/${session.attempt_id}`;
 
+  const finishing = useRef(false); // the timer and a "time's up" answer can both ask to finish
   const finish = useCallback(async () => {
+    if (finishing.current) return;
+    finishing.current = true;
     setBusy(true);
     try {
-      onFinished(await api(`${url}/complete`, { method: "POST" }));
+      onFinished(await api(`${url}/${completePath}`, { method: "POST" }));
     } catch (e) {
+      finishing.current = false;
       setError(e.message);
     } finally {
       setBusy(false);
     }
-  }, [url, onFinished]);
+  }, [url, completePath, onFinished]);
+
+  const left = useCountdown(deadline, phase === "play");
+  const timeUp = deadline !== null && left === 0;
+  useEffect(() => {
+    if (timeUp) finish();
+  }, [timeUp, finish]);
 
   const check = useCallback(async () => {
     if (!current || busy || feedback || !isAnswered(current.kind, value)) return;
     setBusy(true);
     setError("");
     try {
-      const res = await api(`${url}/answer`, { method: "POST", body: { exercise_id: current.id, answer: value } });
+      const res = await api(`${url}/answer`, { method: "POST", body: { exercise_id: current.id, answer: value } }).catch((e) => {
+        if (e.status === 410) finish(); // time ran out on the server
+        throw e;
+      });
       (res.correct ? sfx.correct : sfx.wrong)();
       setFeedback(res);
       setScore(res.score);
@@ -115,10 +150,21 @@ export default function QuizRunner({ session, basePath, intro, startLabel, icon 
         <div className="flex-1">
           <ProgressBar value={index + (feedback ? 1 : 0)} max={total} />
         </div>
-        <span className="flex items-center gap-1 text-lg font-black text-gold" aria-label={phase === "intro" ? `${total} questions` : `Question ${index + 1} of ${total}`}>
-          <Icon name={icon} className="h-6 w-6" />
-          {phase === "intro" ? total : `${index + 1}/${total}`}
-        </span>
+        {deadline && phase === "play" ? (
+          <span
+            className={`flex items-center gap-1 font-mono text-lg font-black tabular-nums ${left < 60000 ? "text-bad" : "text-gold"}`}
+            role="timer"
+            aria-label={`${mmss(left ?? 0)} left`}
+          >
+            <Icon name="bolt" className="h-6 w-6" />
+            {mmss(left ?? 0)}
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 text-lg font-black text-gold" aria-label={phase === "intro" ? `${total} questions` : `Question ${index + 1} of ${total}`}>
+            <Icon name={icon} className="h-6 w-6" />
+            {phase === "intro" ? total : `${index + 1}/${total}`}
+          </span>
+        )}
       </div>
 
       <div className="mx-auto w-full max-w-3xl flex-1 overflow-x-hidden px-4 pb-56 pt-6">
@@ -187,7 +233,7 @@ export default function QuizRunner({ session, basePath, intro, startLabel, icon 
                   </span>
                   <div className="min-w-0">
                     <p className="text-2xl font-black">{feedback.correct ? "Correct!" : "Not quite"}</p>
-                    {!feedback.correct && (
+                    {!feedback.correct && feedback.correct_answer !== undefined && (
                       <>
                         <p className="text-sm font-extrabold">Correct answer:</p>
                         <NoCopy as="pre" className="whitespace-pre-wrap break-words font-mono text-sm">
