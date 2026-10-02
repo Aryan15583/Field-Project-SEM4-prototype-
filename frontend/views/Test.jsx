@@ -28,7 +28,9 @@ function Result({ test, result, onRetry, onDone }) {
   const detail = result.passed
     ? section
       ? `${test.title.replace(/^Ready for |\?$/g, "")} is unlocked. ${result.lessons_skipped} earlier lessons are marked as tested out - you can still replay any of them.`
-      : "The next unit is unlocked. Keep going!"
+      : result.certificate
+        ? "That was the final chapter - you've finished the whole course!"
+        : "The next unit is unlocked. Keep going!"
     : `You need ${result.pass_mark} of ${result.total} to pass. Review the lessons, then try again - each attempt has new questions.`;
 
   return (

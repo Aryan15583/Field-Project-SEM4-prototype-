@@ -37,6 +37,11 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **Practice (spaced repetition)** - every question you miss in a lesson, test or daily challenge goes on your review
   list; questions you know come back after 1, 3, 7, 16 and 35 days (Leitner boxes). 10-question sessions serve what's
   due first, then your weakest items; they earn +10 XP (5 sessions a day) and a heart back, and never cost hearts.
+- **Projects** - every section ends with a 3-step build project (21 in all: a grade book, a shopping cart, a route
+  planner, an event-booking database, an accessible landing page...). Each step starts from your own code of the step
+  before, so you finish with one real program; a wrong step is retried in place.
+- **Certificates** - finish every lesson, project and chapter test of a course to get a certificate with a public,
+  printable verify page (`/certificate/<code>`, no sign-in needed) - listed on your profile.
 - **5 exercise types** - multiple choice, fill-in-the-blank, arrange-the-code, write-a-snippet, write-and-run a program.
 - **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 8 badges, daily challenge, weekly league.
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).
@@ -97,6 +102,8 @@ Each lesson: a short concept intro, quick-check exercises, and a program to writ
 `backend/app/curriculum/<language>.py` and are synced into the database at start-up (new lessons are
 added, changed ones updated in place, admin-edited ones left alone). Intermediate and advanced units
 live in `<language>_adv.py`; learners' existing progress is kept when new units are added.
+Section projects live in `projects_<language>.py` (`project()` + `run(..., carry=True)` in `curriculum/dsl.py`)
+and are added as the 4th lesson of units 8, 12 and 16.
 
 **Every runnable exercise is verified by execution** - `python backend/scripts/validate_curriculum.py`
 runs each reference solution with the real toolchain (python3, Node + the browser runners' own code,
@@ -212,5 +219,5 @@ Sign in with an email listed in `ADMIN_EMAILS` → **Admin → Content**. Lesson
 
 ## Roadmap (from the specification)
 
-Interview-prep tracks, "jump ahead" placement tests, collaborative coding & real-time contests (WebSockets),
+Interview-prep tracks, collaborative coding & real-time contests (WebSockets),
 personalised recommendations (scikit-learn / PyTorch), WebAuthn passkeys.
