@@ -41,7 +41,7 @@ def stats(user: CurrentUser, db: DB):
         .join(Lesson, Lesson.id == UserLesson.lesson_id)
         .join(Unit, Unit.id == Lesson.unit_id)
         .join(Course, Course.id == Unit.course_id)
-        .where(UserLesson.user_id == user.id)
+        .where(UserLesson.user_id == user.id, UserLesson.completed_count > 0)
         .group_by(Course.title)
     ).all()
     earned = {b.badge: b.earned_at for b in user.badges}

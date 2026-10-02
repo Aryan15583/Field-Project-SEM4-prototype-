@@ -16,7 +16,7 @@ from ..security.deps import get_current_user
 from ..security.ratelimit import limit
 from ..config import get_settings
 from ..security.ratelimit import check
-from ..services import code_runner, gamification, grading
+from ..services import code_runner, gamification, grading, progress
 
 router = APIRouter(prefix="/api", tags=["learn"])
 
@@ -54,12 +54,7 @@ def _ordered_lessons(course: Course) -> list[Lesson]:
 
 
 def _completed_ids(db: Session, user: User) -> set[int]:
-    return set(db.scalars(select(UserLesson.lesson_id).where(UserLesson.user_id == user.id)))
-
-
-def _is_unlocked(lesson: Lesson, ordered: list[Lesson], done: set[int]) -> bool:
-    idx = next(i for i, l in enumerate(ordered) if l.id == lesson.id)
-    return idx == 0 or ordered[idx - 1].id in done or lesson.id in done
+    return progress.completed_ids(db, user)
 
 
 def _load_course(db: Session, course_id: int) -> Course:
@@ -92,20 +87,26 @@ def course_path(slug: Annotated[str, Field(max_length=40)], user: CurrentUser, d
     if course is None:
         raise HTTPException(404, "Course not found")
     done = _completed_ids(db, user)
-    ordered = _ordered_lessons(course)
+    passed = progress.passed_targets(db, user)
+    status = progress.lesson_statuses(course, done, passed)
+    unit_q = progress.UNIT_TEST_QUESTIONS
+    section_q = progress.SECTION_TEST_QUESTIONS
     return {
         "slug": course.slug, "title": course.title, "icon": course.icon, "description": course.description,
         "units": [
             {
-                "id": u.id, "title": u.title, "section": u.section or "Beginner",
-                "lessons": [
-                    {"id": l.id, "title": l.title, "xp": l.xp_reward,
-                     "status": "completed" if l.id in done else ("unlocked" if _is_unlocked(l, ordered, done) else "locked")}
-                    for l in u.lessons
-                ],
+                "id": u.id, "title": u.title, "section": progress.section_name(u),
+                "lessons": [{"id": l.id, "title": l.title, "xp": l.xp_reward, "status": status[l.id]} for l in u.lessons],
+                "test": {"status": progress.unit_test_status(u, status, passed), "questions": unit_q,
+                         "pass_mark": progress.pass_mark(unit_q), "xp": progress.UNIT_TEST_XP},
             }
             for u in course.units
         ],
+        "section_tests": {
+            name: {"status": st, "questions": section_q, "pass_mark": progress.pass_mark(section_q), "xp": progress.SECTION_TEST_XP}
+            for name, _ in progress.sections(course)
+            if (st := progress.section_test_status(course, name, status, passed))
+        },
     }
 
 
@@ -116,8 +117,8 @@ def start_lesson(lesson_id: int, user: CurrentUser, db: DB):
         raise HTTPException(404, "Lesson not found")
     course = _load_course(db, lesson.unit.course_id)
     done = _completed_ids(db, user)
-    if not _is_unlocked(lesson, _ordered_lessons(course), done):
-        raise HTTPException(403, "Finish the previous lesson first")
+    if progress.lesson_statuses(course, done, progress.passed_targets(db, user)).get(lesson.id) == "locked":
+        raise HTTPException(403, "Finish the previous lesson (and the chapter test) first")
     gamification.refill_hearts(user)
     if user.hearts <= 0 and lesson.id not in done:
         db.commit()

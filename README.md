@@ -31,6 +31,9 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
   Java, C and C++ run in an optional **sandboxed server runner** (Piston) - or fall back to pattern checks.
 - **Learning path** - courses → sections → units → lessons, unlocked in order, on a winding Duolingo-style map with
   section headers, per-section progress and quick jumps between sections.
+- **Chapter tests** - every unit ends with an 8-question test (6 to pass) drawn from its lessons; passing unlocks the
+  next unit. **Readiness tests** - 15 questions (12 to pass) on everything before Intermediate or Advanced: pass to
+  jump straight there. Tests are graded on the server, never cost hearts, allow no hints and give new questions each try.
 - **5 exercise types** - multiple choice, fill-in-the-blank, arrange-the-code, write-a-snippet, write-and-run a program.
 - **Gamification** - XP, daily goal, streaks, 5 hearts that refill over time, 8 badges, daily challenge, weekly league.
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).

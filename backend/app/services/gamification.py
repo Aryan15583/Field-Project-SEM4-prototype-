@@ -17,6 +17,8 @@ BADGES: dict[str, dict] = {
     "xp_500": {"name": "XP Hoarder", "icon": "🏆", "desc": "Earn 500 XP"},
     "polyglot": {"name": "Polyglot", "icon": "🌐", "desc": "Complete lessons in 3 languages"},
     "daily": {"name": "Challenger", "icon": "🎯", "desc": "Solve a daily challenge"},
+    "checkpoint": {"name": "Checkpoint", "icon": "🏁", "desc": "Pass a chapter test"},
+    "jumper": {"name": "Fast Track", "icon": "🚀", "desc": "Pass a readiness test to jump ahead"},
 }
 
 
@@ -67,16 +69,22 @@ def grant_badge(db: Session, user: User, key: str, earned: list[str]) -> None:
         earned.append(key)
 
 
-def check_badges(db: Session, user: User, *, perfect: bool = False, daily: bool = False) -> list[str]:
+def check_badges(db: Session, user: User, *, perfect: bool = False, daily: bool = False, test: str | None = None) -> list[str]:
     earned: list[str] = []
     db.flush()
-    lessons_done = db.scalar(select(func.count()).select_from(UserLesson).where(UserLesson.user_id == user.id)) or 0
+    # lessons actually played (rows from testing out have completed_count 0)
+    played = (UserLesson.user_id == user.id) & (UserLesson.completed_count > 0)
+    lessons_done = db.scalar(select(func.count()).select_from(UserLesson).where(played)) or 0
     if lessons_done >= 1:
         grant_badge(db, user, "first_lesson", earned)
     if perfect:
         grant_badge(db, user, "perfect", earned)
     if daily:
         grant_badge(db, user, "daily", earned)
+    if test == "unit":
+        grant_badge(db, user, "checkpoint", earned)
+    if test == "section":
+        grant_badge(db, user, "jumper", earned)
     if user.streak_current >= 3:
         grant_badge(db, user, "streak_3", earned)
     if user.streak_current >= 7:
@@ -91,7 +99,7 @@ def check_badges(db: Session, user: User, *, perfect: bool = False, daily: bool 
         .join(Lesson, Lesson.id == UserLesson.lesson_id)
         .join(Unit, Unit.id == Lesson.unit_id)
         .join(Course, Course.id == Unit.course_id)
-        .where(UserLesson.user_id == user.id)
+        .where(played)
     ) or 0
     if languages >= 3:
         grant_badge(db, user, "polyglot", earned)

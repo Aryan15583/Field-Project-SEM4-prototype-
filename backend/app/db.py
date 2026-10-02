@@ -41,6 +41,7 @@ def get_db() -> Iterator[Session]:
 _ADDED_COLUMNS = {
     "units": {"key": "VARCHAR(80)", "section": "VARCHAR(40) DEFAULT 'Beginner'"},
     "lessons": {"key": "VARCHAR(80)", "content_hash": "VARCHAR(64)"},
+    "user_lessons": {"tested_out": "BOOLEAN DEFAULT FALSE"},
     # existing accounts were all enrolled with an authenticator app
     "users": {
         "mfa_method": "VARCHAR(10) DEFAULT 'totp'",

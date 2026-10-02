@@ -186,6 +186,44 @@ class UserLesson(Base):
     completed_count: Mapped[int] = mapped_column(Integer, default=0)
     perfect: Mapped[bool] = mapped_column(Boolean, default=False)
     first_completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # skipped by passing a section readiness test (completed_count stays 0 until really played)
+    tested_out: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class TestAttempt(Base):
+    """One sitting of a chapter (unit) test or a section readiness test."""
+
+    __tablename__ = "test_attempts"
+    __test__ = False  # not a pytest test class
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(10))  # unit | section
+    target: Mapped[str] = mapped_column(String(80))  # "unit:<id>" | "section:<course id>:<name>"
+    exercise_ids: Mapped[list] = mapped_column(JSON, default=list)
+    results: Mapped[dict] = mapped_column(JSON, default=dict)  # {exercise id: correct}
+    pass_mark: Mapped[int] = mapped_column(Integer)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    score: Mapped[int] = mapped_column(Integer, default=0)
+    passed: Mapped[bool] = mapped_column(Boolean, default=False)
+    xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class UserTest(Base):
+    """Best result per test - a passed unit test unlocks the next unit."""
+
+    __tablename__ = "user_tests"
+    __table_args__ = (UniqueConstraint("user_id", "target"),)
+    __test__ = False
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    target: Mapped[str] = mapped_column(String(80))
+    best_score: Mapped[int] = mapped_column(Integer, default=0)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    passed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class XpEvent(Base):

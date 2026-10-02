@@ -43,7 +43,7 @@ function groupSections(units) {
   return sections;
 }
 
-function SectionHeader({ section }) {
+function SectionHeader({ section, jump, slug }) {
   const locked = section.units[0]?.lessons[0]?.status === "locked";
   const complete = section.total > 0 && section.done === section.total;
   return (
@@ -77,7 +77,100 @@ function SectionHeader({ section }) {
       <p className="mt-2 text-xs font-bold text-muted">
         {section.done} of {section.total} lessons · {section.units.length} units
       </p>
+      {jump?.status === "available" && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-3">
+          <p className="min-w-0 flex-1 text-sm font-bold">
+            Already know this? Pass a {jump.questions}-question readiness test ({jump.pass_mark} correct) to jump straight here.
+          </p>
+          <Link
+            href={`/test?course=${encodeURIComponent(slug)}&section=${encodeURIComponent(section.name)}`}
+            className="btn-primary shrink-0"
+          >
+            Jump here
+          </Link>
+        </div>
+      )}
     </div>
+  );
+}
+
+/* ---------------------------------------------------------------- chapter test node */
+function TestNode({ unit, slug, index, isCurrent, open, onToggle, nodeRef }) {
+  const router = useRouter();
+  const test = unit.test;
+  const locked = test.status === "locked";
+  const passed = test.status === "passed";
+  const x = OFFSETS[index % OFFSETS.length];
+  const name = unit.title.replace(/^Unit \d+ · /, "");
+  return (
+    <motion.div
+      ref={nodeRef}
+      className={`relative flex flex-col items-center ${open ? "z-30" : ""}`}
+      data-path-node
+      style={{ x: rem(x) }}
+      initial={{ opacity: 0, scale: 0.6 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: Math.min(index, 10) * 0.04, type: "spring", stiffness: 420, damping: 24 }}
+    >
+      {isCurrent && !open && (
+        <span className="absolute -top-[3.25rem] z-10 animate-bob whitespace-nowrap rounded-xl border-2 border-line bg-raised px-3 py-1.5 text-sm font-black uppercase tracking-wider text-gold">
+          Chapter test
+          <span className="absolute -bottom-[0.4375rem] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-b-2 border-r-2 border-line bg-raised" />
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-label={`Chapter test: ${name} - ${test.status}`}
+        title={`Chapter test: ${name}`}
+        className={`node ${locked ? "bg-line text-muted" : passed ? "bg-gold text-white" : "bg-gold text-white ring-4 ring-gold/30"}`}
+        style={{ "--node-lip": locked ? "rgb(var(--muted) / .35)" : "#c98a00" }}
+      >
+        <Icon name={locked ? "lock" : passed ? "check" : "trophy"} className="h-9 w-9" />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="absolute top-[5.625rem] z-20 w-72"
+            style={{ x: rem(-x / 2) }}
+            initial={{ opacity: 0, scale: 0.85, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -6 }}
+            transition={{ type: "spring", stiffness: 520, damping: 32 }}
+          >
+            <div className={`relative rounded-2xl p-4 ${locked ? "border-2 border-line bg-raised" : "bg-gold"}`}>
+              <span
+                className={`absolute -top-[0.4375rem] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 ${locked ? "border-l-2 border-t-2 border-line bg-raised" : "bg-gold"}`}
+                style={{ marginLeft: rem(x / 2) }}
+              />
+              <p className={`text-lg font-black ${locked ? "text-ink" : "text-white"}`}>Chapter test · {name}</p>
+              <p className={`mb-4 text-sm font-bold ${locked ? "text-muted" : "text-white/85"}`}>
+                {locked
+                  ? "Finish this unit's lessons to unlock its test."
+                  : passed
+                    ? "Passed! Retake it any time to practise."
+                    : `${test.questions} questions · get ${test.pass_mark} right to unlock the next unit`}
+              </p>
+              {locked ? (
+                <button className="btn-disabled w-full" disabled>
+                  Locked
+                </button>
+              ) : (
+                <button
+                  className="btn w-full bg-raised text-gold"
+                  style={{ boxShadow: "0 0.25rem 0 rgb(0 0 0 / .18)" }}
+                  onClick={() => router.push(`/test?course=${encodeURIComponent(slug)}&unit=${unit.id}`)}
+                  autoFocus
+                >
+                  {passed ? "Practice test" : `Take test +${test.xp} XP`}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -294,6 +387,10 @@ export default function Learn() {
 
   const all = path?.units.flatMap((u) => u.lessons) ?? [];
   const currentId = all.find((l) => l.status === "unlocked")?.id;
+  // when no lesson is open, the next step is the chapter test that unlocks the following unit
+  const currentTestUnit = currentId
+    ? null
+    : path?.units.find((u, i) => u.test?.status === "unlocked" && (i + 1 === path.units.length || path.units[i + 1].lessons[0]?.status === "locked"))?.id;
   const course = courses?.find((c) => c.slug === slug);
   const sections = path ? groupSections(path.units) : [];
 
@@ -355,12 +452,20 @@ export default function Learn() {
               const offset = path.units
                 .slice(0, ui)
                 .reduce((n, u) => n + u.lessons.length, 0);
+              // path position for the zig-zag: every unit has its lessons plus a test node
+              const slot = offset + ui;
               const startsSection = sections.find(
                 (sec) => sec.units[0] === unit,
               );
               return (
                 <section key={unit.id} className="mb-14">
-                  {startsSection && <SectionHeader section={startsSection} />}
+                  {startsSection && (
+                    <SectionHeader
+                      section={startsSection}
+                      jump={path.section_tests?.[startsSection.name]}
+                      slug={path.slug}
+                    />
+                  )}
                   {/* sticky unit banner, like Duolingo's section header */}
                   <div
                     className="sticky top-[4.75rem] z-10 mb-14 flex items-center justify-between rounded-2xl bg-primary px-5 py-4 text-on-primary"
@@ -385,7 +490,7 @@ export default function Learn() {
                         <LessonNode
                           key={l.id}
                           lesson={l}
-                          index={idx}
+                          index={slot + li}
                           number={idx + 1}
                           total={all.length}
                           isCurrent={l.id === currentId}
@@ -395,6 +500,17 @@ export default function Learn() {
                         />
                       );
                     })}
+                    {unit.test && (
+                      <TestNode
+                        unit={unit}
+                        slug={path.slug}
+                        index={slot + unit.lessons.length}
+                        isCurrent={unit.id === currentTestUnit}
+                        open={open === `test-${unit.id}`}
+                        onToggle={() => setOpen(open === `test-${unit.id}` ? null : `test-${unit.id}`)}
+                        nodeRef={unit.id === currentTestUnit ? currentRef : undefined}
+                      />
+                    )}
                     {/* Codi hangs out beside the path */}
                     <Mascot
                       size={104}
