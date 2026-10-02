@@ -135,7 +135,7 @@ def test_readiness_test_jumps_to_the_next_section(client):
     assert _path(client)["units"][8]["lessons"][0]["status"] == "locked"
 
     t, res = _take_test(client, {"course": "python", "section": "Intermediate"})
-    assert len(t["questions"]) == 15 and res["passed"] and res["xp_awarded"] == 50 and res["lessons_skipped"] == 24
+    assert len(t["questions"]) == 15 and res["passed"] and res["xp_awarded"] == 50 and res["lessons_skipped"] == 25
     assert {b["key"] for b in res["new_badges"]} >= {"jumper"}
     assert "first_lesson" not in {b["key"] for b in res["new_badges"]}  # testing out isn't "playing" a lesson
 
@@ -149,7 +149,7 @@ def test_readiness_test_jumps_to_the_next_section(client):
     with SessionLocal() as db:
         uid = db.scalar(select(User.id).where(User.email == "learner@example.com"))
         rows = db.scalars(select(UserLesson).where(UserLesson.user_id == uid)).all()
-        assert len(rows) == 24 and all(r.tested_out and r.completed_count == 0 for r in rows)
+        assert len(rows) == 25 and all(r.tested_out and r.completed_count == 0 for r in rows)
     stats = client.get("/api/stats").json()
     assert stats["lessons_completed"] == 0  # stats count lessons actually played
 

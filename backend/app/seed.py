@@ -25,6 +25,7 @@ def _fill(lesson: Lesson, spec: dict) -> None:
     lesson.title = spec["title"]
     lesson.intro = spec["intro"]
     lesson.xp_reward = spec.get("xp", 10)
+    lesson.is_project = bool(spec.get("project"))
     lesson.exercises.clear()
     for i, e in enumerate(spec["exercises"]):
         lesson.exercises.append(Exercise(position=i, **e))

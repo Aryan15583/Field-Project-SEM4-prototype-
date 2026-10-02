@@ -123,6 +123,23 @@ function Finished({ result, elapsed, accuracy, onContinue }) {
             </motion.div>
           ))}
         </div>
+        {result.certificate && (
+          <motion.a
+            href={`/certificate/${result.certificate.code}`}
+            className="card mt-5 flex w-full items-center gap-3 p-4 text-left"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+          >
+            <span className="text-3xl" aria-hidden="true">
+              🎓
+            </span>
+            <span>
+              <span className="block font-black text-gold">Course complete - certificate earned!</span>
+              <span className="text-sm font-semibold text-muted">View and share your {result.certificate.course} certificate</span>
+            </span>
+          </motion.a>
+        )}
         {result.new_badges.length > 0 && (
           <motion.div className="card mt-5 w-full p-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
             <p className="label mb-2">New badge{result.new_badges.length > 1 && "s"} unlocked!</p>
@@ -227,7 +244,15 @@ export default function Lesson({ id }) {
       setOutOfHearts(true);
       return;
     }
-    // Wrong answers go to the back of the queue - you must get every one right.
+    const project = session.lesson.project;
+    // Wrong answers go to the back of the queue - you must get every one right. In a project the
+    // steps build on each other, so a wrong step is retried straight away with the learner's code.
+    if (project && !feedback.correct) {
+      setFeedback(null);
+      setHint(null);
+      setValue((v) => ({ ...v, run: null }));
+      return;
+    }
     const rest = feedback.correct ? queue.slice(1) : [...queue.slice(1), queue[0]];
     setFeedback(null);
     setHint(null);
@@ -237,8 +262,11 @@ export default function Lesson({ id }) {
     }
     setQueue(rest);
     setRound((r) => r + 1);
-    setValue(initialValue(rest[0]));
-  }, [feedback, busy, queue, finish]);
+    const fresh = initialValue(rest[0]);
+    // project steps continue from the learner's own code of the previous step
+    if (rest[0].kind === "run" && rest[0].data?.carry && typeof value?.code === "string" && value.code.trim()) fresh.code = value.code;
+    setValue(fresh);
+  }, [feedback, busy, queue, finish, session, value]);
 
   // Enter = check / continue (buttons handle their own Enter; textareas need it for newlines)
   useEffect(() => {
@@ -323,7 +351,9 @@ export default function Lesson({ id }) {
         <AnimatePresence mode="wait" initial={false}>
           {phase === "intro" ? (
             <motion.div key="intro" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -48 }} transition={{ duration: 0.22, ease: EASE }}>
-              <p className="label mb-2">{session.lesson.course_title} · New concept</p>
+              <p className="label mb-2">
+                {session.lesson.course_title} · {session.lesson.project ? "Project - 3 steps" : "New concept"}
+              </p>
               <h1 className="mb-6 text-3xl font-black">{session.lesson.title}</h1>
               <div className="flex items-start gap-4">
                 <Mascot size={96} mood="wave" className="hidden shrink-0 sm:block" />
@@ -340,6 +370,12 @@ export default function Lesson({ id }) {
                 transition={{ duration: 0.22, ease: EASE }}
               >
                 <motion.div animate={verdict === "wrong" ? { x: [0, -10, 10, -6, 6, 0] } : { x: 0 }} transition={{ duration: 0.35 }}>
+                  {session.lesson.project && (
+                    <p className="mb-3 inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-primary">
+                      <Icon name="code" className="h-4 w-4" /> Step {solved + 1} of {total}
+                      {current.data?.carry && solved > 0 ? " - continuing your code" : ""}
+                    </p>
+                  )}
                   <Exercise exercise={current} value={value} onChange={setValue} result={verdict} />
                 </motion.div>
                 {!feedback && (

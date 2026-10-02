@@ -194,5 +194,9 @@ def test_course_path_is_split_into_sections(client):
         units = client.get(f"/api/courses/{slug}").json()["units"]
         sections = [u["section"] for u in units]
         assert sections == ["Beginner"] * 8 + ["Intermediate"] * 4 + ["Advanced"] * 4, slug
-        assert all(len(u["lessons"]) == 3 for u in units)
+        # 3 lessons per unit, plus a project closing each section (units 8, 12 and 16)
+        assert [len(u["lessons"]) for u in units] == [3] * 7 + [4] + [3] * 3 + [4] + [3] * 3 + [4], slug
+        assert [l["title"] for u in units for l in u["lessons"] if l["project"]] and all(
+            u["lessons"][-1]["project"] for i, u in enumerate(units) if i + 1 in (8, 12, 16)
+        )
         assert units[-1]["lessons"][-1]["status"] == "locked"

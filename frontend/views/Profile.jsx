@@ -28,6 +28,12 @@ export default function Profile() {
   const [regen, setRegen] = useState(false);
   const [code, setCode] = useState("");
   const [codes, setCodes] = useState(null);
+  const [certs, setCerts] = useState([]);
+  useEffect(() => {
+    api("/api/certificates")
+      .then(setCerts)
+      .catch(() => {});
+  }, []);
 
   const save = async (patch) => {
     setError("");
@@ -69,6 +75,30 @@ export default function Profile() {
           <p className="text-sm text-muted">{user.email}</p>
         </div>
       </div>
+
+      <section className="card space-y-3 p-5">
+        <h2 className="font-extrabold">Certificates</h2>
+        {certs.length ? (
+          <ul className="space-y-2">
+            {certs.map((c) => (
+              <li key={c.code}>
+                <a href={`/certificate/${c.code}`} className="flex items-center gap-3 rounded-xl border-2 border-line p-3 transition-colors hover:bg-surface">
+                  <span className="text-2xl" aria-hidden="true">
+                    🎓
+                  </span>
+                  <span className="flex-1">
+                    <span className="block font-extrabold">{c.course}</span>
+                    <span className="text-xs font-bold text-muted">Issued {new Date(c.issued_at).toLocaleDateString()}</span>
+                  </span>
+                  <span className="btn-link text-sm">View</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm font-semibold text-muted">Finish every lesson, project and chapter test in a course to earn its certificate.</p>
+        )}
+      </section>
 
       <section className="card space-y-4 p-5">
         <h2 className="font-extrabold">Profile</h2>

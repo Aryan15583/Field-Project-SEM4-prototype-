@@ -17,7 +17,7 @@ from ..models import Course, Exercise, Lesson, TestAttempt, Unit, User, UserLess
 from ..schemas import public_exercise
 from ..security.deps import get_current_user
 from ..security.ratelimit import limit
-from ..services import gamification, grading, progress, review
+from ..services import certificates, gamification, grading, progress, review
 from .learn import AnswerIn
 
 router = APIRouter(prefix="/api/tests", tags=["tests"])
@@ -148,8 +148,10 @@ def complete(attempt_id: str, user: CurrentUser, db: DB):
         if attempt.kind == "section":
             skipped = _test_out(db, user, attempt)
         new_badges = gamification.check_badges(db, user, test=attempt.kind)
+    cert = certificates.maybe_issue(db, user, attempt.course_id) if attempt.passed else None
     db.commit()
     return {
+        "certificate": certificates.public(cert) if cert else None,
         "passed": attempt.passed, "score": attempt.score, "total": total, "pass_mark": attempt.pass_mark,
         "xp_awarded": attempt.xp_awarded, "lessons_skipped": skipped, "best_score": record.best_score,
         "new_badges": [{"key": k, **gamification.BADGES[k]} for k in new_badges],

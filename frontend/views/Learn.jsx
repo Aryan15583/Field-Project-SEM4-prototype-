@@ -254,7 +254,7 @@ function LessonNode({
           }}
         >
           <Icon
-            name={locked ? "lock" : done ? "check" : "star"}
+            name={locked ? "lock" : done ? "check" : lesson.project ? "code" : "star"}
             className="h-9 w-9"
           />
         </button>
@@ -287,7 +287,9 @@ function LessonNode({
               >
                 {locked
                   ? "Complete all lessons above to unlock this!"
-                  : `Lesson ${number} of ${total}`}
+                  : lesson.project
+                    ? "Project · build something real in 3 steps"
+                    : `Lesson ${number} of ${total}`}
               </p>
               {locked ? (
                 <button className="btn-disabled w-full" disabled>
@@ -531,6 +533,13 @@ export default function Learn() {
                 <h3 className="mt-3 text-xl font-black">Course complete! 🎉</h3>
                 <p className="font-semibold text-muted">
                   Pick another language above or replay lessons for practice XP.
+                </p>
+                <p className="mt-3 text-sm font-bold text-muted">
+                  Pass every chapter test too, and your certificate appears on your{" "}
+                  <Link href="/profile" className="btn-link">
+                    Profile
+                  </Link>
+                  .
                 </p>
               </div>
             )}

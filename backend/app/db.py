@@ -40,7 +40,7 @@ def get_db() -> Iterator[Session]:
 # columns to existing ones (tiny forward-only migration; use Alembic if the schema grows further).
 _ADDED_COLUMNS = {
     "units": {"key": "VARCHAR(80)", "section": "VARCHAR(40) DEFAULT 'Beginner'"},
-    "lessons": {"key": "VARCHAR(80)", "content_hash": "VARCHAR(64)"},
+    "lessons": {"key": "VARCHAR(80)", "content_hash": "VARCHAR(64)", "is_project": "BOOLEAN DEFAULT FALSE"},
     "user_lessons": {"tested_out": "BOOLEAN DEFAULT FALSE"},
     # existing accounts were all enrolled with an authenticator app
     "users": {

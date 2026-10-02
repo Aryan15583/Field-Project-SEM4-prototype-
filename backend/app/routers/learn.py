@@ -10,13 +10,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from ..db import get_db
-from ..models import Course, DailyChallengeClaim, Exercise, Lesson, LessonAttempt, Unit, User, UserLesson
+from ..models import Certificate, Course, DailyChallengeClaim, Exercise, Lesson, LessonAttempt, Unit, User, UserLesson
 from ..schemas import public_exercise
 from ..security.deps import get_current_user
 from ..security.ratelimit import limit
 from ..config import get_settings
 from ..security.ratelimit import check
-from ..services import code_runner, gamification, grading, progress, review
+from ..services import certificates, code_runner, gamification, grading, progress, review
 
 router = APIRouter(prefix="/api", tags=["learn"])
 
@@ -96,7 +96,7 @@ def course_path(slug: Annotated[str, Field(max_length=40)], user: CurrentUser, d
         "units": [
             {
                 "id": u.id, "title": u.title, "section": progress.section_name(u),
-                "lessons": [{"id": l.id, "title": l.title, "xp": l.xp_reward, "status": status[l.id]} for l in u.lessons],
+                "lessons": [{"id": l.id, "title": l.title, "xp": l.xp_reward, "status": status[l.id], "project": l.is_project} for l in u.lessons],
                 "test": {"status": progress.unit_test_status(u, status, passed), "questions": unit_q,
                          "pass_mark": progress.pass_mark(unit_q), "xp": progress.UNIT_TEST_XP},
             }
@@ -128,7 +128,8 @@ def start_lesson(lesson_id: int, user: CurrentUser, db: DB):
     db.commit()
     return {
         "attempt_id": attempt.id,
-        "lesson": {"id": lesson.id, "title": lesson.title, "intro": lesson.intro, "course": course.slug, "course_title": course.title},
+        "lesson": {"id": lesson.id, "title": lesson.title, "intro": lesson.intro, "course": course.slug, "course_title": course.title,
+                   "project": lesson.is_project},
         "exercises": [public_exercise(e) for e in lesson.exercises],
         "hearts": user.hearts,
     }
@@ -197,12 +198,30 @@ def complete(attempt_id: str, user: CurrentUser, db: DB):
     attempt.xp_awarded = xp
     gamification.award_xp(db, user, xp, "lesson")
     new_badges = gamification.check_badges(db, user, perfect=perfect)
+    cert = certificates.maybe_issue(db, user, lesson.unit.course_id)
     db.commit()
     return {
+        "certificate": certificates.public(cert) if cert else None,
         "xp_awarded": xp, "perfect": perfect, "mistakes": attempt.mistakes,
         "new_badges": [{"key": k, **gamification.BADGES[k]} for k in new_badges],
         "streak": gamification.current_streak(user), "xp_total": user.xp_total,
     }
+
+
+# ------------------------------------------------------------------ certificates
+@router.get("/certificates")
+def my_certificates(user: CurrentUser, db: DB):
+    rows = db.scalars(select(Certificate).where(Certificate.user_id == user.id).order_by(Certificate.issued_at)).all()
+    return [certificates.public(c) for c in rows]
+
+
+@router.get("/public/certificates/{code}", dependencies=[Depends(limit("cert_verify", 30))])
+def verify_certificate(code: Annotated[str, Field(min_length=8, max_length=32)], db: DB):
+    """Public: anyone with the link can verify a certificate (only the holder's display name is shown)."""
+    cert = db.get(Certificate, code)
+    if cert is None:
+        raise HTTPException(404, "Certificate not found")
+    return certificates.public(cert)
 
 
 # ------------------------------------------------------------------ daily challenge

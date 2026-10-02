@@ -37,9 +37,13 @@ def t(name, **kw):
 
 
 def run(prompt, language, tests, expected, example, starter="", require=None, forbid=None, fallback=None,
-        setup=None, explanation="", hint=""):
+        setup=None, explanation="", hint="", carry=False):
+    """`carry=True` (project steps): the editor starts from the learner's own code from the previous step;
+    `starter` is only the fallback (use the previous step's reference solution)."""
     assert len(tests) == len(expected), prompt
     data = {"language": language, "starter": starter, "tests": tests}
+    if carry:
+        data["carry"] = True
     if setup:
         data["setup"] = setup
     sol = {"expected": expected, "example": example}
@@ -55,6 +59,12 @@ def run(prompt, language, tests, expected, example, starter="", require=None, fo
 
 def lesson(title, intro, *exercises, xp=10, key=None):
     return {"title": title, "intro": intro, "exercises": list(exercises), "xp": xp, "key": key}
+
+
+def project(title, intro, *steps, xp=30):
+    """A multi-step build at the end of a section: each step is a `run` exercise that usually
+    continues from the learner's code in the previous step (carry=True)."""
+    return {"title": title, "intro": intro, "exercises": list(steps), "xp": xp, "key": None, "project": True}
 
 
 def unit(title, *lessons):

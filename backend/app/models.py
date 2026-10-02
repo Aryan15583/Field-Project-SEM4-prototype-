@@ -137,6 +137,7 @@ class Lesson(Base):
     intro: Mapped[str] = mapped_column(Text, default="")
     position: Mapped[int] = mapped_column(Integer, default=0)
     xp_reward: Mapped[int] = mapped_column(Integer, default=10)
+    is_project: Mapped[bool] = mapped_column(Boolean, default=False)  # multi-step build at the end of a section
 
     unit: Mapped[Unit] = relationship(back_populates="lessons")
     exercises: Mapped[list["Exercise"]] = relationship(
@@ -239,6 +240,21 @@ class PracticeAttempt(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
     heart_awarded: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class Certificate(Base):
+    """Issued once a learner completes a whole course; `id` is the public verification code."""
+
+    __tablename__ = "certificates"
+    __table_args__ = (UniqueConstraint("user_id", "course_id"),)
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"))
+    holder_name: Mapped[str] = mapped_column(String(120))  # snapshot: the certificate doesn't change if the name does
+    course_title: Mapped[str] = mapped_column(String(120))
+    lessons: Mapped[int] = mapped_column(Integer)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class UserTest(Base):

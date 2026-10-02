@@ -69,6 +69,17 @@ function Result({ test, result, onRetry, onDone }) {
           </div>
         </motion.div>
         {result.passed && result.xp_awarded === 0 && <p className="mt-3 text-sm font-semibold text-muted">Retakes are practice - XP is awarded on your first pass.</p>}
+        {result.certificate && (
+          <a href={`/certificate/${result.certificate.code}`} className="card mt-5 flex w-full items-center gap-3 p-4 text-left">
+            <span className="text-3xl" aria-hidden="true">
+              🎓
+            </span>
+            <span>
+              <span className="block font-black text-gold">Course complete - certificate earned!</span>
+              <span className="text-sm font-semibold text-muted">View and share your {result.certificate.course} certificate</span>
+            </span>
+          </a>
+        )}
         {result.new_badges.length > 0 && (
           <motion.div className="card mt-5 w-full p-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
             <p className="label mb-2">New badge{result.new_badges.length > 1 && "s"} unlocked!</p>
