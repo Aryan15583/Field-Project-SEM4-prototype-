@@ -7,6 +7,8 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      // big desktop monitors (the root font size also steps up here - see globals.css)
+      screens: { "3xl": "1920px", "4xl": "2400px" },
       colors: {
         bg: v("bg"),
         surface: v("surface"),

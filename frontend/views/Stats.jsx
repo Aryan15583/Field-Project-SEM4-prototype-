@@ -143,7 +143,7 @@ export default function Stats() {
               </div>
               <p className="mt-2 font-extrabold">{b.name}</p>
               <p className="text-xs text-muted">{b.desc}</p>
-              <p className="mt-1 text-[11px] font-bold uppercase text-primary">{b.earned ? "Unlocked" : "Locked"}</p>
+              <p className="mt-1 text-[0.6875rem] font-bold uppercase text-primary">{b.earned ? "Unlocked" : "Locked"}</p>
             </div>
           ))}
         </div>

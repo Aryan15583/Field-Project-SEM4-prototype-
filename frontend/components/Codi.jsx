@@ -165,6 +165,7 @@ export default function Codi({ size = 120, mood = "idle", className = "", intera
       viewBox="-4 -5 24 24"
       width={size}
       height={size}
+      style={{ width: `${size / 16}rem`, height: `${size / 16}rem` }}
       className={`codi ${className} ${interactive ? "cursor-pointer" : ""}`}
       shapeRendering="crispEdges"
       role="img"

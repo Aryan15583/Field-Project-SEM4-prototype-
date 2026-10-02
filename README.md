@@ -33,7 +33,8 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).
 - **Progress dashboard** - XP over time and lessons per language (Recharts), achievements.
 - **Admin panel** - edit lessons/exercises (validated server-side), enable/disable users, security audit log.
-- **Responsive** - desktop sidebar, mobile bottom navigation; light/dark/system theme.
+- **Responsive, phone to QHD/4K** - mobile bottom navigation, desktop sidebar; on big monitors the whole UI scales up
+  (root size 112.5% at 1920px, 125% at 2400px - e.g. 2560×1440 - and 150% at 3200px). Everything is vector, so it stays sharp.
 - **Codi, the pixel-art mascot** - blue in light mode, green-on-terminal in dark mode; bobs, blinks, follows your
   cursor, reacts to right/wrong answers, thinks while a hint loads, celebrates finished lessons and hops when tapped.
 - **Duolingo-style feel at 60 fps** - springy 3D buttons, tap-to-open lesson popovers, sticky unit banners,

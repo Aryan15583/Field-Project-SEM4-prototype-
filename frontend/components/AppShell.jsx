@@ -71,7 +71,7 @@ export default function AppShell({ children }) {
 
       {/* top bar */}
       <header className="sticky top-0 z-30 border-b-2 border-line bg-bg/90 backdrop-blur lg:ml-64">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+        <div className="mx-auto flex h-16 max-w-5xl 3xl:max-w-6xl items-center justify-between px-4">
           <Logo compact className="text-xl lg:hidden" />
           <span className="hidden lg:block" />
           <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export default function AppShell({ children }) {
       </header>
 
       <main className="overflow-x-hidden px-4 pb-28 pt-6 lg:ml-64 lg:pb-10">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-5xl 3xl:max-w-6xl">
           {children}
         </div>
       </main>
@@ -94,7 +94,7 @@ export default function AppShell({ children }) {
             key={n.to}
             to={n.to}
             className={({ isActive }) =>
-              `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[10px] font-extrabold uppercase ${isActive ? "text-primary" : "text-muted"}`
+              `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[0.625rem] font-extrabold uppercase ${isActive ? "text-primary" : "text-muted"}`
             }
           >
             <Icon name={n.icon} className="h-6 w-6" />

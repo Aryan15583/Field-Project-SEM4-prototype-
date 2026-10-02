@@ -112,8 +112,8 @@ function Finished({ result, elapsed, accuracy, onContinue }) {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               transition={{ delay: 0.45 + i * 0.12, type: "spring", stiffness: 420, damping: 22 }}
             >
-              <p className="py-1 text-[11px] font-black uppercase text-white">{s.label}</p>
-              <p className={`m-[2px] mt-0 flex items-center justify-center gap-1 rounded-xl bg-bg py-3 text-xl font-black ${s.text}`}>
+              <p className="py-1 text-[0.6875rem] font-black uppercase text-white">{s.label}</p>
+              <p className={`m-[0.125rem] mt-0 flex items-center justify-center gap-1 rounded-xl bg-bg py-3 text-xl font-black ${s.text}`}>
                 <Icon name={s.icon} className="h-5 w-5" />
                 <span>
                   {s.prefix}
@@ -356,7 +356,7 @@ export default function Lesson({ id }) {
                           <Mascot size={60} mood={hint.loading ? "think" : "idle"} className="shrink-0" />
                           <div className="card relative flex-1 p-4 text-sm font-semibold">
                             {hint.loading ? <span className="animate-pulse">Codi is thinking…</span> : hint.hint}
-                            {hint.source === "ai" && <span className="mt-2 block text-[11px] font-bold uppercase text-muted">AI hint</span>}
+                            {hint.source === "ai" && <span className="mt-2 block text-[0.6875rem] font-bold uppercase text-muted">AI hint</span>}
                           </div>
                         </motion.div>
                       ) : (

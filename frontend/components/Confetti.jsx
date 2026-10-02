@@ -11,10 +11,14 @@ export default function Confetti({ colors, count = 140, duration = 2600 }) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = ref.current;
     const c = canvas.getContext("2d");
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Render scale: devicePixelRatio, but capped at ~1.5 megapixels. Full-screen canvases on big
+    // monitors (2560x1440 = 3.7 MP) are costly to allocate and clear every frame; confetti is just
+    // blocky rectangles, so a lower-resolution canvas stretched by CSS looks the same.
+    const MAX_PIXELS = 1_500_000;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(MAX_PIXELS / (innerWidth * innerHeight)));
     const resize = () => {
-      canvas.width = innerWidth * dpr;
-      canvas.height = innerHeight * dpr;
+      canvas.width = Math.round(innerWidth * dpr);
+      canvas.height = Math.round(innerHeight * dpr);
     };
     resize();
     window.addEventListener("resize", resize);

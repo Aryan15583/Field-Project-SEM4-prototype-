@@ -25,7 +25,7 @@ export default function Exercise({ exercise, value, onChange, result }) {
   return (
     <div>
       <p className="label mb-2">{TITLES[exercise.kind]}</p>
-      <h2 className="mb-6 text-2xl font-extrabold leading-snug sm:text-[28px]">{exercise.prompt}</h2>
+      <h2 className="mb-6 text-2xl font-extrabold leading-snug sm:text-[1.75rem]">{exercise.prompt}</h2>
       {exercise.kind === "mcq" && <Mcq exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
       {exercise.kind === "fill" && <Fill exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
       {exercise.kind === "order" && <Order exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
@@ -216,7 +216,7 @@ function Code({ value, onChange, locked, result }) {
         autoComplete="off"
         aria-label="Code editor"
         placeholder="Type your code here…"
-        className="block w-full resize-y bg-raised p-4 font-mono text-[15px] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+        className="block w-full resize-y bg-raised p-4 font-mono text-[0.9375rem] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
       />
     </div>
   );

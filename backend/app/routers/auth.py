@@ -1,6 +1,7 @@
 """Authentication: Google sign-in -> mandatory TOTP 2-step verification -> session cookies."""
 import hmac
 import logging
+import re
 from datetime import datetime, timezone
 
 import jwt
@@ -116,6 +117,8 @@ def _upsert_google_user(db: Session, claims: dict) -> User:
         user.google_sub = claims["sub"]
     user.email = email
     pic = claims.get("picture") or ""
+    # Google serves a 96px thumbnail by default; ask for 256px so avatars stay sharp on hi-res screens
+    pic = re.sub(r"=s\d+(-c)?$", "=s256-c", pic)
     user.avatar_url = pic[:512] if pic.startswith("https://lh3.googleusercontent.com/") else None
     if email in [e.lower() for e in s.admin_emails]:
         user.role = "admin"

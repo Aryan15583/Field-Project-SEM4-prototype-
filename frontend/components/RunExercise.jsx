@@ -55,10 +55,10 @@ function Editor({ value, onChange, locked, language, border }) {
         <span className="h-3 w-3 rounded-full bg-gold/70" />
         <span className="h-3 w-3 rounded-full bg-primary/70" />
         <span className="ml-2 font-mono text-xs font-bold text-muted">{FILE[language]}</span>
-        <span className="ml-auto text-[11px] font-black uppercase tracking-wider text-muted">{LANG_LABEL[language]}</span>
+        <span className="ml-auto text-[0.6875rem] font-black uppercase tracking-wider text-muted">{LANG_LABEL[language]}</span>
       </div>
       <div className="flex bg-raised">
-        <div aria-hidden="true" className="select-none border-r-2 border-line px-3 py-4 text-right font-mono text-[15px] leading-relaxed text-muted/60">
+        <div aria-hidden="true" className="select-none border-r-2 border-line px-3 py-4 text-right font-mono text-[0.9375rem] leading-relaxed text-muted/60">
           {Array.from({ length: lines }, (_, i) => (
             <div key={i}>{i + 1}</div>
           ))}
@@ -77,7 +77,7 @@ function Editor({ value, onChange, locked, language, border }) {
           wrap="off"
           aria-label={`${LANG_LABEL[language]} code editor`}
           placeholder="Write your code here…"
-          className="block min-w-0 flex-1 resize-none overflow-x-auto bg-transparent px-4 py-4 font-mono text-[15px] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+          className="block min-w-0 flex-1 resize-none overflow-x-auto bg-transparent px-4 py-4 font-mono text-[0.9375rem] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
         />
       </div>
     </div>
@@ -175,7 +175,7 @@ export default function RunExercise({ exercise, value, onChange, locked, result 
       <Editor value={value.code} onChange={(code) => onChange({ ...value, code })} locked={locked} language={language} border={border} />
       <div className="flex flex-wrap items-center gap-3">
         {canRun ? (
-          <button type="button" className="btn-ghost min-h-[40px] px-4 py-2 text-sm" onClick={run} disabled={running || locked || !value.code.trim()}>
+          <button type="button" className="btn-ghost min-h-[2.5rem] px-4 py-2 text-sm" onClick={run} disabled={running || locked || !value.code.trim()}>
             <Icon name="star" className="h-4 w-4" /> {running ? "Running…" : "Run"}
           </button>
         ) : (

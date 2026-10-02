@@ -49,6 +49,16 @@
 }
 
 html, body { min-height: 100%; }
+
+/*
+ * Big-screen scaling. Everything is sized in rem, so stepping up the root size scales the whole UI
+ * proportionally on large monitors (QHD 2560x1440 and up) instead of leaving a tiny layout in a sea
+ * of empty space. Percentages keep the user's own browser text-size preference.
+ */
+html { font-size: 100%; }
+@media (min-width: 1920px) { html { font-size: 112.5%; } }   /* 18px - 1080p/1200p desktops */
+@media (min-width: 2400px) { html { font-size: 125%; } }     /* 20px - QHD 2560x1440 */
+@media (min-width: 3200px) { html { font-size: 150%; } }     /* 24px - 4K at 100% scaling */
 html { -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
 body {
   font-family: var(--font-nunito), ui-rounded, "Segoe UI", system-ui, sans-serif;
@@ -66,11 +76,11 @@ button, a { touch-action: manipulation; } /* no 300ms tap delay, no double-tap z
 @layer components {
   /* Chunky, tactile "3D" buttons - press = sink into the lip */
   .btn {
-    @apply relative inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl px-5 py-3 text-[15px] font-extrabold
+    @apply relative inline-flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl px-5 py-3 text-[0.9375rem] font-extrabold
       uppercase tracking-wide select-none disabled:cursor-not-allowed disabled:opacity-50
       focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40;
     transition: transform 80ms ease-out, filter 120ms ease-out;
-    --lip: 4px;
+    --lip: 0.25rem;
   }
   .btn:not(:disabled):hover { filter: brightness(1.06); }
   .btn:not(:disabled):active { transform: translateY(var(--lip)); box-shadow: none !important; }
@@ -87,7 +97,7 @@ button, a { touch-action: manipulation; } /* no 300ms tap delay, no double-tap z
       focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20;
   }
   .chip { @apply inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-extrabold; }
-  .code { @apply rounded-2xl border-2 border-line bg-surface p-4 font-mono text-[15px] leading-relaxed text-ink whitespace-pre-wrap break-words; }
+  .code { @apply rounded-2xl border-2 border-line bg-surface p-4 font-mono text-[0.9375rem] leading-relaxed text-ink whitespace-pre-wrap break-words; }
 
   /* Answer tiles (choices, word bank) */
   .tile {
@@ -96,7 +106,7 @@ button, a { touch-action: manipulation; } /* no 300ms tap delay, no double-tap z
     transition: transform 80ms ease-out, background-color 120ms, border-color 120ms, color 120ms;
   }
   .tile:not(:disabled):hover { @apply bg-surface; }
-  .tile:not(:disabled):active { transform: translateY(2px); }
+  .tile:not(:disabled):active { transform: translateY(0.125rem); }
   .tile-selected { @apply border-primary bg-primary/10 text-primary; }
   .tile-right { @apply border-ok bg-ok/15 text-ok; }
   .tile-wrong { @apply border-bad bg-bad/10 text-bad; }
@@ -104,12 +114,12 @@ button, a { touch-action: manipulation; } /* no 300ms tap delay, no double-tap z
 
   /* Lesson-path node: circular 3D button */
   .node {
-    @apply relative grid h-[70px] w-[76px] place-items-center rounded-[50%] select-none focus:outline-none
+    @apply relative grid h-[4.375rem] w-[4.75rem] place-items-center rounded-[50%] select-none focus:outline-none
       focus-visible:ring-8 focus-visible:ring-primary/30;
     transition: transform 90ms ease-out;
-    box-shadow: 0 8px 0 var(--node-lip);
+    box-shadow: 0 0.5rem 0 var(--node-lip);
   }
-  .node:not(:disabled):active { transform: translateY(8px); box-shadow: none; }
+  .node:not(:disabled):active { transform: translateY(0.5rem); box-shadow: none; }
 
   .skeleton { @apply rounded-2xl bg-line; animation: pulse-soft 1.2s ease-in-out infinite; }
 }

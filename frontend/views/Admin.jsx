@@ -71,7 +71,7 @@ function Content() {
 
   if (!tree) return <Spinner />;
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+    <div className="grid gap-6 lg:grid-cols-[17.5rem_1fr]">
       <div className="card max-h-[70vh] overflow-y-auto p-4 text-sm">
         {tree.map((c) => (
           <div key={c.id} className="mb-4">

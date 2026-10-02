@@ -10,7 +10,9 @@ import { useAuth } from "@/lib/auth";
 
 const COURSE_KEY = "cg_course";
 // Winding path offsets (px), Duolingo-style
-const OFFSETS = [0, 45, 70, 45, 0, -45, -70, -45];
+// Winding path offsets in rem (scale with the UI on big screens)
+const OFFSETS = [0, 2.8, 4.4, 2.8, 0, -2.8, -4.4, -2.8];
+const rem = (n) => `${n}rem`;
 
 function readCourse() {
   try {
@@ -32,22 +34,22 @@ function LessonNode({ lesson, index, number, total, isCurrent, open, onToggle, n
       ref={nodeRef}
       className={`relative flex flex-col items-center ${open ? "z-30" : ""}`}
       data-path-node
-      style={{ x }}
+      style={{ x: rem(x) }}
       initial={{ opacity: 0, scale: 0.6 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: Math.min(index, 10) * 0.04, type: "spring", stiffness: 420, damping: 24 }}
     >
       {isCurrent && !open && (
-        <span className="absolute -top-[52px] z-10 animate-bob rounded-xl border-2 border-line bg-raised px-3 py-1.5 text-sm font-black uppercase tracking-wider text-primary">
+        <span className="absolute -top-[3.25rem] z-10 animate-bob rounded-xl border-2 border-line bg-raised px-3 py-1.5 text-sm font-black uppercase tracking-wider text-primary">
           Start
-          <span className="absolute -bottom-[7px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-b-2 border-r-2 border-line bg-raised" />
+          <span className="absolute -bottom-[0.4375rem] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-b-2 border-r-2 border-line bg-raised" />
         </span>
       )}
 
       <div className="relative">
         {isCurrent && (
           // progress ring around the current lesson
-          <svg className="pointer-events-none absolute -inset-[10px] h-[calc(100%+20px)] w-[calc(100%+20px)]" viewBox="0 0 100 100" aria-hidden="true">
+          <svg className="pointer-events-none absolute -inset-[0.625rem] h-[calc(100%+1.25rem)] w-[calc(100%+1.25rem)]" viewBox="0 0 100 100" aria-hidden="true">
             <circle cx="50" cy="50" r="46" fill="none" strokeWidth="7" className="stroke-line" />
           </svg>
         )}
@@ -67,8 +69,8 @@ function LessonNode({ lesson, index, number, total, isCurrent, open, onToggle, n
       <AnimatePresence>
         {open && (
           <motion.div
-            className="absolute top-[90px] z-20 w-72"
-            style={{ x: -x / 2 }}
+            className="absolute top-[5.625rem] z-20 w-72"
+            style={{ x: rem(-x / 2) }}
             initial={{ opacity: 0, scale: 0.85, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: -6 }}
@@ -76,8 +78,8 @@ function LessonNode({ lesson, index, number, total, isCurrent, open, onToggle, n
           >
             <div className={`relative rounded-2xl p-4 ${locked ? "border-2 border-line bg-raised" : done ? "bg-gold" : "bg-primary"}`}>
               <span
-                className={`absolute -top-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 ${locked ? "border-l-2 border-t-2 border-line bg-raised" : done ? "bg-gold" : "bg-primary"}`}
-                style={{ marginLeft: x / 2 }}
+                className={`absolute -top-[0.4375rem] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 ${locked ? "border-l-2 border-t-2 border-line bg-raised" : done ? "bg-gold" : "bg-primary"}`}
+                style={{ marginLeft: rem(x / 2) }}
               />
               <p className={`text-lg font-black ${locked ? "text-ink" : "text-on-primary"}`}>{lesson.title}</p>
               <p className={`mb-4 text-sm font-bold ${locked ? "text-muted" : "text-on-primary/80"}`}>
@@ -90,7 +92,7 @@ function LessonNode({ lesson, index, number, total, isCurrent, open, onToggle, n
               ) : (
                 <button
                   className="btn w-full bg-raised text-primary"
-                  style={{ boxShadow: "0 4px 0 rgb(0 0 0 / .18)" }}
+                  style={{ boxShadow: "0 0.25rem 0 rgb(0 0 0 / .18)" }}
                   onClick={() => router.push(`/lesson/${lesson.id}`)}
                   autoFocus
                 >
@@ -111,7 +113,7 @@ function PathSkeleton() {
       <div className="skeleton mb-10 h-24 w-full rounded-3xl" />
       <div className="flex flex-col items-center gap-9">
         {[0, 1, 2, 3, 4].map((i) => (
-          <div key={i} className="skeleton h-[70px] w-[76px] rounded-full" style={{ transform: `translateX(${OFFSETS[i]}px)` }} />
+          <div key={i} className="skeleton h-[4.375rem] w-[4.75rem] rounded-full" style={{ transform: `translateX(${OFFSETS[i]}rem)` }} />
         ))}
       </div>
     </div>
@@ -183,7 +185,7 @@ export default function Learn() {
   }, [path]);
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="min-w-0">
         {/* course picker */}
         <div className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]" role="tablist" aria-label="Courses">
@@ -194,7 +196,7 @@ export default function Learn() {
                 role="tab"
                 aria-selected={c.slug === slug}
                 onClick={() => (c.slug !== slug ? (setPath(null), setSlug(c.slug)) : null)}
-                className={`chip shrink-0 border-2 border-b-4 transition-colors active:translate-y-[2px] ${
+                className={`chip shrink-0 border-2 border-b-4 transition-colors active:translate-y-[0.125rem] ${
                   c.slug === slug ? "border-primary bg-primary/10 text-primary" : "border-line text-muted hover:bg-surface"
                 }`}
               >
@@ -217,8 +219,8 @@ export default function Learn() {
                 <section key={unit.id} className="mb-14">
                   {/* sticky unit banner, like Duolingo's section header */}
                   <div
-                    className="sticky top-[76px] z-10 mb-14 flex items-center justify-between rounded-2xl bg-primary px-5 py-4 text-on-primary"
-                    style={{ boxShadow: "0 5px 0 rgb(var(--primary-strong))" }}
+                    className="sticky top-[4.75rem] z-10 mb-14 flex items-center justify-between rounded-2xl bg-primary px-5 py-4 text-on-primary"
+                    style={{ boxShadow: "0 0.3125rem 0 rgb(var(--primary-strong))" }}
                   >
                     <div>
                       <p className="text-xs font-black uppercase tracking-widest opacity-80">
@@ -228,7 +230,7 @@ export default function Learn() {
                     </div>
                     <Icon name="code" className="h-8 w-8 opacity-70" />
                   </div>
-                  <div className="relative flex flex-col items-center gap-[60px]">
+                  <div className="relative flex flex-col items-center gap-[3.75rem]">
                     {unit.lessons.map((l, li) => {
                       const idx = offset + li;
                       return (
@@ -263,7 +265,7 @@ export default function Learn() {
       </div>
 
       {/* right rail */}
-      <aside className="space-y-5 lg:sticky lg:top-[88px] lg:self-start">
+      <aside className="space-y-5 lg:sticky lg:top-[5.5rem] lg:self-start">
         <div className="card p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-extrabold">Daily goal</h3>
