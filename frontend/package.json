@@ -5,8 +5,10 @@
   "scripts": {
     "predev": "node scripts/copy-runtimes.mjs",
     "dev": "next dev",
+    "dev:webpack": "node scripts/copy-runtimes.mjs && next dev --webpack",
     "prebuild": "node scripts/copy-runtimes.mjs",
     "build": "next build",
+    "build:webpack": "node scripts/copy-runtimes.mjs && next build --webpack",
     "start": "next start"
   },
   "dependencies": {

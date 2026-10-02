@@ -155,6 +155,12 @@ npm install
 npm run dev          # http://localhost:3000  (Next rewrites /api to :8000)
 ```
 
+On Windows, if `npm run dev` says *"Turbopack is not supported on this platform … native bindings are not available"*
+(Smart App Control / Application Control blocks Next's native compiler), use the Webpack bundler instead:
+`npm run dev:webpack` (and `npm run build:webpack` for production builds).
+
+Windows PowerShell: activate the venv with `.venv\Scripts\Activate.ps1` instead of `source .venv/bin/activate`.
+
 Open http://localhost:3000, use **Developer login**, scan the QR code with an authenticator app and start learning.
 
 Run the tests:
