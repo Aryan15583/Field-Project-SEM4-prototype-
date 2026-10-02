@@ -14,7 +14,7 @@ const FEATURES = [
   { icon: "shield", title: "Secure by default", text: "Google sign-in with mandatory 2-step verification, or a passkey (Face ID, fingerprint or PIN)." },
 ];
 
-const LANGS = ["Python", "JavaScript", "Java", "C++", "C", "SQL", "HTML & CSS"];
+const LANGS = ["Python", "JavaScript", "TypeScript", "Java", "C++", "C", "SQL", "HTML & CSS", "Git", "Algorithms"];
 
 function GoogleG() {
   return (

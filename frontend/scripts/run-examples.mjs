@@ -1,4 +1,4 @@
-// Used by backend/scripts/validate_curriculum.py: executes JavaScript, SQL and HTML reference
+// Used by backend/scripts/validate_curriculum.py: executes JavaScript, TypeScript, Git, SQL and HTML reference
 // solutions with EXACTLY the same logic as the in-browser runners (public/runners/*), so the
 // expected outputs stored in the curriculum match what learners' browsers will produce.
 // Input (stdin): JSON [{ lang, code, tests, setup }]  ->  output: JSON [[stdout per test] | {error}]
@@ -9,6 +9,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { formatSqlResult, htmlOutput, runJsProgram } from "../public/runners/shared.mjs";
 import { collectLibs, compileTs } from "../public/runners/ts-shared.mjs";
+import { runGitProgram } from "../public/runners/git-sim.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const jobs = JSON.parse(await new Promise((r) => {
@@ -90,6 +91,7 @@ for (const job of jobs) {
       }
       results.push(outs);
     }
+    else if (job.lang === "git") results.push(job.tests.map((t) => runGitProgram(job.code, t, job.setup)));
     else if (job.lang === "sql") results.push(await Promise.all(job.tests.map((t) => runSql(job.code, t, job.setup))));
     else if (job.lang === "html") results.push(await runHtml(job.code, job.tests));
     else results.push({ error: `unsupported ${job.lang}` });

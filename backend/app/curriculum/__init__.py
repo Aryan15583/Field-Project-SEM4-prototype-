@@ -17,6 +17,7 @@ import importlib
 from .c import COURSE as C
 from .cpp import COURSE as CPP
 from .dsa import COURSE as DSA
+from .git import COURSE as GIT
 from .htmlcss import COURSE as HTMLCSS
 from .java import COURSE as JAVA
 from .javascript import COURSE as JAVASCRIPT
@@ -47,5 +48,6 @@ CURRICULUM = [
     _with_projects(C, "projects_c"),
     _with_projects(SQL, "projects_sql"),
     _with_projects(HTMLCSS, "projects_htmlcss"),
+    _with_projects(GIT, "projects_git"),
     _with_projects(DSA, "projects_dsa"),
 ]

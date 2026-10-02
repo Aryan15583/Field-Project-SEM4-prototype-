@@ -3,20 +3,22 @@
 // Runs learner code in the browser, never on the main thread:
 //   python -> Pyodide in a module Web Worker      javascript -> Web Worker
 //   typescript -> real compiler (type-check) + the JS runner, in a Worker
+//   git    -> an in-memory Git simulator in a Worker
 //   sql    -> sql.js (SQLite/WASM) in a Worker    html       -> iframe with scripts disabled
 // Each worker is served with its own restrictive CSP (see next.config.mjs) and is terminated if a
 // run exceeds its time limit, so an infinite loop can't freeze the page.
 
-export const BROWSER_LANGS = new Set(["python", "javascript", "typescript", "sql", "html"]);
+export const BROWSER_LANGS = new Set(["python", "javascript", "typescript", "sql", "html", "git"]);
 export const SERVER_LANGS = new Set(["java", "c", "cpp"]);
 
 const WORKERS = {
   python: "/runners/py-worker.mjs",
   javascript: "/runners/js-worker.mjs",
   typescript: "/runners/ts-worker.mjs",
+  git: "/runners/git-worker.mjs",
   sql: "/runners/sql-worker.mjs",
 };
-const TIME_LIMIT_MS = { python: 8000, javascript: 4000, typescript: 8000, sql: 4000 };
+const TIME_LIMIT_MS = { python: 8000, javascript: 4000, typescript: 8000, sql: 4000, git: 4000 };
 const LOAD_LIMIT_MS = 60000; // Pyodide is ~13 MB the first time; it's cached afterwards
 
 const pool = {};

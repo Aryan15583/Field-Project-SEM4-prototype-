@@ -123,8 +123,15 @@ function Console({ run, running }) {
                 {r.name || `Test ${i + 1}`}
               </p>
             ) : null}
-            <pre className="whitespace-pre-wrap break-words text-ink">{r.stdout || (r.stderr ? "" : "(no output)")}</pre>
-            {r.stderr && <pre className="whitespace-pre-wrap break-words text-bad">{r.stderr}</pre>}
+            {r.transcript !== undefined ? (
+              // git: the whole terminal session (only the check commands' output is graded)
+              <pre className="whitespace-pre-wrap break-words text-ink">{r.transcript || "(no output)"}</pre>
+            ) : (
+              <>
+                <pre className="whitespace-pre-wrap break-words text-ink">{r.stdout || (r.stderr ? "" : "(no output)")}</pre>
+                {r.stderr && <pre className="whitespace-pre-wrap break-words text-bad">{r.stderr}</pre>}
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -173,7 +180,7 @@ export default function RunExercise({ exercise, value, onChange, locked, result 
     <div className="space-y-4">
       {setup && (
         <details className="rounded-2xl border-2 border-line bg-surface px-4 py-3 text-sm">
-          <summary className="cursor-pointer font-extrabold text-primary">Tables in this database</summary>
+          <summary className="cursor-pointer font-extrabold text-primary">{language === "git" ? "How the repository was set up" : "Tables in this database"}</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre font-mono text-xs text-ink">{setup}</pre>
         </details>
       )}

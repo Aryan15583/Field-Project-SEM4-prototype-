@@ -23,6 +23,7 @@ const nextConfig = {
     ];
     return [
       { source: "/runners/js-worker.mjs", headers: worker("script-src 'self' 'unsafe-eval'; connect-src 'none'") },
+      { source: "/runners/git-worker.mjs", headers: worker("script-src 'self'; connect-src 'none'") },
       { source: "/runners/ts-worker.mjs", headers: worker("script-src 'self' 'unsafe-eval'; connect-src 'self'") },
       { source: "/runners/py-worker.mjs", headers: worker("script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src 'self'") },
       { source: "/runners/sql-worker.mjs", headers: worker("script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'") },

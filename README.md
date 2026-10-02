@@ -2,7 +2,7 @@
 
 **Duolingo, but for coding.** Codeingo is a gamified coding-learning platform: bite-sized lessons,
 instant feedback, XP, streaks, hearts, badges, daily challenges, a weekly leaderboard and AI hints,
-across **Python, JavaScript, Java, C++, C, SQL and HTML/CSS**.
+across **Python, JavaScript, TypeScript, Java, C++, C, SQL, HTML/CSS, Git and Data Structures & Algorithms**.
 
 Built to the Codeingo project specification (Chapters 1–3): **Next.js (App Router, React 19) + Tailwind + Recharts**
 frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tutor
@@ -28,9 +28,9 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **Installable app (PWA)** - "Install the app" in the sidebar/profile (or Add to Home Screen on iPhone): full-screen,
   its own icon and shortcuts, an offline page, and cached static files and code runtimes for fast starts. The API is
   never cached.
-- **Beginner → Intermediate → Advanced** - 7 languages × 16 units × 3 lessons = **336 lessons / 1,680 exercises**, from
-  "Hello, World" to generators, async/await, generics, templates & move semantics, linked structures, window functions,
-  recursive CTEs, `:has()` and ARIA (see the tables below).
+- **Beginner → Intermediate → Advanced** - 10 courses, **438 lessons / 2,130 exercises** (incl. 30 projects): 7 languages
+  × 16 units, plus 8-unit courses in TypeScript, Git and DSA - from "Hello, World" to generators, async/await, generics,
+  templates & move semantics, window functions, `:has()`, ARIA, merge conflicts and dynamic programming (tables below).
 - **Real code, really run** - every lesson ends with a program the learner writes and runs:
   Python (Pyodide/WebAssembly), JavaScript, SQL (SQLite/WebAssembly) and HTML/CSS run **in the browser**;
   Java, C and C++ run in an optional **sandboxed server runner** (Piston) - or fall back to pattern checks.
@@ -84,7 +84,8 @@ See **[SECURITY.md](SECURITY.md)** for the full threat model. Highlights:
 
 ## Curriculum
 
-Every course has three sections: **Beginner** (units 1-8), **Intermediate** (9-12) and **Advanced** (13-16).
+Every course has three sections: **Beginner**, **Intermediate** and **Advanced** - units 1-8 / 9-12 / 13-16 in the
+16-unit courses, 1-4 / 5-6 / 7-8 in TypeScript, Git and DSA.
 
 ### Beginner
 
@@ -110,16 +111,27 @@ Every course has three sections: **Beginner** (units 1-8), **Intermediate** (9-1
 | SQL | Functions · Combining queries · Subqueries & CTEs · Window functions | Schema design · Indexes, views & performance · Transactions & triggers · Advanced querying |
 | HTML & CSS | Forms in depth · Selectors & the cascade · Layout in depth · Responsive design | Custom properties & theming · Motion · Modern CSS · Accessibility & production |
 
+### TypeScript, Git and Data Structures & Algorithms (8 units each)
+
+| Course | Beginner (1-4) | Intermediate (5-6) | Advanced (7-8) |
+|---|---|---|---|
+| TypeScript | Types basics · Functions · Objects & interfaces · Unions & narrowing | Classes & enums · Generics | Type-level tools (utility, mapped & conditional types) · Real-world TS (unknown & guards, async, never) |
+| Git | Getting started · History & changes · Undoing things · Branches | Merging & conflicts · Stash, tags & remotes | Rewriting history (reset, revert) · Team workflows (PRs, rebase, secrets) |
+| DSA (Python) | Big-O · Arrays & two pointers · Hashing · Stacks & queues | Searching & sorting · Recursion & linked lists | Trees & heaps · Graphs & dynamic programming |
+
+Projects - TypeScript: typed shopping cart · generic data store · type-safe API client. Git: first website repo ·
+hotfix during a feature · team release. DSA: undo/redo editor · library catalogue · metro route planner.
+
 Each lesson: a short concept intro, quick-check exercises, and a program to write. Lessons live in
 `backend/app/curriculum/<language>.py` and are synced into the database at start-up (new lessons are
 added, changed ones updated in place, admin-edited ones left alone). Intermediate and advanced units
 live in `<language>_adv.py`; learners' existing progress is kept when new units are added.
 Section projects live in `projects_<language>.py` (`project()` + `run(..., carry=True)` in `curriculum/dsl.py`)
-and are added as the 4th lesson of units 8, 12 and 16.
+and are added as the last lesson of each section's final unit.
 
 **Every runnable exercise is verified by execution** - `python backend/scripts/validate_curriculum.py`
 runs each reference solution with the real toolchain (python3, Node + the browser runners' own code,
-sql.js, Chromium, javac, gcc, g++), checks it prints exactly the expected output, and checks the
+sql.js, the TypeScript compiler, the Git simulator, Chromium, javac, gcc, g++), checks it prints exactly the expected output, and checks the
 starter code does *not* pass. CI runs it on every push.
 
 ### How code is run and graded
@@ -128,6 +140,11 @@ starter code does *not* pass. CI runs it on every push.
   main thread, so the UI stays at 60 fps) with a time limit, no network access and their own tight CSP.
   The browser reports what the program printed; the **server compares it with expected output it
   never sends to the browser**, plus optional structure checks (e.g. "must use a loop").
+- **TypeScript** is type-checked (strict) by the real TypeScript compiler inside the worker, then run like JavaScript;
+  a type error fails the exercise. Tests can append `// @ts-expect-error` lines, so overly loose types (`any`) fail too.
+- **Git** runs in an in-memory Git simulator (`public/runners/git-sim.mjs`: init, add, commit, log, branch, switch,
+  merge with conflicts, restore, reset, revert, stash, tag, .gitignore, simulated remotes). Only the output of each
+  test's check commands is graded, so learners can explore with extra commands freely.
 - **Java / C / C++** go to a self-hosted [Piston](https://github.com/engineer-man/piston) sandbox if
   `CODE_RUNNER_URL` is set (`docker compose --profile runner up -d`, then
   `docker compose exec runner piston ppm install java c c++`). Otherwise they're graded with patterns.
