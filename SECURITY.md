@@ -15,6 +15,7 @@ This document lists the threats Codeingo defends against and where each control 
 | TOTP **replay protection** (a code/time-step is accepted once), ±30 s drift window, constant-time compare | `mfa.verify_totp` |
 | **Lockout**: 5 failed codes → 15-minute lock, plus per-IP rate limit on every auth route | `mfa.register_failure`, `ratelimit.limit` |
 | 10 recovery codes, SHA-256 hashed, single use; regenerating them needs a fresh TOTP code | `mfa.new_recovery_codes` |
+| **Passkeys (WebAuthn)**: only public keys stored; **user verification required** (biometric/PIN), so a passkey is two factors and signs in without a code. RP ID and origin are pinned to `PUBLIC_URL` (phishing sites can't use them); 32-byte random challenges are stored server-side, expire in 5 minutes and are **deleted on use** (no replay); the user handle is an opaque HMAC, not the email or database id; sign counts are checked. Adding a passkey needs a full session | `security/passkeys.py`, `routers/passkeys.py` |
 
 ## 2. Sessions
 

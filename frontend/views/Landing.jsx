@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { cancelled, passkeysSupported, signInWithPasskey } from "@/lib/webauthn";
 import { ErrorNote, Icon, Logo, Mascot, ThemeToggle } from "@/components/ui";
 
 const FEATURES = [
   { icon: "bolt", title: "Bite-sized lessons", text: "5-minute lessons with quizzes, fill-in-the-blanks and real code." },
   { icon: "flame", title: "Streaks & XP", text: "Build a daily habit. Earn XP, keep your streak alive, collect badges." },
   { icon: "bulb", title: "AI hints from Codi", text: "Stuck? Codi nudges you toward the answer without spoiling it." },
-  { icon: "shield", title: "Secure by default", text: "Google sign-in plus mandatory 2-step verification for every account." },
+  { icon: "shield", title: "Secure by default", text: "Google sign-in with mandatory 2-step verification, or a passkey (Face ID, fingerprint or PIN)." },
 ];
 
 const LANGS = ["Python", "JavaScript", "Java", "C++", "C", "SQL", "HTML & CSS"];
@@ -32,6 +34,9 @@ export default function Landing() {
   const [dev, setDev] = useState({ email: "", name: "" });
   const [error, setError] = useState(params.get("error") ? "Sign-in failed or was cancelled. Please try again." : "");
   const [busy, setBusy] = useState(false);
+  const [canPasskey, setCanPasskey] = useState(false);
+  const { reload } = useAuth();
+  useEffect(() => setCanPasskey(passkeysSupported()), []);
   const [greeting, setGreeting] = useState(true); // Codi waves hello, then watches your cursor
   useEffect(() => {
     const t = setTimeout(() => setGreeting(false), 1600);
@@ -51,6 +56,20 @@ export default function Landing() {
       router.push(`/2fa/${stage}`);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const passkeyLogin = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await signInWithPasskey();
+      await reload();
+      router.replace("/learn");
+    } catch (err) {
+      if (!cancelled(err)) setError(err.message);
     } finally {
       setBusy(false);
     }
@@ -88,6 +107,12 @@ export default function Landing() {
               </span>
               Continue with Google
             </a>
+            {canPasskey && (
+              <button type="button" onClick={passkeyLogin} disabled={busy} className="btn-ghost w-full">
+                <Icon name="key" className="h-6 w-6" />
+                Sign in with a passkey
+              </button>
+            )}
             <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted md:justify-start">
               <Icon name="shield" className="h-4 w-4 text-primary" /> 2-step verification is required for every account
             </p>

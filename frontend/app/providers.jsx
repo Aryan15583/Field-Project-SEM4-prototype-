@@ -2,6 +2,7 @@
 
 import { MotionConfig } from "motion/react";
 import { AuthProvider } from "@/lib/auth";
+import { PwaProvider } from "@/lib/pwa";
 import { ThemeProvider } from "@/lib/theme";
 
 export default function Providers({ children }) {
@@ -9,7 +10,9 @@ export default function Providers({ children }) {
     // reducedMotion="user": springs/slides become instant for people who asked their OS for less motion
     <MotionConfig reducedMotion="user">
       <ThemeProvider>
-        <AuthProvider>{children}</AuthProvider>
+        <PwaProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </PwaProvider>
       </ThemeProvider>
     </MotionConfig>
   );

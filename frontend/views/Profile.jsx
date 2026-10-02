@@ -6,7 +6,9 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { ErrorNote, Icon, Modal } from "@/components/ui";
 import { setSoundEnabled, sfx, soundEnabled } from "@/lib/feedback";
+import { usePwa } from "@/lib/pwa";
 import { useTheme } from "@/lib/theme";
+import { addPasskey, cancelled, deviceName, passkeysSupported } from "@/lib/webauthn";
 import { RecoveryCodes } from "./TwoFactor";
 
 const GOALS = [
@@ -162,6 +164,8 @@ export default function Profile() {
         <ErrorNote>{!regen && error}</ErrorNote>
       </section>
 
+      <AppInstall />
+
       <section className="card space-y-4 p-5">
         <h2 className="flex items-center gap-2 font-extrabold">
           <Icon name="shield" className="h-5 w-5 text-primary" /> Security
@@ -170,6 +174,7 @@ export default function Profile() {
           <Icon name="check" className="h-5 w-5 text-primary" /> 2-step verification is on ·{" "}
           {user.mfa_method === "totp" ? "authenticator app" : "codes emailed to " + user.email}
         </p>
+        <Passkeys />
         <div className="flex flex-wrap gap-2">
           {user.mfa_method === "totp" && (
             <button className="btn-ghost" onClick={() => (setRegen(true), setCodes(null), setError(""))}>
@@ -208,5 +213,106 @@ export default function Profile() {
         )}
       </Modal>
     </div>
+  );
+}
+
+function Passkeys() {
+  const [list, setList] = useState(null);
+  const [supported, setSupported] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const load = () =>
+    api("/api/auth/passkeys")
+      .then(setList)
+      .catch(() => setList([]));
+  useEffect(() => {
+    setSupported(passkeysSupported());
+    load();
+  }, []);
+
+  const add = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await addPasskey(deviceName());
+      await load();
+    } catch (e) {
+      if (!cancelled(e)) setError(e.name === "InvalidStateError" ? "This device already has a passkey for your account." : e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const remove = async (pk) => {
+    setError("");
+    try {
+      await api(`/api/auth/passkeys/${pk.id}`, { method: "DELETE" });
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  return (
+    <div className="space-y-3 rounded-2xl border-2 border-line p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 font-extrabold">
+            <Icon name="key" className="h-5 w-5 text-primary" /> Passkeys
+          </p>
+          <p className="text-sm font-semibold text-muted">Sign in with Face ID, your fingerprint or your screen lock - no code needed.</p>
+        </div>
+        {supported && (
+          <button className="btn-primary" onClick={add} disabled={busy}>
+            {busy ? "Waiting…" : "Add a passkey"}
+          </button>
+        )}
+      </div>
+      {!supported && <p className="text-sm font-semibold text-muted">This browser doesn't support passkeys.</p>}
+      {list?.length > 0 && (
+        <ul className="divide-y-2 divide-line">
+          {list.map((pk) => (
+            <li key={pk.id} className="flex items-center gap-3 py-2">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-bold">{pk.name}</span>
+                <span className="text-xs font-semibold text-muted">
+                  Added {new Date(pk.created_at).toLocaleDateString()}
+                  {pk.last_used_at ? ` · last used ${new Date(pk.last_used_at).toLocaleDateString()}` : " · not used yet"}
+                  {pk.synced ? " · synced" : ""}
+                </span>
+              </span>
+              <button className="text-sm font-bold text-muted hover:text-red-500" onClick={() => remove(pk)} aria-label={`Remove passkey ${pk.name}`}>
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <ErrorNote>{error}</ErrorNote>
+    </div>
+  );
+}
+
+function AppInstall() {
+  const { canInstall, installed, ios, install } = usePwa();
+  return (
+    <section className="card flex flex-wrap items-center justify-between gap-4 p-5">
+      <div className="min-w-0 flex-1">
+        <h2 className="font-extrabold">Codeingo app</h2>
+        <p className="text-sm font-semibold text-muted">
+          {installed
+            ? "You're using the installed app."
+            : ios
+              ? "On iPhone or iPad: tap Share, then “Add to Home Screen”."
+              : canInstall
+                ? "Install Codeingo for a full-screen app with its own icon - it opens straight to your lessons."
+                : "Install Codeingo from your browser's menu (“Install app” or “Add to Home screen”)."}
+        </p>
+      </div>
+      {canInstall && (
+        <button className="btn-primary" onClick={install}>
+          Install the app
+        </button>
+      )}
+    </section>
   );
 }

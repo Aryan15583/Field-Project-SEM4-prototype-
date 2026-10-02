@@ -23,6 +23,11 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 - **Sign in with Google (Gmail)** - OpenID Connect with PKCE, `state` and `nonce`; ID tokens verified against Google's keys.
 - **Mandatory 2-step verification** for every account - a 6-digit code **emailed** at sign-in (default, no app needed), or an
   authenticator app (Google Authenticator, Authy, 1Password…) with 10 single-use recovery codes for extra security.
+- **Passkeys** - add one in your profile, then sign in with Face ID, a fingerprint, your screen lock or a security
+  key (WebAuthn, user verification required - so it counts as both factors and skips the emailed code).
+- **Installable app (PWA)** - "Install the app" in the sidebar/profile (or Add to Home Screen on iPhone): full-screen,
+  its own icon and shortcuts, an offline page, and cached static files and code runtimes for fast starts. The API is
+  never cached.
 - **Beginner → Intermediate → Advanced** - 7 languages × 16 units × 3 lessons = **336 lessons / 1,680 exercises**, from
   "Hello, World" to generators, async/await, generics, templates & move semantics, linked structures, window functions,
   recursive CTEs, `:has()` and ARIA (see the tables below).

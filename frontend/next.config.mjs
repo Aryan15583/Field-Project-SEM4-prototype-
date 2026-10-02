@@ -25,6 +25,14 @@ const nextConfig = {
       { source: "/runners/js-worker.mjs", headers: worker("script-src 'self' 'unsafe-eval'; connect-src 'none'") },
       { source: "/runners/py-worker.mjs", headers: worker("script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src 'self'") },
       { source: "/runners/sql-worker.mjs", headers: worker("script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'") },
+      // the service worker must always be re-checked so updates roll out; it may only load itself
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+        ],
+      },
       // runtimes never change for a given build -> cache hard
       { source: "/:dir(pyodide|sqljs)/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=604800" }] },
       {

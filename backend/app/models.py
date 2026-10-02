@@ -262,6 +262,35 @@ class Certificate(Base):
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class Passkey(Base):
+    """A WebAuthn credential (passkey). Only the public key is stored - the private key never leaves the device."""
+
+    __tablename__ = "passkeys"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    credential_id: Mapped[str] = mapped_column(String(1400), unique=True, index=True)  # base64url
+    public_key: Mapped[str] = mapped_column(Text)  # base64url COSE key
+    sign_count: Mapped[int] = mapped_column(Integer, default=0)
+    transports: Mapped[list] = mapped_column(JSON, default=list)
+    name: Mapped[str] = mapped_column(String(60))
+    backed_up: Mapped[bool] = mapped_column(Boolean, default=False)  # synced passkey (e.g. iCloud / Google)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class WebAuthnChallenge(Base):
+    """A one-time WebAuthn challenge, consumed by the matching verify call (works with several workers)."""
+
+    __tablename__ = "webauthn_challenges"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    challenge: Mapped[str] = mapped_column(String(128))  # base64url
+    purpose: Mapped[str] = mapped_column(String(10))  # register | login
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class Follow(Base):
     """One-way follow (like Duolingo friends): the follower sees the followee in their friends league."""
 

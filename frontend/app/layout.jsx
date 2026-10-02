@@ -6,11 +6,20 @@ import "./globals.css";
 export const metadata = {
   title: { default: "Codeingo", template: "%s · Codeingo" },
   description: "Codeingo - learn to code with bite-sized, gamified lessons.",
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: "/favicon.svg", apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Codeingo", statusBarStyle: "default" },
   referrer: "strict-origin-when-cross-origin",
 };
 
-export const viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
 
 // Rounded, friendly type (self-hosted by Next at build time - no runtime request to Google).
 const nunito = Nunito({ subsets: ["latin"], weight: ["600", "700", "800", "900"], display: "swap", variable: "--font-nunito" });

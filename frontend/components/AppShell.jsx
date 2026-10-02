@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { usePwa } from "@/lib/pwa";
 import { Icon, Logo, StatPill, ThemeToggle } from "./ui";
 
 const NAV = [
@@ -47,6 +48,16 @@ export function UserStats() {
   );
 }
 
+function InstallButton() {
+  const { canInstall, install } = usePwa();
+  if (!canInstall) return null;
+  return (
+    <button onClick={install} className="btn-ghost mb-4 w-full text-sm">
+      Install the app
+    </button>
+  );
+}
+
 export default function AppShell({ children }) {
   const { user } = useAuth();
   const items = user?.role === "admin" ? [...NAV, { to: "/admin", label: "Admin", icon: "shield" }] : NAV;
@@ -64,6 +75,7 @@ export default function AppShell({ children }) {
             </NavLink>
           ))}
         </nav>
+        <InstallButton />
         <div className="flex items-center justify-between px-2">
           <span className="label">Theme</span>
           <ThemeToggle />
