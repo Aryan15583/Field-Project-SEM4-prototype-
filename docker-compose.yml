@@ -53,7 +53,7 @@ services:
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_started }
-    networks: [internal, egress]   # egress: Google OAuth token/JWKS endpoints + optional AI API
+    networks: [internal, egress]   # egress: Google OAuth, SMTP (sign-in codes) + optional AI API
 
   # OPTIONAL sandbox for Java / C / C++ exercises (Python, JS, SQL, HTML run in the learner's browser).
   # Start with:  docker compose --profile runner up -d   then install the runtimes once:

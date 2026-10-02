@@ -54,6 +54,21 @@ class Settings(BaseSettings):
     max_request_bytes: int = 64 * 1024
     mfa_max_failures: int = 5
     mfa_lockout_minutes: int = 15
+    # emailed sign-in codes
+    email_code_minutes: int = 10
+    email_code_resend_seconds: int = 60
+    email_code_max_per_hour: int = 6
+    email_code_max_attempts: int = 5
+
+    # --- outgoing email (sign-in codes). Gmail: smtp.gmail.com, port 587, an App Password. ---
+    # Empty SMTP_HOST in development -> codes are printed to the API console instead of sent.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""  # e.g. "Codeingo <no-reply@codeingo.dev>"; defaults to SMTP_USERNAME
+    smtp_security: str = "starttls"  # starttls (port 587) | ssl (port 465)
+    smtp_timeout_seconds: float = 10.0
 
     # --- AI tutor (any OpenAI-compatible endpoint: OpenAI, Mistral, Llama 3 via Ollama/vLLM...) ---
     ai_api_key: str = ""
@@ -72,6 +87,10 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.env == "production"
+
+    @property
+    def email_configured(self) -> bool:
+        return bool(self.smtp_host)
 
     @property
     def fernet(self) -> Fernet:
@@ -93,6 +112,10 @@ class Settings(BaseSettings):
             problems.append("COOKIE_SECURE must be true in production")
         if not self.public_url.startswith("https://"):
             problems.append("PUBLIC_URL must use https:// in production")
+        if not self.smtp_host or not (self.smtp_from or self.smtp_username):
+            problems.append("SMTP_HOST and SMTP_FROM (or SMTP_USERNAME) are required to email sign-in codes")
+        if self.smtp_security not in ("starttls", "ssl"):
+            problems.append("SMTP_SECURITY must be starttls or ssl")
         if not self.redis_url:
             problems.append("REDIS_URL is required in production (shared rate limiting)")
         if self.database_url.startswith("sqlite"):

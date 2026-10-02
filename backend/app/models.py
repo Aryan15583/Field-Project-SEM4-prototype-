@@ -40,13 +40,21 @@ class User(Base):
     # Bumping this invalidates every access token issued to the user ("log out everywhere").
     token_version: Mapped[int] = mapped_column(Integer, default=0)
 
-    # --- 2-step verification (TOTP). Secrets are Fernet-encrypted at rest. ---
+    # --- 2-step verification: an emailed code (default) or an authenticator app (TOTP). ---
     mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    mfa_method: Mapped[str] = mapped_column(String(10), default="email")  # email | totp
     totp_secret_enc: Mapped[str | None] = mapped_column(Text)
     totp_pending_enc: Mapped[str | None] = mapped_column(Text)
     totp_last_step: Mapped[int] = mapped_column(Integer, default=0)  # replay protection
     mfa_failed_count: Mapped[int] = mapped_column(Integer, default=0)
     mfa_locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # The current emailed code: only a keyed hash is stored, never the code itself.
+    email_code_hash: Mapped[str | None] = mapped_column(String(64))
+    email_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_code_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_code_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    email_code_window_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_code_window_count: Mapped[int] = mapped_column(Integer, default=0)
 
     # --- gamification ---
     xp_total: Mapped[int] = mapped_column(Integer, default=0)

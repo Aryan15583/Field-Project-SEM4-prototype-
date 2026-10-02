@@ -129,12 +129,15 @@ export default function Profile() {
           <Icon name="shield" className="h-5 w-5 text-primary" /> Security
         </h2>
         <p className="flex items-center gap-2 text-sm">
-          <Icon name="check" className="h-5 w-5 text-primary" /> Signed in with Google · 2-step verification is on
+          <Icon name="check" className="h-5 w-5 text-primary" /> 2-step verification is on ·{" "}
+          {user.mfa_method === "totp" ? "authenticator app" : "codes emailed to " + user.email}
         </p>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-ghost" onClick={() => (setRegen(true), setCodes(null), setError(""))}>
-            New recovery codes
-          </button>
+          {user.mfa_method === "totp" && (
+            <button className="btn-ghost" onClick={() => (setRegen(true), setCodes(null), setError(""))}>
+              New recovery codes
+            </button>
+          )}
           <button className="btn-ghost" onClick={() => signOut(false)}>
             <Icon name="logout" className="h-4 w-4" /> Log out
           </button>

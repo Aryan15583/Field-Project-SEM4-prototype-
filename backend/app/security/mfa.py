@@ -93,3 +93,69 @@ def use_recovery_code(db: Session, user: User, code: str) -> bool:
 
 def remaining_recovery_codes(db: Session, user: User) -> int:
     return len(list(db.scalars(select(RecoveryCode.id).where(RecoveryCode.user_id == user.id, RecoveryCode.used_at.is_(None)))))
+
+
+# ------------------------------------------------------------------ emailed sign-in codes
+class EmailCodeThrottled(Exception):
+    def __init__(self, retry_after: int):
+        self.retry_after = retry_after
+
+
+def _email_code_hash(user: User, code: str) -> str:
+    # Keyed with the server secret: a leaked database alone can't be brute-forced back into codes.
+    key = get_settings().secret_key.encode()
+    return hmac.new(key, f"email-code:{user.id}:{user.email}:{code}".encode(), "sha256").hexdigest()
+
+
+def _live_email_code(user: User) -> bool:
+    expires = aware(user.email_code_expires_at)
+    return bool(user.email_code_hash) and expires is not None and expires > datetime.now(timezone.utc)
+
+
+def email_code_resend_in(user: User) -> int:
+    """Seconds until another code may be sent. Only an unused, unexpired code holds a resend back -
+    once a code is used up (e.g. signing out and straight back in) a new one goes out immediately."""
+    sent = aware(user.email_code_sent_at)
+    if sent is None or not _live_email_code(user):
+        return 0
+    wait = get_settings().email_code_resend_seconds - (datetime.now(timezone.utc) - sent).total_seconds()
+    return max(0, int(wait + 0.999))
+
+
+def issue_email_code(user: User) -> str | None:
+    """Creates a fresh 6-digit code, or returns None if one was sent moments ago (the earlier
+    code stays valid). Raises EmailCodeThrottled when the hourly limit is reached."""
+    s = get_settings()
+    now = datetime.now(timezone.utc)
+    if email_code_resend_in(user) > 0:
+        return None
+    window = aware(user.email_code_window_start)
+    if window is None or now - window >= timedelta(hours=1):
+        user.email_code_window_start, user.email_code_window_count = now, 0
+    if user.email_code_window_count >= s.email_code_max_per_hour:
+        raise EmailCodeThrottled(int((aware(user.email_code_window_start) + timedelta(hours=1) - now).total_seconds()) + 1)
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    user.email_code_hash = _email_code_hash(user, code)
+    user.email_code_expires_at = now + timedelta(minutes=s.email_code_minutes)
+    user.email_code_sent_at = now
+    user.email_code_attempts = 0
+    user.email_code_window_count += 1
+    return code
+
+
+def verify_email_code(user: User, code: str) -> bool:
+    """Single use, expires, and only a few guesses per code."""
+    code = _clean(code)
+    if not _live_email_code(user):
+        return False
+    user.email_code_attempts += 1
+    ok = len(code) == 6 and code.isdigit() and hmac.compare_digest(user.email_code_hash, _email_code_hash(user, code))
+    if ok or user.email_code_attempts >= get_settings().email_code_max_attempts:
+        user.email_code_hash = user.email_code_expires_at = None  # used up (or too many guesses)
+    return ok
+
+
+def mask_email(email: str) -> str:
+    local, _, domain = email.partition("@")
+    shown = local[:2] if len(local) > 3 else local[:1]
+    return f"{shown}•••••@{domain}"  # fixed width: doesn't reveal the address length

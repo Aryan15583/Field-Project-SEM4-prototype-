@@ -24,7 +24,7 @@ export default async function RootLayout({ children }) {
   // Reading the request makes every page dynamically rendered, which the per-request CSP nonce requires.
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
-    <html lang="en" className={nunito.variable} suppressHydrationWarning>
+    <html lang="en" className={nunito.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>

@@ -21,7 +21,8 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 ## Features
 
 - **Sign in with Google (Gmail)** - OpenID Connect with PKCE, `state` and `nonce`; ID tokens verified against Google's keys.
-- **Mandatory 2-step verification** for every account - TOTP (Google Authenticator, Authy, 1Password…), 10 single-use recovery codes.
+- **Mandatory 2-step verification** for every account - a 6-digit code **emailed** at sign-in (default, no app needed), or an
+  authenticator app (Google Authenticator, Authy, 1Password…) with 10 single-use recovery codes for extra security.
 - **Beginner → Intermediate → Advanced** - 7 languages × 16 units × 3 lessons = **336 lessons / 1,680 exercises**, from
   "Hello, World" to generators, async/await, generics, templates & move semantics, linked structures, window functions,
   recursive CTEs, `:has()` and ARIA (see the tables below).
@@ -49,7 +50,7 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
 
 See **[SECURITY.md](SECURITY.md)** for the full threat model. Highlights:
 
-- Google sign-in + **required TOTP 2FA**, replay protection, lockout after 5 failures, hashed single-use recovery codes, TOTP secrets **encrypted at rest** (Fernet).
+- Google sign-in + **required 2FA**: emailed one-time codes (hashed, 10-minute, single-use, resend-throttled) or TOTP with replay protection; lockout after 5 failures; hashed single-use recovery codes; TOTP secrets **encrypted at rest** (Fernet).
 - Short-lived JWT access tokens (15 min) + **rotating refresh tokens with theft/reuse detection**; "log out of all devices" revokes everything instantly.
 - Cookies are `HttpOnly`, `Secure`, `SameSite=Strict`; **CSRF** double-submit token + Origin check.
 - **Rate limiting at two layers** (nginx `limit_req`/`limit_conn` + Redis-backed app limits), request-size caps, slowloris timeouts, bounded DB pool and statement timeouts → application-layer DDoS resistance. Put Cloudflare (or similar) in front for volumetric DDoS.
@@ -161,7 +162,18 @@ On Windows, if `npm run dev` says *"Turbopack is not supported on this platform 
 
 Windows PowerShell: activate the venv with `.venv\Scripts\Activate.ps1` instead of `source .venv/bin/activate`.
 
-Open http://localhost:3000, use **Developer login**, scan the QR code with an authenticator app and start learning.
+Open http://localhost:3000 and use **Dev sign in**. You'll be asked for a 6-digit code: with no mail server configured,
+development mode prints it in the API terminal (look for a line starting `EMAIL (dev, not sent)`). To really send email,
+add SMTP settings to `backend/.env` - for Gmail:
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=you@gmail.com
+# App password: Google Account → Security → 2-Step Verification → App passwords (remove the spaces)
+SMTP_PASSWORD=abcdefghijklmnop
+SMTP_FROM=Codeingo <you@gmail.com>
+```
 
 Run the tests:
 

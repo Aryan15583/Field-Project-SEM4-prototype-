@@ -132,6 +132,12 @@ function useLook(ref, enabled) {
 }
 
 // ---------------------------------------------------------------- component
+function hashString(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
 export default function Codi({ size = 120, mood = "idle", className = "", interactive = true, title = "Codi, the Codeingo mascot" }) {
   const reduce = useReducedMotion();
   const ref = useRef(null);
@@ -154,8 +160,9 @@ export default function Codi({ size = 120, mood = "idle", className = "", intera
     setPokeMood(Math.random() < 0.5 ? "happy" : "wave");
   };
 
-  // random blink timing so several Codis on screen don't blink in sync
-  const blinkDelay = useRef(`${(Math.random() * 3).toFixed(2)}s`).current;
+  // varied blink timing so several Codis on screen don't blink in sync. Derived from useId (not
+  // Math.random) so the server-rendered HTML and the browser agree - avoids a hydration mismatch.
+  const blinkDelay = `${(hashString(uid) % 300) / 100}s`;
   const waving = current === "wave" || current === "celebrate";
   const idleLoops = !reduce && current !== "sad";
 

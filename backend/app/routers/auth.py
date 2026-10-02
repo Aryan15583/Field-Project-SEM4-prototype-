@@ -1,4 +1,4 @@
-"""Authentication: Google sign-in -> mandatory TOTP 2-step verification -> session cookies."""
+"""Authentication: Google sign-in -> mandatory 2-step verification (emailed code or authenticator app) -> session cookies."""
 import hmac
 import logging
 import re
@@ -18,7 +18,7 @@ from ..schemas import MeOut, me_out
 from ..security import mfa, tokens
 from ..security.deps import audit, get_current_user, get_mfa_user
 from ..security.ratelimit import client_ip, limit
-from ..services import google_oauth
+from ..services import google_oauth, mailer
 
 log = logging.getLogger("codeingo.auth")
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -52,7 +52,7 @@ def csrf(response: Response):
 @router.get("/config")
 def auth_config():
     s = get_settings()
-    return {"google": bool(s.google_client_id), "devLogin": s.dev_login_enabled}
+    return {"google": bool(s.google_client_id), "devLogin": s.dev_login_enabled, "emailDelivery": s.email_configured}
 
 
 # ------------------------------------------------------------------ Google sign-in
@@ -153,7 +153,17 @@ def mfa_status(request: Request, db: Session = Depends(get_db)):
     for stage in ("setup", "verify"):
         try:
             user = get_mfa_user(request, db, stage)
-            return {"stage": stage, "email": user.email, "locked": mfa.is_locked(user)}
+            return {
+                "stage": stage,
+                "email": user.email,
+                "email_masked": mfa.mask_email(user.email),
+                "method": user.mfa_method if user.mfa_enabled else None,
+                "has_recovery_codes": user.mfa_enabled and mfa.remaining_recovery_codes(db, user) > 0,
+                "locked": mfa.is_locked(user),
+                "resend_in": mfa.email_code_resend_in(user),
+                # local development without a mail server prints codes to the API console
+                "codes_in_console": get_settings().dev_login_enabled and not get_settings().email_configured,
+            }
         except HTTPException:
             continue
     raise HTTPException(401, "Sign-in session expired. Please sign in again.")
@@ -181,13 +191,93 @@ def mfa_enable(body: CodeIn, request: Request, response: Response, db: Session =
         db.commit()
         raise HTTPException(400, "That code didn't match. Check your authenticator app and try again.")
     user.totp_secret_enc, user.totp_pending_enc = user.totp_pending_enc, None
-    user.mfa_enabled = True
+    user.mfa_enabled, user.mfa_method = True, "totp"
     user.mfa_failed_count = 0
     codes = mfa.new_recovery_codes(db, user)
     _start_session(db, request, response, user)
     audit(db, request, "mfa_enabled", user.id)
     db.commit()
     return {"recovery_codes": codes, "user": me_out(db, user)}
+
+
+def _send_email_code(db: Session, request: Request, user: User) -> dict:
+    """Emails a fresh code unless one went out moments ago (then the earlier code stays valid)."""
+    try:
+        code = mfa.issue_email_code(user)
+    except mfa.EmailCodeThrottled as exc:
+        db.commit()
+        raise HTTPException(429, f"Too many codes requested. Try again in {exc.retry_after // 60 + 1} minutes.")
+    if code is not None:
+        minutes = get_settings().email_code_minutes
+        app = get_settings().app_name
+        try:
+            mailer.send(
+                user.email,
+                f"{code} is your {app} verification code",
+                f"Your {app} verification code is: {code}\n\n"
+                f"It expires in {minutes} minutes and can be used once.\n"
+                "If you didn't try to sign in, ignore this email - and consider signing out of all devices.",
+                _code_email_html(app, code, minutes),
+            )
+        except mailer.MailError:
+            user.email_code_hash = user.email_code_expires_at = user.email_code_sent_at = None
+            db.commit()
+            raise HTTPException(503, "We couldn't send the email right now. Please try again in a minute.")
+        audit(db, request, "email_code_sent", user.id)
+    db.commit()
+    return {"sent_to": mfa.mask_email(user.email), "resend_in": mfa.email_code_resend_in(user)}
+
+
+def _code_email_html(app: str, code: str, minutes: int) -> str:
+    # Only fixed text and a 6-digit number go in here - no user-controlled content.
+    return f"""<!doctype html><html><body style="margin:0;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;color:#111">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
+<table role="presentation" width="100%" style="max-width:440px;background:#fff;border-radius:16px;padding:32px;border:1px solid #e3e8f0">
+<tr><td style="font-size:22px;font-weight:800;color:#1d4ed8">{app}</td></tr>
+<tr><td style="padding-top:20px;font-size:16px">Your verification code is:</td></tr>
+<tr><td style="padding:16px 0;font-size:36px;font-weight:800;letter-spacing:8px;font-family:Consolas,Menlo,monospace">{code}</td></tr>
+<tr><td style="font-size:14px;color:#555">It expires in {minutes} minutes and can be used once.<br><br>
+If you didn't try to sign in, you can ignore this email.</td></tr>
+</table></td></tr></table></body></html>"""
+
+
+@router.post("/2fa/email/send", dependencies=[Depends(auth_limit())])
+def mfa_email_send(request: Request, db: Session = Depends(get_db)):
+    """Send (or resend) an emailed code - during first-time setup or at sign-in."""
+    for stage in ("setup", "verify"):
+        try:
+            user = get_mfa_user(request, db, stage)
+            break
+        except HTTPException:
+            continue
+    else:
+        raise HTTPException(401, "Sign-in session expired. Please sign in again.")
+    if stage == "verify" and user.mfa_method != "email":
+        raise HTTPException(400, "This account uses an authenticator app")
+    if mfa.is_locked(user):
+        raise HTTPException(429, "Too many failed attempts. Try again later.")
+    return _send_email_code(db, request, user)
+
+
+@router.post("/2fa/email/enable", dependencies=[Depends(auth_limit())])
+def mfa_email_enable(body: CodeIn, request: Request, response: Response, db: Session = Depends(get_db)):
+    """First-time setup with emailed codes: proving you can read your inbox turns it on."""
+    user = get_mfa_user(request, db, "setup")
+    if user.mfa_enabled:
+        raise HTTPException(409, "2-step verification already enabled")
+    if mfa.is_locked(user):
+        raise HTTPException(429, "Too many failed attempts. Try again later.")
+    if not mfa.verify_email_code(user, body.code):
+        mfa.register_failure(user)
+        audit(db, request, "mfa_setup_failed", user.id)
+        db.commit()
+        raise HTTPException(400, "That code didn't match or has expired. Check your email or send a new code.")
+    user.mfa_enabled, user.mfa_method, user.mfa_failed_count = True, "email", 0
+    user.totp_pending_enc = None
+    _start_session(db, request, response, user)
+    audit(db, request, "mfa_enabled", user.id, "email")
+    db.commit()
+    return {"user": me_out(db, user)}
 
 
 @router.post("/2fa/verify", dependencies=[Depends(auth_limit())])
@@ -199,7 +289,7 @@ def mfa_verify(body: VerifyIn, request: Request, response: Response, db: Session
         raise HTTPException(429, "Too many failed attempts. Try again later.")
     ok = False
     if body.code:
-        ok = mfa.verify_totp(user, body.code)
+        ok = mfa.verify_email_code(user, body.code) if user.mfa_method == "email" else mfa.verify_totp(user, body.code)
     elif body.recovery_code:
         ok = mfa.use_recovery_code(db, user, body.recovery_code)
         if ok:
@@ -263,6 +353,8 @@ def logout_all(request: Request, response: Response, user: User = Depends(get_cu
 @router.post("/recovery-codes", dependencies=[Depends(auth_limit())])
 def regenerate_recovery_codes(body: CodeIn, request: Request, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Re-authenticate with a fresh TOTP code before issuing new recovery codes."""
+    if user.mfa_method != "totp":
+        raise HTTPException(400, "Recovery codes are only used with an authenticator app")
     if mfa.is_locked(user) or not mfa.verify_totp(user, body.code):
         mfa.register_failure(user)
         db.commit()

@@ -8,7 +8,9 @@ This document lists the threats Codeingo defends against and where each control 
 |---|---|
 | Google sign-in via OIDC authorization-code flow with **PKCE (S256)**, random `state` (login-CSRF) and `nonce` (token replay) held in a signed, 10-minute cookie | `backend/app/services/google_oauth.py`, `routers/auth.py` |
 | ID token signature, `aud`, `iss`, `exp` verified with Google's published keys; `email_verified` required; optional domain allow-list | `google_oauth.verify_id_token` |
-| **2-step verification is mandatory** - no session exists until a TOTP code is verified | `routers/auth.py` (`cg_mfa` token → `/2fa/*`) |
+| **2-step verification is mandatory** - no session exists until an emailed code or an authenticator (TOTP) code is verified | `routers/auth.py` (`cg_mfa` token → `/2fa/*`) |
+| **Emailed codes** (default): 6 digits from a CSPRNG, stored only as an HMAC keyed with `SECRET_KEY`, expire after 10 min, single use, a new code invalidates the old one, 5 guesses per code, 60 s resend cooldown and 6 emails/hour per account; sent over TLS (STARTTLS or SMTPS with certificate verification) | `mfa.issue_email_code`, `mfa.verify_email_code`, `services/mailer.py` |
+| Accounts that chose an authenticator app can't be downgraded to emailed codes at sign-in | `routers/auth.py` (`/2fa/email/send`) |
 | TOTP secrets encrypted at rest (Fernet / AES-128-CBC + HMAC) | `security/mfa.py` |
 | TOTP **replay protection** (a code/time-step is accepted once), ±30 s drift window, constant-time compare | `mfa.verify_totp` |
 | **Lockout**: 5 failed codes → 15-minute lock, plus per-IP rate limit on every auth route | `mfa.register_failure`, `ratelimit.limit` |
@@ -63,6 +65,8 @@ The rate limiter fails **open** if Redis is down (so a Redis outage doesn't take
 - [ ] Put the domain behind Cloudflare (or another CDN/WAF) and firewall the origin to CDN IPs.
 - [ ] Generate unique `SECRET_KEY`, `ENCRYPTION_KEY`, DB and Redis passwords; store backups of `ENCRYPTION_KEY` (losing it means users must re-enrol 2FA).
 - [ ] Restrict the Google OAuth client to your production redirect URI.
+- [ ] Configure SMTP (`SMTP_HOST`, `SMTP_FROM`, credentials) - production refuses to start without it. Use a dedicated sending account or a transactional email service, and set up SPF/DKIM for the sending domain so codes don't land in spam.
+- [ ] Note the trade-off: with Google sign-in, an emailed code goes to the same Gmail inbox, so it protects against stolen sessions and OAuth mistakes but not against a fully compromised Google account. Encourage admins and staff to pick **authenticator app** at setup.
 - [ ] Back up the Postgres volume and review the Admin → Security log regularly.
 
 ## Reporting a vulnerability

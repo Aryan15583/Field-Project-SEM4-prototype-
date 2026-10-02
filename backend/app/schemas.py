@@ -19,6 +19,7 @@ class MeOut(BaseModel):
     hearts: int
     max_hearts: int
     badges: list[str]
+    mfa_method: str
 
 
 def me_out(db: Session, user: User) -> dict:
@@ -40,6 +41,7 @@ def me_out(db: Session, user: User) -> dict:
         hearts=user.hearts,
         max_hearts=get_settings().max_hearts,
         badges=[b.badge for b in user.badges],
+        mfa_method=user.mfa_method,
     ).model_dump()
 
 

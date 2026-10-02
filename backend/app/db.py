@@ -41,6 +41,16 @@ def get_db() -> Iterator[Session]:
 _ADDED_COLUMNS = {
     "units": {"key": "VARCHAR(80)", "section": "VARCHAR(40) DEFAULT 'Beginner'"},
     "lessons": {"key": "VARCHAR(80)", "content_hash": "VARCHAR(64)"},
+    # existing accounts were all enrolled with an authenticator app
+    "users": {
+        "mfa_method": "VARCHAR(10) DEFAULT 'totp'",
+        "email_code_hash": "VARCHAR(64)",
+        "email_code_expires_at": "TIMESTAMP WITH TIME ZONE",
+        "email_code_sent_at": "TIMESTAMP WITH TIME ZONE",
+        "email_code_attempts": "INTEGER DEFAULT 0",
+        "email_code_window_start": "TIMESTAMP WITH TIME ZONE",
+        "email_code_window_count": "INTEGER DEFAULT 0",
+    },
 }
 
 
