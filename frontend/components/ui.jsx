@@ -1,9 +1,44 @@
 "use client";
 
 import { animate, AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/lib/theme";
 import Codi from "./Codi";
+
+/* ------------------------------------------------------------------ learn by typing */
+/**
+ * Answer boxes don't accept pasted or dragged-in text: typing an answer out is how it sticks
+ * (and stops copying the revealed answer straight back in). Returns props for the input plus a
+ * short note to show after a blocked paste.
+ */
+export function usePasteGuard() {
+  const [blocked, setBlocked] = useState(0);
+  useEffect(() => {
+    if (!blocked) return;
+    const t = setTimeout(() => setBlocked(0), 4000);
+    return () => clearTimeout(t);
+  }, [blocked]);
+  const block = (e) => {
+    e.preventDefault();
+    setBlocked((n) => n + 1);
+  };
+  const note = blocked ? (
+    <p role="status" className="mt-2 text-sm font-bold text-gold">
+      Pasting is turned off here - type it out yourself, that's how it sticks!
+    </p>
+  ) : null;
+  return { guard: { onPaste: block, onDrop: block }, note };
+}
+
+/** Readable but not selectable or copyable - used for revealed answers. */
+export function NoCopy({ as: Tag = "div", className = "", children, ...rest }) {
+  const stop = (e) => e.preventDefault();
+  return (
+    <Tag className={`select-none ${className}`} onCopy={stop} onCut={stop} onContextMenu={stop} onDragStart={stop} {...rest}>
+      {children}
+    </Tag>
+  );
+}
 
 /* ------------------------------------------------------------------ icons */
 const paths = {

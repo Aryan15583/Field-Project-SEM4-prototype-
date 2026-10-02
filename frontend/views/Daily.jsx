@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Exercise, { initialValue, isAnswered } from "@/components/Exercise";
-import { ErrorNote, Mascot, Spinner } from "@/components/ui";
+import { ErrorNote, Mascot, NoCopy, Spinner } from "@/components/ui";
 import { sfx } from "@/lib/feedback";
 
 export default function Daily() {
@@ -78,7 +78,11 @@ export default function Daily() {
             transition={{ type: "spring", stiffness: 480, damping: 30 }}
           >
             <p className="text-xl font-black">{result.correct ? `Correct! +${result.xp_awarded} XP` : "Not this time"}</p>
-            {!result.correct && <pre className="mt-1 whitespace-pre-wrap font-mono text-sm">Answer: {result.correct_answer}</pre>}
+            {!result.correct && (
+              <NoCopy as="pre" className="mt-1 whitespace-pre-wrap font-mono text-sm">
+                Answer: {result.correct_answer}
+              </NoCopy>
+            )}
             {result.explanation && <p className="mt-1 text-sm text-ink/80">{result.explanation}</p>}
             <button className="btn-primary mt-4" onClick={() => navigate("/learn")}>
               Continue

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { BROWSER_LANGS, preloadRunner, runInBrowser, SERVER_LANGS } from "@/lib/runners";
-import { Icon } from "./ui";
+import { Icon, usePasteGuard } from "./ui";
 
 const LANG_LABEL = { python: "Python", javascript: "JavaScript", sql: "SQL", html: "HTML/CSS", java: "Java", c: "C", cpp: "C++" };
 const FILE = { python: "main.py", javascript: "main.js", sql: "query.sql", html: "index.html", java: "Main.java", c: "main.c", cpp: "main.cpp" };
@@ -29,6 +29,7 @@ export async function prepareRunAnswer(exercise, value, onChange) {
 
 function Editor({ value, onChange, locked, language, border }) {
   const lines = Math.max(6, (value.match(/\n/g) || []).length + 2);
+  const { guard, note } = usePasteGuard();
   const onKeyDown = (e) => {
     const el = e.target;
     if (e.key === "Tab") {
@@ -49,37 +50,41 @@ function Editor({ value, onChange, locked, language, border }) {
     }
   };
   return (
-    <div className={`overflow-hidden rounded-2xl border-2 transition-colors ${border}`}>
-      <div className="flex items-center gap-1.5 border-b-2 border-line bg-surface px-4 py-2">
-        <span className="h-3 w-3 rounded-full bg-bad/70" />
-        <span className="h-3 w-3 rounded-full bg-gold/70" />
-        <span className="h-3 w-3 rounded-full bg-primary/70" />
-        <span className="ml-2 font-mono text-xs font-bold text-muted">{FILE[language]}</span>
-        <span className="ml-auto text-[0.6875rem] font-black uppercase tracking-wider text-muted">{LANG_LABEL[language]}</span>
-      </div>
-      <div className="flex bg-raised">
-        <div aria-hidden="true" className="select-none border-r-2 border-line px-3 py-4 text-right font-mono text-[0.9375rem] leading-relaxed text-muted/60">
-          {Array.from({ length: lines }, (_, i) => (
-            <div key={i}>{i + 1}</div>
-          ))}
+    <div>
+      <div className={`overflow-hidden rounded-2xl border-2 transition-colors ${border}`}>
+        <div className="flex items-center gap-1.5 border-b-2 border-line bg-surface px-4 py-2">
+          <span className="h-3 w-3 rounded-full bg-bad/70" />
+          <span className="h-3 w-3 rounded-full bg-gold/70" />
+          <span className="h-3 w-3 rounded-full bg-primary/70" />
+          <span className="ml-2 font-mono text-xs font-bold text-muted">{FILE[language]}</span>
+          <span className="ml-auto text-[0.6875rem] font-black uppercase tracking-wider text-muted">{LANG_LABEL[language]}</span>
         </div>
-        <textarea
-          value={value}
-          disabled={locked}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={onKeyDown}
-          maxLength={5000}
-          rows={lines}
-          spellCheck={false}
-          autoCapitalize="off"
-          autoComplete="off"
-          autoCorrect="off"
-          wrap="off"
-          aria-label={`${LANG_LABEL[language]} code editor`}
-          placeholder="Write your code here…"
-          className="block min-w-0 flex-1 resize-none overflow-x-auto bg-transparent px-4 py-4 font-mono text-[0.9375rem] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
-        />
+        <div className="flex bg-raised">
+          <div aria-hidden="true" className="select-none border-r-2 border-line px-3 py-4 text-right font-mono text-[0.9375rem] leading-relaxed text-muted/60">
+            {Array.from({ length: lines }, (_, i) => (
+              <div key={i}>{i + 1}</div>
+            ))}
+          </div>
+          <textarea
+            {...guard}
+            value={value}
+            disabled={locked}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            maxLength={5000}
+            rows={lines}
+            spellCheck={false}
+            autoCapitalize="off"
+            autoComplete="off"
+            autoCorrect="off"
+            wrap="off"
+            aria-label={`${LANG_LABEL[language]} code editor`}
+            placeholder="Write your code here…"
+            className="block min-w-0 flex-1 resize-none overflow-x-auto bg-transparent px-4 py-4 font-mono text-[0.9375rem] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+          />
+        </div>
       </div>
+      {note}
     </div>
   );
 }

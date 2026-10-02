@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Confetti from "@/components/Confetti";
 import Exercise, { initialValue, isAnswered } from "@/components/Exercise";
-import { ErrorNote, Icon, Mascot, Modal, ProgressBar } from "@/components/ui";
+import { ErrorNote, Icon, Mascot, Modal, NoCopy, ProgressBar } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { sfx } from "@/lib/feedback";
@@ -318,7 +318,9 @@ export default function Test({ course, unitId, section }) {
                     {!feedback.correct && (
                       <>
                         <p className="text-sm font-extrabold">Correct answer:</p>
-                        <pre className="whitespace-pre-wrap break-words font-mono text-sm">{feedback.correct_answer}</pre>
+                        <NoCopy as="pre" className="whitespace-pre-wrap break-words font-mono text-sm">
+                          {feedback.correct_answer}
+                        </NoCopy>
                       </>
                     )}
                     {feedback.explanation && <p className="mt-1 text-sm font-semibold text-ink/80">{feedback.explanation}</p>}

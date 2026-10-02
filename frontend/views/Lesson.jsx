@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Confetti from "@/components/Confetti";
 import Exercise, { initialValue, isAnswered } from "@/components/Exercise";
 import { prepareRunAnswer } from "@/components/RunExercise";
-import { AnimatedNumber, ErrorNote, Icon, Mascot, Modal, ProgressBar } from "@/components/ui";
+import { AnimatedNumber, ErrorNote, Icon, Mascot, Modal, NoCopy, ProgressBar } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { sfx } from "@/lib/feedback";
@@ -433,7 +433,9 @@ export default function Lesson({ id }) {
                     {!feedback.correct && (
                       <>
                         <p className="text-sm font-extrabold">Correct answer:</p>
-                        <pre className="whitespace-pre-wrap break-words font-mono text-sm">{feedback.correct_answer}</pre>
+                        <NoCopy as="pre" className="whitespace-pre-wrap break-words font-mono text-sm">
+                          {feedback.correct_answer}
+                        </NoCopy>
                       </>
                     )}
                     {feedback.explanation && <p className="mt-1 text-sm font-semibold text-ink/80">{feedback.explanation}</p>}

@@ -4,6 +4,7 @@ import { LayoutGroup, motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/feedback";
 import RunExercise, { runInitialValue } from "./RunExercise";
+import { usePasteGuard } from "./ui";
 
 const TITLES = {
   mcq: "Select the correct answer",
@@ -105,22 +106,27 @@ function Fill({ exercise, value, onChange, locked, result }) {
   useEffect(() => ref.current?.focus({ preventScroll: true }), [exercise.id]);
   const [before, after = ""] = (exercise.code || "___").split("___");
   const tone = result === "right" ? "border-ok bg-ok/15 text-ok" : result === "wrong" ? "border-bad bg-bad/10 text-bad" : "border-primary bg-primary/10 text-primary";
+  const { guard, note } = usePasteGuard();
   return (
-    <div className="code flex flex-wrap items-center text-base">
-      <span className="whitespace-pre-wrap">{before}</span>
-      <input
-        ref={ref}
-        value={value}
-        disabled={locked}
-        maxLength={60}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label="Your answer for the blank"
-        spellCheck={false}
-        autoComplete="off"
-        autoCapitalize="off"
-        className={`mx-1 w-32 rounded-lg border-b-4 px-2 py-1 font-mono transition-colors focus:outline-none ${tone}`}
-      />
-      <span className="whitespace-pre-wrap">{after}</span>
+    <div>
+      <div className="code flex flex-wrap items-center text-base">
+        <span className="whitespace-pre-wrap">{before}</span>
+        <input
+          ref={ref}
+          {...guard}
+          value={value}
+          disabled={locked}
+          maxLength={60}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label="Your answer for the blank"
+          spellCheck={false}
+          autoComplete="off"
+          autoCapitalize="off"
+          className={`mx-1 w-32 rounded-lg border-b-4 px-2 py-1 font-mono transition-colors focus:outline-none ${tone}`}
+        />
+        <span className="whitespace-pre-wrap">{after}</span>
+      </div>
+      {note}
     </div>
   );
 }
@@ -196,28 +202,33 @@ function Code({ value, onChange, locked, result }) {
     }
   };
   const border = result === "right" ? "border-ok" : result === "wrong" ? "border-bad" : "border-line focus-within:border-primary";
+  const { guard, note } = usePasteGuard();
   return (
-    <div className={`overflow-hidden rounded-2xl border-2 transition-colors ${border}`}>
-      <div className="flex items-center gap-1.5 border-b-2 border-line bg-surface px-4 py-2">
-        <span className="h-3 w-3 rounded-full bg-bad/70" />
-        <span className="h-3 w-3 rounded-full bg-gold/70" />
-        <span className="h-3 w-3 rounded-full bg-primary/70" />
-        <span className="ml-2 text-xs font-bold text-muted">editor</span>
+    <div>
+      <div className={`overflow-hidden rounded-2xl border-2 transition-colors ${border}`}>
+        <div className="flex items-center gap-1.5 border-b-2 border-line bg-surface px-4 py-2">
+          <span className="h-3 w-3 rounded-full bg-bad/70" />
+          <span className="h-3 w-3 rounded-full bg-gold/70" />
+          <span className="h-3 w-3 rounded-full bg-primary/70" />
+          <span className="ml-2 text-xs font-bold text-muted">editor</span>
+        </div>
+        <textarea
+          {...guard}
+          value={value}
+          disabled={locked}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          maxLength={2000}
+          rows={6}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoComplete="off"
+          aria-label="Code editor"
+          placeholder="Type your code here…"
+          className="block w-full resize-y bg-raised p-4 font-mono text-[0.9375rem] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+        />
       </div>
-      <textarea
-        value={value}
-        disabled={locked}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={onKeyDown}
-        maxLength={2000}
-        rows={6}
-        spellCheck={false}
-        autoCapitalize="off"
-        autoComplete="off"
-        aria-label="Code editor"
-        placeholder="Type your code here…"
-        className="block w-full resize-y bg-raised p-4 font-mono text-[0.9375rem] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
-      />
+      {note}
     </div>
   );
 }
