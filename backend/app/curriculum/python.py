@@ -1,4 +1,5 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
+from .python_adv import ADVANCED, INTERMEDIATE
 
 Q = r"""(['"])"""  # an opening quote; close it with \1
 
@@ -344,4 +345,6 @@ COURSE = course(
                 require=[r"\btry\s*:", r"\bexcept\b"], hint="Put the risky lines in try and add one except per error type."),
         ),
     ),
+    INTERMEDIATE,
+    ADVANCED,
 )

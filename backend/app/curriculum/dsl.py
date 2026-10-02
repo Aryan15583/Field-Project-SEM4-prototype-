@@ -61,5 +61,14 @@ def unit(title, *lessons):
     return {"title": title, "lessons": list(lessons)}
 
 
+def section(name, *units):
+    """Groups units into a path section (Beginner / Intermediate / Advanced), like Duolingo."""
+    return [{**u, "section": name} for u in units]
+
+
 def course(slug, title, icon, description, *units):
-    return {"slug": slug, "title": title, "icon": icon, "description": description, "units": list(units)}
+    flat = []
+    for u in units:
+        flat.extend(u if isinstance(u, list) else [u])
+    return {"slug": slug, "title": title, "icon": icon, "description": description,
+            "units": [{"section": "Beginner", **u} for u in flat]}

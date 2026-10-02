@@ -1,4 +1,5 @@
 from .dsl import course, fill, lesson, mcq, order, run, t, unit, code
+from .cpp_adv import ADVANCED, INTERMEDIATE
 
 STARTER = "#include <iostream>\n\nint main() {\n    \n    return 0;\n}\n"
 
@@ -343,4 +344,6 @@ COURSE = course(
                 fallback=[r"unique_ptr\s*<\s*std::string\s*>", r"make_unique"]),
         ),
     ),
+    INTERMEDIATE,
+    ADVANCED,
 )

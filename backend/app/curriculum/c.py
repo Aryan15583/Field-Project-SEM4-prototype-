@@ -1,4 +1,5 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
+from .c_adv import ADVANCED, INTERMEDIATE
 
 STARTER = "#include <stdio.h>\n\nint main(void) {\n    \n    return 0;\n}\n"
 
@@ -332,4 +333,6 @@ COURSE = course(
                 starter=STARTER, require=[r"struct", r"total\s*\("], fallback=[r"typedef\s+struct|struct\s+\w+\s*\{", r"double\s+total\s*\(", r"%lf"]),
         ),
     ),
+    INTERMEDIATE,
+    ADVANCED,
 )

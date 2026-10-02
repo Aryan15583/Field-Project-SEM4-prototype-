@@ -1,4 +1,5 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
+from .java_adv import ADVANCED, INTERMEDIATE
 
 MAIN = "public class Main {\n    public static void main(String[] args) {\n        \n    }\n}\n"
 SCAN = "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        \n    }\n}\n"
@@ -346,4 +347,6 @@ COURSE = course(
                 starter=SCAN, require=[r"\btry\b", r"\bcatch\b"], fallback=[r"\btry\s*\{", r"NumberFormatException", r"ArithmeticException"]),
         ),
     ),
+    INTERMEDIATE,
+    ADVANCED,
 )

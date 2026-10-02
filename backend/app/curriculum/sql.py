@@ -1,4 +1,5 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
+from .sql_adv import ADVANCED, INTERMEDIATE
 
 # Output of a query = its rows, one per line, columns joined by "|" (NULL shown as NULL).
 
@@ -343,4 +344,6 @@ COURSE = course(
                 require=[r"(?i)SELECT[\s\S]*\(\s*SELECT"], forbid=[r"\b78\b"]),
         ),
     ),
+    INTERMEDIATE,
+    ADVANCED,
 )

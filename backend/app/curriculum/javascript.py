@@ -1,4 +1,5 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
+from .javascript_adv import ADVANCED, INTERMEDIATE
 
 COURSE = course(
     "javascript", "JavaScript", "⚡", "The language of the web - make pages interactive.",
@@ -349,4 +350,6 @@ COURSE = course(
                 starter="function safeParse(text) {\n  \n}\n", require=[r"\btry\b", r"\bcatch\b"]),
         ),
     ),
+    INTERMEDIATE,
+    ADVANCED,
 )
