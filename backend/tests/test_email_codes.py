@@ -101,10 +101,10 @@ def test_resend_cooldown_and_hourly_cap(client, outbox):
     assert len(outbox) == 1 and again["resend_in"] > 0 and first["resend_in"] > 0
     for _ in range(5):
         _age_last_send()
-        assert client.post("/api/auth/2fa/email/send").status_code == 200
+        assert client.post("/api/auth/2fa/email/send", json={"resend": True}).status_code == 200
     assert len(outbox) == 6
     _age_last_send()
-    r = client.post("/api/auth/2fa/email/send")
+    r = client.post("/api/auth/2fa/email/send", json={"resend": True})
     assert r.status_code == 429 and len(outbox) == 6
 
 
@@ -191,3 +191,26 @@ def test_mailer_rejects_header_injection(monkeypatch):
     monkeypatch.setattr(s, "smtp_host", "smtp.example.com")
     with pytest.raises(ValueError):
         mailer.send("victim@example.com\r\nBcc: everyone@example.com", "x", "y")
+
+
+def test_reloading_the_page_keeps_the_code_already_sent(client, outbox):
+    _login(client)
+    client.post("/api/auth/2fa/email/send")
+    first = _code(outbox[-1])
+    _age_last_send(seconds=120)  # learner spent two minutes finding the email, then the page reloaded
+    r = client.post("/api/auth/2fa/email/send")
+    assert r.status_code == 200 and len(outbox) == 1  # no new code replaced the one they're typing
+    assert client.post("/api/auth/2fa/email/enable", json={"code": first}).status_code == 200
+
+
+def test_asking_for_a_new_code_replaces_the_old_one(client, outbox):
+    _login(client)
+    client.post("/api/auth/2fa/email/send")
+    old = _code(outbox[-1])
+    _age_last_send()
+    client.post("/api/auth/2fa/email/send", json={"resend": True})
+    new = _code(outbox[-1])
+    assert len(outbox) == 2
+    if old != new:
+        assert client.post("/api/auth/2fa/email/enable", json={"code": old}).status_code == 400
+    assert client.post("/api/auth/2fa/email/enable", json={"code": new}).status_code == 200

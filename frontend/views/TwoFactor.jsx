@@ -106,7 +106,7 @@ function EmailCodeForm({ status, onSubmit, footer }) {
     setError("");
     setNote("");
     try {
-      const res = await api("/api/auth/2fa/email/send", { method: "POST" });
+      const res = await api("/api/auth/2fa/email/send", { method: "POST", body: { resend: manual } });
       setSentTo(res.sent_to);
       setLeft(res.resend_in);
       if (manual) setNote("New code sent. Codes from earlier emails no longer work.");

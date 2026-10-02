@@ -200,10 +200,10 @@ def mfa_enable(body: CodeIn, request: Request, response: Response, db: Session =
     return {"recovery_codes": codes, "user": me_out(db, user)}
 
 
-def _send_email_code(db: Session, request: Request, user: User) -> dict:
+def _send_email_code(db: Session, request: Request, user: User, resend: bool = False) -> dict:
     """Emails a fresh code unless one went out moments ago (then the earlier code stays valid)."""
     try:
-        code = mfa.issue_email_code(user)
+        code = mfa.issue_email_code(user, resend=resend)
     except mfa.EmailCodeThrottled as exc:
         db.commit()
         raise HTTPException(429, f"Too many codes requested. Try again in {exc.retry_after // 60 + 1} minutes.")
@@ -241,9 +241,14 @@ If you didn't try to sign in, you can ignore this email.</td></tr>
 </table></td></tr></table></body></html>"""
 
 
+class SendCodeIn(BaseModel):
+    resend: bool = False  # true only when the learner clicks "send a new code"
+
+
 @router.post("/2fa/email/send", dependencies=[Depends(auth_limit())])
-def mfa_email_send(request: Request, db: Session = Depends(get_db)):
-    """Send (or resend) an emailed code - during first-time setup or at sign-in."""
+def mfa_email_send(request: Request, body: SendCodeIn | None = None, db: Session = Depends(get_db)):
+    """Send an emailed code - during first-time setup or at sign-in. Reloading the page reuses a
+    still-valid code; `resend` replaces it with a new one."""
     for stage in ("setup", "verify"):
         try:
             user = get_mfa_user(request, db, stage)
@@ -256,7 +261,7 @@ def mfa_email_send(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(400, "This account uses an authenticator app")
     if mfa.is_locked(user):
         raise HTTPException(429, "Too many failed attempts. Try again later.")
-    return _send_email_code(db, request, user)
+    return _send_email_code(db, request, user, resend=bool(body and body.resend))
 
 
 @router.post("/2fa/email/enable", dependencies=[Depends(auth_limit())])

@@ -122,12 +122,15 @@ def email_code_resend_in(user: User) -> int:
     return max(0, int(wait + 0.999))
 
 
-def issue_email_code(user: User) -> str | None:
-    """Creates a fresh 6-digit code, or returns None if one was sent moments ago (the earlier
-    code stays valid). Raises EmailCodeThrottled when the hourly limit is reached."""
+def issue_email_code(user: User, *, resend: bool = False) -> str | None:
+    """Creates a fresh 6-digit code, or returns None when the code already sent should be used:
+    - without `resend` (e.g. the sign-in page loading or reloading) whenever a code is still valid,
+      so a reload never silently replaces the code the learner is about to type;
+    - with `resend` (the learner asked for a new code) only during the short cooldown.
+    Raises EmailCodeThrottled when the hourly limit is reached."""
     s = get_settings()
     now = datetime.now(timezone.utc)
-    if email_code_resend_in(user) > 0:
+    if email_code_resend_in(user) > 0 or (not resend and _live_email_code(user)):
         return None
     window = aware(user.email_code_window_start)
     if window is None or now - window >= timedelta(hours=1):
