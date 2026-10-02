@@ -6,8 +6,8 @@ import { api } from "@/lib/api";
 import { BROWSER_LANGS, preloadRunner, runInBrowser, SERVER_LANGS } from "@/lib/runners";
 import { Icon, usePasteGuard } from "./ui";
 
-const LANG_LABEL = { python: "Python", javascript: "JavaScript", sql: "SQL", html: "HTML/CSS", java: "Java", c: "C", cpp: "C++" };
-const FILE = { python: "main.py", javascript: "main.js", sql: "query.sql", html: "index.html", java: "Main.java", c: "main.c", cpp: "main.cpp" };
+const LANG_LABEL = { python: "Python", javascript: "JavaScript", typescript: "TypeScript", git: "Git", sql: "SQL", html: "HTML/CSS", java: "Java", c: "C", cpp: "C++" };
+const FILE = { python: "main.py", javascript: "main.js", typescript: "main.ts", git: "terminal", sql: "query.sql", html: "index.html", java: "Main.java", c: "main.c", cpp: "main.cpp" };
 
 /** Value shape for a run exercise: { code, run: null | { results, error } }. */
 export function runInitialValue(exercise) {

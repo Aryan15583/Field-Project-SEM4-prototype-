@@ -3,11 +3,12 @@
 // expected outputs stored in the curriculum match what learners' browsers will produce.
 // Input (stdin): JSON [{ lang, code, tests, setup }]  ->  output: JSON [[stdout per test] | {error}]
 import { execSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { formatSqlResult, htmlOutput, runJsProgram } from "../public/runners/shared.mjs";
+import { collectLibs, compileTs } from "../public/runners/ts-shared.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const jobs = JSON.parse(await new Promise((r) => {
@@ -66,6 +67,25 @@ for (const job of jobs) {
       for (const t of job.tests) {
         stray = "";
         const r = await runJsProgram(job.code, t);
+        outs.push({ stdout: r.stdout, stderr: r.stderr + stray });
+      }
+      results.push(outs);
+    }
+    else if (job.lang === "typescript") {
+      // same compiler and lib files as public/typescript (copied from node_modules/typescript)
+      const require = createRequire(import.meta.url);
+      const ts = require("typescript");
+      const libDir = join(root, "node_modules/typescript/lib");
+      const libs = collectLibs((name) => readFileSync(join(libDir, name), "utf8"));
+      const outs = [];
+      for (const t of job.tests) {
+        const c = compileTs(ts, libs, `${job.code}\n${t.append || ""}`);
+        if (c.errors) {
+          outs.push({ stdout: "", stderr: c.errors.join("\n") });
+          continue;
+        }
+        stray = "";
+        const r = await runJsProgram(c.js, { ...t, append: "" });
         outs.push({ stdout: r.stdout, stderr: r.stderr + stray });
       }
       results.push(outs);

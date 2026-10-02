@@ -22,6 +22,7 @@ from .java import COURSE as JAVA
 from .javascript import COURSE as JAVASCRIPT
 from .python import COURSE as PYTHON
 from .sql import COURSE as SQL
+from .typescript import COURSE as TYPESCRIPT
 
 
 
@@ -40,6 +41,7 @@ def _with_projects(course: dict, module: str) -> dict:
 CURRICULUM = [
     _with_projects(PYTHON, "projects_python"),
     _with_projects(JAVASCRIPT, "projects_javascript"),
+    _with_projects(TYPESCRIPT, "projects_typescript"),
     _with_projects(JAVA, "projects_java"),
     _with_projects(CPP, "projects_cpp"),
     _with_projects(C, "projects_c"),

@@ -63,7 +63,7 @@ class ExerciseIn(BaseModel):
         return self
 
 
-RUN_LANGS = {"python", "javascript", "sql", "html", "java", "c", "cpp"}
+RUN_LANGS = {"python", "javascript", "typescript", "sql", "html", "java", "c", "cpp"}
 TEST_KEYS = {"name", "stdin", "append", "selector", "prop"}
 
 

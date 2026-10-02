@@ -42,7 +42,7 @@ export const config = {
   matcher: [
     {
       // pages only - not the API (FastAPI sets its own headers) or immutable static assets
-      source: "/((?!api|_next/static|_next/image|favicon.svg|runners/|pyodide/|sqljs/|icons/|sw.js|offline.html).*)",
+      source: "/((?!api|_next/static|_next/image|favicon.svg|runners/|pyodide/|sqljs/|typescript/|icons/|sw.js|offline.html).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },
