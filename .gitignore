@@ -16,3 +16,5 @@ frontend/public/typescript/
 frontend/test-results/
 backend/e2e.db
 backend/e2e-outbox.jsonl
+docs/project-report/sem3/survey.csv
+docs/project-report/sem3/format.pdf
