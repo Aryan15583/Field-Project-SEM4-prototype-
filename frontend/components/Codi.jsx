@@ -2,9 +2,11 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useId, useRef, useState } from "react";
+import { MASCOT_ARMS, getMascot } from "../lib/mascots";
+import { useMascotId } from "../lib/mascotPref";
 
 /*
- * Codi - Codeingo's pixel-art mascot: a little screen-faced bot with </> bracket arms.
+ * Codi and friends - Codeingo's pixel-art mascots (see lib/mascots.js); Codi: a little screen-faced bot with </> bracket arms.
  * Drawn on a 16x16 pixel grid (crisp edges), coloured from the theme: blue in light mode,
  * green in dark mode (the screen turns into a dark terminal with glowing eyes).
  *
@@ -15,28 +17,9 @@ import { useEffect, useId, useRef, useState } from "react";
  */
 
 // ---------------------------------------------------------------- pixel art
-// Each string is one row, 16 pixels wide:  P body  S shade/outline  W screen  G gold  . empty
-const BODY = [
-  ".......GG.......",
-  ".......SS.......",
-  "...PPPPPPPPPP...",
-  "..PPPPPPPPPPPP..",
-  "..PWWWWWWWWWWP..",
-  "..PWWWWWWWWWWP..",
-  "..PWWWWWWWWWWP..",
-  "..PWWWWWWWWWWP..",
-  "..PWWWWWWWWWWP..",
-  "..PWWWWWWWWWWP..",
-  "..PPPPPPPPPPPP..",
-  "...SSSSSSSSSS...",
-  "..PPPPPPPPPPPP..",
-  "..PPPPPPPPPPPP..",
-  "..PPPPPPPPPPPP..",
-  "....SSS..SSS....",
-];
-
+// The cast lives in lib/mascots.js (16 rows of 16 characters each). Faces are shared by all of them.
 /** Turns rows of characters into one SVG path per colour (a few DOM nodes, not 200 rects). */
-function toPaths(rows, colors = "PSWG") {
+function toPaths(rows, colors = "PSWGAB") {
   const out = {};
   for (const c of colors) out[c] = "";
   rows.forEach((row, y) => {
@@ -49,9 +32,18 @@ function toPaths(rows, colors = "PSWG") {
 }
 
 const px = (list) => list.map(([x, y]) => `M${x} ${y}h1v1h-1z`).join("");
-const BODY_PATHS = toPaths(BODY);
-const ARM_LEFT = px([[1, 12], [0, 13], [1, 14]]); //  <
-const ARM_RIGHT = px([[14, 12], [15, 13], [14, 14]]); //  >
+const PATH_CACHE = new Map();
+function pathsFor(m) {
+  if (!PATH_CACHE.has(m.id)) {
+    PATH_CACHE.set(m.id, {
+      body: toPaths(m.rows),
+      eyeArt: toPaths(m.rows, "E").E, // pupils drawn into the art (frog)
+      armL: px(MASCOT_ARMS[m.arms][0]),
+      armR: px(MASCOT_ARMS[m.arms][1]),
+    });
+  }
+  return PATH_CACHE.get(m.id);
+}
 
 // Faces live on the screen (x 3..12, y 4..9)
 const EYES = {
@@ -138,7 +130,12 @@ function hashString(str) {
   return Math.abs(h);
 }
 
-export default function Codi({ size = 120, mood = "idle", className = "", interactive = true, title = "Codi, the Codeingo mascot" }) {
+export default function Codi({ size = 120, mood = "idle", className = "", interactive = true, mascot, title }) {
+  const chosen = useMascotId();
+  const m = getMascot(mascot || chosen); // an explicit `mascot` wins over the learner's saved choice
+  const art = pathsFor(m);
+  const pal = m.palette;
+  const label = title || `${m.name}, a Codeingo mascot`;
   const reduce = useReducedMotion();
   const ref = useRef(null);
   const uid = useId().replace(/:/g, "");
@@ -176,10 +173,10 @@ export default function Codi({ size = 120, mood = "idle", className = "", intera
       className={`codi ${className} ${interactive ? "cursor-pointer" : ""}`}
       shapeRendering="crispEdges"
       role="img"
-      aria-label={title}
+      aria-label={label}
       onClick={onTap}
     >
-      <title>{title}</title>
+      <title>{label}</title>
       {/* ground shadow shrinks as Codi jumps */}
       <ellipse cx="8" cy="16.6" rx="6" ry="0.8" className="fill-ink/10" shapeRendering="auto" />
 
@@ -192,21 +189,24 @@ export default function Codi({ size = 120, mood = "idle", className = "", intera
         <g className={idleLoops ? "codi-bob" : ""}>
           {/* arms: </> brackets - they wave when happy/celebrating */}
           <g className={waving && !reduce ? "codi-arm-l" : ""}>
-            <path d={ARM_LEFT} className="fill-primary-strong" />
+            <path d={art.armL} style={{ fill: pal.arm || pal.S }} />
           </g>
           <g className={waving && !reduce ? "codi-arm-r" : ""}>
-            <path d={ARM_RIGHT} className="fill-primary-strong" />
+            <path d={art.armR} style={{ fill: pal.arm || pal.S }} />
           </g>
 
-          <path d={BODY_PATHS.P} className="fill-primary" />
-          <path d={BODY_PATHS.S} className="fill-primary-strong" />
-          <path d={BODY_PATHS.W} style={{ fill: "rgb(var(--codi-screen))" }} />
-          <path d={BODY_PATHS.G} className={`fill-gold ${idleLoops ? "codi-glow" : ""}`} />
+          <path d={art.body.P} style={{ fill: pal.P }} />
+          <path d={art.body.S} style={{ fill: pal.S }} />
+          <path d={art.body.W} style={{ fill: pal.W }} />
+          {pal.A && <path d={art.body.A} style={{ fill: pal.A }} />}
+          {pal.B && <path d={art.body.B} style={{ fill: pal.B }} />}
+          <path d={art.body.G} style={{ fill: pal.G }} className={m.glow && idleLoops ? "codi-glow" : ""} />
           {/* screen highlight */}
-          <path d={px([[3, 4], [4, 4]])} style={{ fill: "rgb(var(--codi-shine))" }} />
+          <path d={px([[3, 4], [4, 4]])} style={{ fill: pal.shine }} />
+          {art.eyeArt && <path d={art.eyeArt} style={{ fill: pal.eye }} />}
 
           {/* face */}
-          <g style={{ fill: "rgb(var(--codi-eye))" }}>
+          <g style={{ fill: pal.eye }}>
             <g transform={`translate(${look.x} ${look.y})`}>
               <g className={face.eyes === "open" && idleLoops ? "codi-blink" : ""} style={{ animationDelay: blinkDelay }}>
                 <path d={EYES[face.eyes]} />
