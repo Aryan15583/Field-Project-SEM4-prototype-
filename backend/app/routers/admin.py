@@ -9,8 +9,9 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..db import get_db
 from ..models import AuditLog, Course, Exercise, Lesson, Unit, User
-from ..security import tokens
-from ..security.deps import audit, require_admin
+from ..security import mfa, tokens
+from ..security.deps import audit, is_owner, require_admin
+from ..security.ratelimit import limit
 from ..services import grading
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -215,13 +216,59 @@ def delete_lesson(lesson_id: int, request: Request, admin: Admin, db: DB):
 
 
 @router.get("/users")
-def users(_: Admin, db: DB, limit: int = Query(100, ge=1, le=500)):
-    rows = db.scalars(select(User).order_by(User.created_at.desc()).limit(limit)).all()
+def users(_: Admin, db: DB, limit: int = Query(100, ge=1, le=500), q: str = Query("", max_length=120)):
+    query = select(User).order_by((User.role == "admin").desc(), User.created_at.desc()).limit(limit)
+    if q.strip():
+        like = f"%{q.strip().lower()}%"
+        query = query.where(func.lower(User.email).like(like) | func.lower(User.name).like(like))
     return [
-        {"id": u.id, "email": u.email, "name": u.name, "role": u.role, "active": u.is_active, "mfa": u.mfa_enabled,
-         "xp": u.xp_total, "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None}
-        for u in rows
+        {"id": u.id, "email": u.email, "name": u.name, "role": u.role, "owner": is_owner(u), "active": u.is_active,
+         "mfa": u.mfa_enabled, "xp": u.xp_total, "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None}
+        for u in db.scalars(query).all()
     ]
+
+
+class RoleIn(BaseModel):
+    role: Literal["admin", "learner"]
+    code: str = Field(min_length=6, max_length=12)  # the acting admin's current 2-step code (re-confirmation)
+
+
+@router.post("/confirm-code", dependencies=[Depends(limit("admin_confirm", 5))])
+def send_confirm_code(request: Request, admin: Admin, db: DB):
+    """Email a fresh code to an admin who confirms with emailed codes (authenticator users just open their app)."""
+    if admin.mfa_method != "email":
+        return {"method": "totp"}
+    from .auth import _send_email_code
+
+    return {"method": "email", **_send_email_code(db, request, admin, resend=True)}
+
+
+@router.post("/users/{user_id}/role", dependencies=[Depends(limit("admin_role", 10))])
+def set_role(user_id: int, body: RoleIn, request: Request, admin: Admin, db: DB):
+    """Grant or remove admin access. Only admins can do this, and they must re-enter a 2-step code."""
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(404, "User not found")
+    if user.id == admin.id:
+        raise HTTPException(400, "You can't change your own role")
+    if is_owner(user):
+        raise HTTPException(403, "Owner accounts (ADMIN_EMAILS) are always admins")
+    if body.role == "admin" and not (user.is_active and user.mfa_enabled):
+        raise HTTPException(400, "Only active accounts with 2-step verification set up can become admins")
+    if mfa.is_locked(admin):
+        raise HTTPException(429, "Too many failed attempts. Try again later.")
+    ok = mfa.verify_email_code(admin, body.code) if admin.mfa_method == "email" else mfa.verify_totp(admin, body.code)
+    if not ok:
+        mfa.register_failure(admin)
+        audit(db, request, "admin_role_confirm_failed", admin.id, f"user={user_id}")
+        db.commit()
+        raise HTTPException(400, "That code didn't match. Check it and try again.")
+    admin.mfa_failed_count = 0
+    if user.role != body.role:
+        user.role = body.role  # checked on every request, so a removed admin loses access immediately
+        audit(db, request, "admin_role_change", admin.id, f"user={user_id} {user.email} role={body.role}")
+    db.commit()
+    return {"ok": True, "role": user.role}
 
 
 @router.post("/users/{user_id}/active")
@@ -231,6 +278,10 @@ def set_active(user_id: int, body: ActiveIn, request: Request, admin: Admin, db:
         raise HTTPException(404, "User not found")
     if user.id == admin.id:
         raise HTTPException(400, "You can't disable your own account")
+    if is_owner(user):
+        raise HTTPException(403, "Owner accounts can't be disabled here")
+    if user.role == "admin" and not is_owner(admin):
+        raise HTTPException(403, "Only an owner can disable another admin")
     user.is_active = body.active
     if not body.active:
         user.token_version += 1  # kill access tokens immediately

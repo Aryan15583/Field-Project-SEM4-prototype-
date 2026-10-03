@@ -124,8 +124,8 @@ def test_auth_rate_limit(client):
 
 def test_non_admin_cannot_use_admin_api(client):
     enroll(client)
-    assert client.get("/api/admin/tree").status_code == 403
-    assert client.get("/api/admin/audit").status_code == 403
+    assert client.get("/api/admin/tree").status_code == 404  # hidden: learners can't tell it exists
+    assert client.get("/api/admin/audit").status_code == 404
 
 
 def test_admin_can_manage_content_and_it_is_audited(client):

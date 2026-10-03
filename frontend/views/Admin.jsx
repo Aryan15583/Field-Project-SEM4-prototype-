@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { ErrorNote, Spinner } from "@/components/ui";
+import { ErrorNote, Modal, Spinner } from "@/components/ui";
+import { useAuth } from "@/lib/auth";
 
 const TEMPLATE = (unitId) =>
   JSON.stringify(
@@ -126,55 +127,173 @@ function Content() {
   );
 }
 
-function Users() {
-  const [users, setUsers] = useState(null);
+function ConfirmRole({ target, onDone, onCancel }) {
+  const [info, setInfo] = useState(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const load = useCallback(() => api("/api/admin/users").then(setUsers).catch((e) => setError(e.message)), []);
+  const makeAdmin = target.role !== "admin";
+
+  useEffect(() => {
+    api("/api/admin/confirm-code", { method: "POST" })
+      .then(setInfo)
+      .catch((e) => setError(e.message));
+  }, []);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await api(`/api/admin/users/${target.id}/role`, { method: "POST", body: { role: makeAdmin ? "admin" : "learner", code: code.replace(/\s/g, "") } });
+      onDone();
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <h2 className="text-xl font-black">{makeAdmin ? "Give admin access?" : "Remove admin access?"}</h2>
+      <p className="font-semibold text-muted">
+        <strong className="text-ink">{target.name}</strong> ({target.email}){" "}
+        {makeAdmin ? "will be able to edit lessons, disable users and grant admin access." : "will become a normal learner again."}
+      </p>
+      <p className="text-sm font-semibold">
+        {info?.method === "email"
+          ? `Confirm it's you: enter the code we just emailed to ${info.sent_to}.`
+          : info?.method === "totp"
+            ? "Confirm it's you: enter the 6-digit code from your authenticator app."
+            : "Sending a confirmation code…"}
+      </p>
+      <input
+        className="input text-center font-mono text-2xl tracking-[0.4em]"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={8}
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        aria-label="Confirmation code"
+        autoFocus
+      />
+      <ErrorNote>{error}</ErrorNote>
+      <div className="flex gap-2">
+        <button type="button" className="btn-ghost flex-1" onClick={onCancel}>
+          Cancel
+        </button>
+        <button className={`${makeAdmin ? "btn-primary" : "btn-bad"} flex-1`} disabled={busy || code.replace(/\s/g, "").length < 6}>
+          {makeAdmin ? "Make admin" : "Remove admin"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function Users() {
+  const { user: me } = useAuth();
+  const [users, setUsers] = useState(null);
+  const [q, setQ] = useState("");
+  const [error, setError] = useState("");
+  const [roleFor, setRoleFor] = useState(null);
+  const load = useCallback(
+    (query = "") =>
+      api(`/api/admin/users${query ? `?q=${encodeURIComponent(query)}` : ""}`)
+        .then(setUsers)
+        .catch((e) => setError(e.message)),
+    [],
+  );
   useEffect(() => {
     load();
   }, [load]);
   const toggle = async (u) => {
+    setError("");
     try {
       await api(`/api/admin/users/${u.id}/active`, { method: "POST", body: { active: !u.active } });
-      load();
+      load(q);
     } catch (e) {
       setError(e.message);
     }
   };
   if (!users) return <Spinner />;
   return (
-    <div className="card overflow-x-auto">
+    <div className="space-y-4">
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          load(q.trim());
+        }}
+      >
+        <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or email" aria-label="Search users" maxLength={120} />
+        <button className="btn-primary shrink-0">Search</button>
+      </form>
+      <p className="text-sm font-semibold text-muted">
+        Admins can edit lessons and manage users. Owners (the emails in ADMIN_EMAILS on the server) are always admins and can't be removed here. Every change
+        needs your 2-step code and is written to the audit log.
+      </p>
       <ErrorNote>{error}</ErrorNote>
-      <table className="w-full text-left text-sm">
-        <thead className="text-muted">
-          <tr>
-            {["User", "Role", "XP", "2FA", "Last login", ""].map((h) => (
-              <th key={h} className="px-4 py-3 font-bold">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.id} className="border-t-2 border-line">
-              <td className="px-4 py-3">
-                <p className="font-bold">{u.name}</p>
-                <p className="text-xs text-muted">{u.email}</p>
-              </td>
-              <td className="px-4 py-3">{u.role}</td>
-              <td className="px-4 py-3">{u.xp}</td>
-              <td className="px-4 py-3">{u.mfa ? "✓" : "-"}</td>
-              <td className="px-4 py-3 text-xs">{u.last_login_at ? new Date(u.last_login_at).toLocaleString() : "never"}</td>
-              <td className="px-4 py-3">
-                <button className={u.active ? "btn-link text-bad" : "btn-link"} onClick={() => toggle(u)}>
-                  {u.active ? "Disable" : "Enable"}
-                </button>
-              </td>
+      <div className="card overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="text-muted">
+            <tr>
+              {["User", "Role", "XP", "2FA", "Last login", "", ""].map((h, i) => (
+                <th key={i} className="px-4 py-3 font-bold">
+                  {h}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((u) => {
+              const self = u.id === me?.id;
+              return (
+                <tr key={u.id} className="border-t-2 border-line">
+                  <td className="px-4 py-3">
+                    <p className="font-bold">
+                      {u.name} {self && <span className="text-xs text-muted">(you)</span>}
+                    </p>
+                    <p className="text-xs text-muted">{u.email}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`chip text-xs ${u.role === "admin" ? "bg-primary/10 text-primary" : "text-muted"}`}>{u.owner ? "owner" : u.role}</span>
+                  </td>
+                  <td className="px-4 py-3">{u.xp}</td>
+                  <td className="px-4 py-3">{u.mfa ? "✓" : "-"}</td>
+                  <td className="px-4 py-3 text-xs">{u.last_login_at ? new Date(u.last_login_at).toLocaleString() : "never"}</td>
+                  <td className="px-4 py-3">
+                    {!self && !u.owner && (u.role === "admin" || (u.active && u.mfa)) && (
+                      <button className={u.role === "admin" ? "btn-link text-bad" : "btn-link"} onClick={() => setRoleFor(u)}>
+                        {u.role === "admin" ? "Remove admin" : "Make admin"}
+                      </button>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {!self && !u.owner && (
+                      <button className={u.active ? "btn-link text-bad" : "btn-link"} onClick={() => toggle(u)}>
+                        {u.active ? "Disable" : "Enable"}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <Modal open={!!roleFor} onClose={() => setRoleFor(null)} label="Change admin access">
+        {roleFor && (
+          <ConfirmRole
+            key={roleFor.id}
+            target={roleFor}
+            onCancel={() => setRoleFor(null)}
+            onDone={() => {
+              setRoleFor(null);
+              load(q.trim());
+            }}
+          />
+        )}
+      </Modal>
     </div>
   );
 }

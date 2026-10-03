@@ -23,9 +23,17 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
 
 
 def require_admin(user: User = Depends(get_current_user)) -> User:
+    # 404, not 403: to anyone who isn't an admin the admin API simply doesn't exist
     if user.role != "admin":
-        raise HTTPException(403, "Admins only")
+        raise HTTPException(404, "Not found")
     return user
+
+
+def is_owner(user: User) -> bool:
+    """Owners are the accounts listed in ADMIN_EMAILS: always admins, and no other admin can demote or disable them."""
+    from ..config import get_settings
+
+    return user.email.lower() in {e.lower() for e in get_settings().admin_emails}
 
 
 def get_mfa_user(request: Request, db: Session, stage: str) -> User:

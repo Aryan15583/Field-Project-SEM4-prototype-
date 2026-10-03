@@ -58,7 +58,11 @@ frontend, **FastAPI (Python) + PostgreSQL** backend, REST + JWT, optional LLM tu
   you already practised). Turn them off in your profile or with the signed one-click unsubscribe link in each email.
 - **AI tutor "Codi"** - hints that nudge without giving away the answer (falls back to author hints if no AI is configured).
 - **Progress dashboard** - XP over time and lessons per language (Recharts), achievements.
-- **Admin panel** - edit lessons/exercises (validated server-side), enable/disable users, security audit log.
+- **Admin panel (hidden)** - edit lessons/exercises (validated server-side), enable/disable users, security audit log.
+  Non-admins get a plain 404 for `/admin` and the admin API, so they can't tell it exists. **Owners** (the emails in
+  `ADMIN_EMAILS`) are always admins; admins grant or remove admin access for other accounts in **Admin → Users**,
+  re-confirming with their own 2-step code each time. Owners can't be demoted or disabled, nobody can change their
+  own role, and only owners can disable another admin. Every change is in the audit log.
 - **Responsive, phone to QHD/4K** - mobile bottom navigation, desktop sidebar; on big monitors the whole UI scales up
   (root size 112.5% at 1920px, 125% at 2400px - e.g. 2560×1440 - and 150% at 3200px). Everything is vector, so it stays sharp.
 - **Codi, the pixel-art mascot** - blue in light mode, green-on-terminal in dark mode; bobs, blinks, follows your
