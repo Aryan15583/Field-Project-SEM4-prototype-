@@ -7,11 +7,13 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { cancelled, passkeysSupported, signInWithPasskey } from "@/lib/webauthn";
 import { ErrorNote, Icon, Logo, Mascot, ThemeToggle } from "@/components/ui";
+import { getMascot } from "@/lib/mascots";
+import { useMascotId } from "@/lib/mascotPref";
 
 const FEATURES = [
   { icon: "bolt", title: "Bite-sized lessons", text: "5-minute lessons with quizzes, fill-in-the-blanks and real code." },
   { icon: "flame", title: "Streaks & XP", text: "Build a daily habit. Earn XP, keep your streak alive, collect badges." },
-  { icon: "bulb", title: "AI hints from Codi", text: "Stuck? Codi nudges you toward the answer without spoiling it." },
+  { icon: "bulb", title: "AI hints from {buddy}", text: "Stuck? {buddy} nudges you toward the answer without spoiling it." },
   { icon: "shield", title: "Secure by default", text: "Google sign-in with mandatory 2-step verification, or a passkey (Face ID, fingerprint or PIN)." },
 ];
 
@@ -30,6 +32,7 @@ function GoogleG() {
 }
 
 export default function Landing() {
+  const buddy = getMascot(useMascotId()).name;
   const params = useSearchParams();
   const router = useRouter();
   const [config, setConfig] = useState({ google: false, devLogin: false });
@@ -156,7 +159,9 @@ export default function Landing() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4">
-        {FEATURES.map((f, i) => (
+        {FEATURES.map((f0, i) => {
+          const f = { ...f0, title: f0.title.replace("{buddy}", buddy), text: f0.text.replace("{buddy}", buddy) };
+          return (
           <div key={f.title} className={`card card-accent p-6 ${CHIP_TINTS[(i * 2 + 1) % CHIP_TINTS.length]}`}>
             <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-primary/15 text-primary">
               <Icon name={f.icon} className="h-6 w-6" />
@@ -164,7 +169,8 @@ export default function Landing() {
             <h3 className="text-lg font-extrabold">{f.title}</h3>
             <p className="mt-1 text-sm text-muted">{f.text}</p>
           </div>
-        ))}
+          );
+        })}
       </section>
 
       <footer className="border-t-2 border-line py-8 text-center text-sm text-muted">

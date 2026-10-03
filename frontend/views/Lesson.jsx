@@ -10,6 +10,8 @@ import { AnimatedNumber, ErrorNote, Icon, Mascot, Modal, NoCopy, ProgressBar } f
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { sfx } from "@/lib/feedback";
+import { getMascot } from "@/lib/mascots";
+import { useMascotId } from "@/lib/mascotPref";
 import { useTheme } from "@/lib/theme";
 
 const PRAISE = ["Nice!", "Great job!", "Awesome!", "You got it!", "Correct!", "Brilliant!", "Amazing!"];
@@ -162,6 +164,7 @@ function Finished({ result, elapsed, accuracy, onContinue }) {
 
 /* ---------------------------------------------------------------- lesson */
 export default function Lesson({ id }) {
+  const buddy = getMascot(useMascotId()).name;
   const router = useRouter();
   const { reload } = useAuth();
   const [session, setSession] = useState(null); // { attempt_id, lesson, exercises, hearts }
@@ -391,13 +394,13 @@ export default function Lesson({ id }) {
                         >
                           <Mascot size={60} mood={hint.loading ? "think" : "idle"} className="shrink-0" />
                           <div className="card relative flex-1 p-4 text-sm font-semibold">
-                            {hint.loading ? <span className="animate-pulse">Codi is thinking…</span> : hint.hint}
+                            {hint.loading ? <span className="animate-pulse">{buddy} is thinking…</span> : hint.hint}
                             {hint.source === "ai" && <span className="mt-2 block text-[0.6875rem] font-bold uppercase text-muted">AI hint</span>}
                           </div>
                         </motion.div>
                       ) : (
                         <motion.button key="ask" type="button" className="btn-link inline-flex items-center gap-1 text-sm" onClick={askHint} exit={{ opacity: 0 }}>
-                          <Icon name="bulb" className="h-4 w-4" /> Stuck? Ask Codi for a hint
+                          <Icon name="bulb" className="h-4 w-4" /> Stuck? Ask {buddy} for a hint
                         </motion.button>
                       )}
                     </AnimatePresence>
