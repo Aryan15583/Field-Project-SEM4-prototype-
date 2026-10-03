@@ -8,8 +8,11 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   // In development the FastAPI backend is reached through Next so the browser sees ONE origin
   // (same-origin cookies, no CORS). In production nginx routes /api straight to FastAPI.
+  // Hosted on Vercel, set API_ORIGIN (e.g. https://codeingo-api.onrender.com) and the same proxying happens in
+  // production - the browser still talks to one origin, so cookies, CSRF and CSP work unchanged.
   async rewrites() {
-    return process.env.NODE_ENV === "development" ? [{ source: "/api/:path*", destination: `${API_ORIGIN}/api/:path*` }] : [];
+    const proxy = process.env.NODE_ENV === "development" || process.env.API_ORIGIN;
+    return proxy ? [{ source: "/api/:path*", destination: `${API_ORIGIN}/api/:path*` }] : [];
   },
   // Static security headers for every response (CSP with a per-request nonce is set in proxy.js).
   async headers() {

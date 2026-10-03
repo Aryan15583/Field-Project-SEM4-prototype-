@@ -10,7 +10,17 @@ class Base(DeclarativeBase):
     pass
 
 
+def normalise_url(url: str) -> str:
+    """Hosted Postgres (Neon, Render, Supabase...) hands out postgres:// or postgresql:// URLs; use the psycopg 3
+    driver we install rather than SQLAlchemy's default psycopg2."""
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
 def _make_engine(url: str):
+    url = normalise_url(url)
     if url.startswith("sqlite"):
         return create_engine(url, connect_args={"check_same_thread": False})
     # Bounded pool + statement timeout so a flood of slow queries can't exhaust the database.

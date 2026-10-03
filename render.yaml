@@ -1,0 +1,56 @@
+# Render Blueprint for the Codeingo API (+ Redis). The website itself is hosted on Vercel - see deploy/VERCEL.md.
+# Render dashboard -> New -> Blueprint -> pick this repo. Values marked sync: false are asked for on creation.
+services:
+  - type: web
+    name: codeingo-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: ENV
+        value: production
+      - key: PORT
+        value: "8000"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codeingo-redis
+          property: connectionString
+      - key: DATABASE_URL # Neon connection string (direct, not "pooled")
+        sync: false
+      - key: ENCRYPTION_KEY # a Fernet key - see deploy/VERCEL.md
+        sync: false
+      - key: PUBLIC_URL # https://YOUR-APP.vercel.app
+        sync: false
+      - key: ALLOWED_HOSTS # ["codeingo-api.onrender.com"]
+        sync: false
+      - key: ADMIN_EMAILS # ["you@gmail.com"]
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI # https://YOUR-APP.vercel.app/api/auth/google/callback
+        sync: false
+      - key: SMTP_HOST # smtp.gmail.com
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURITY
+        value: starttls
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD # a Gmail App Password
+        sync: false
+      - key: SMTP_FROM # Codeingo <you@gmail.com>
+        sync: false
+
+  - type: keyvalue
+    name: codeingo-redis
+    plan: free
+    ipAllowList: [] # only reachable from your Render services

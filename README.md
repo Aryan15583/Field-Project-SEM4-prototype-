@@ -229,6 +229,9 @@ cd backend && pytest -q
 
 ## Deploy (production)
 
+**Free hosting (Vercel + Render + Neon):** follow [deploy/VERCEL.md](deploy/VERCEL.md) - the website on Vercel, the API
+and Redis on Render (`render.yaml`), PostgreSQL on Neon. Below: the single-server Docker setup.
+
 1. **Google OAuth client** - Google Cloud Console → *APIs & Services → Credentials → Create OAuth client ID → Web application*.
    Authorized redirect URI: `https://YOUR_DOMAIN/api/auth/google/callback`. Configure the OAuth consent screen (scopes: `openid email profile`).
 2. **Configure** - `cp .env.example .env` and fill in every value (the file explains how to generate each secret).
