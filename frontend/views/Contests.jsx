@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ErrorNote, Icon, Spinner } from "@/components/ui";
+import { courseTint, ErrorNote, Icon, PageTitle, Spinner } from "@/components/ui";
 import { api } from "@/lib/api";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -18,8 +18,8 @@ function ContestCard({ c }) {
   const { status, score, rank } = c.me;
   const action = status === "open" ? "Enter" : status === "running" ? "Resume" : "Results";
   return (
-    <Link href={`/contest/${c.id}`} className="card flex items-center gap-4 p-4 transition-colors hover:bg-surface">
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-2xl" aria-hidden="true">
+    <Link href={`/contest/${c.id}`} className={`card card-accent flex items-center gap-4 p-4 transition-colors hover:bg-primary/5 ${courseTint(c.course)}`}>
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary/15 text-2xl" aria-hidden="true">
         {c.icon}
       </span>
       <span className="min-w-0 flex-1">
@@ -54,15 +54,14 @@ export default function Contests() {
   const ends = data.current[0]?.ends_at;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="tint-pink mx-auto max-w-2xl space-y-6">
       <div className="text-center">
-        <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-gold/15 text-gold">
-          <Icon name="bolt" className="h-9 w-9" />
-        </div>
-        <h1 className="text-2xl font-black">Weekly contests</h1>
-        <p className="text-sm text-muted">
-          {data.questions} questions · {data.minutes} minutes · one try per week. Ranked by score, then speed.
-        </p>
+        <PageTitle
+          icon="bolt"
+          title="Weekly contests"
+          subtitle={`${data.questions} questions · ${data.minutes} minutes · one try per week. Ranked by score, then speed.`}
+          center
+        />
         {ends && (
           <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-bad/10 px-3 py-1 text-xs font-black uppercase tracking-wide text-bad">
             <span className="h-2 w-2 animate-pulse rounded-full bg-bad" aria-hidden="true" /> Live · {timeLeft(ends)}

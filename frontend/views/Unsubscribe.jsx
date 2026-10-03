@@ -23,7 +23,7 @@ export default function Unsubscribe({ u, t }) {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-bg px-4 py-10 text-ink">
+    <div className="grid min-h-screen place-items-center px-4 py-10 text-ink">
       <div className="card w-full max-w-md p-8 text-center">
         <div className="mb-6 flex justify-center">
           <Logo />

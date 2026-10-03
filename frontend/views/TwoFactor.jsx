@@ -9,7 +9,7 @@ import { ErrorNote, Icon, Logo, Mascot, Spinner } from "@/components/ui";
 
 function Shell({ children }) {
   return (
-    <div className="grid min-h-screen place-items-center bg-bg px-4 py-10 text-ink">
+    <div className="grid min-h-screen place-items-center px-4 py-10 text-ink">
       <div className="w-full max-w-md">
         <div className="mb-6 flex justify-center">
           <Logo />

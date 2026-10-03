@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ErrorNote, Icon, Mascot, ProgressBar } from "@/components/ui";
+import { courseTint, ErrorNote, Icon, Mascot, ProgressBar } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
-function Stat({ value, label, tone }) {
+function Stat({ value, label, tint }) {
   return (
-    <div className="rounded-2xl border-2 border-line p-3 text-center">
-      <p className={`text-2xl font-black ${tone}`}>{value}</p>
+    <div className={`rounded-2xl bg-primary/10 p-3 text-center ${tint}`}>
+      <p className="text-2xl font-black text-primary">{value}</p>
       <p className="text-xs font-bold uppercase tracking-wider text-muted">{label}</p>
     </div>
   );
@@ -30,8 +30,8 @@ export default function PracticeHub() {
   const ready = all && all.total >= (data?.min_items ?? 3);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="card flex flex-col items-center gap-5 p-6 text-center sm:flex-row sm:text-left">
+    <div className="tint-violet mx-auto max-w-2xl space-y-6">
+      <div className="card card-accent flex flex-col items-center gap-5 bg-gradient-to-br from-primary/15 via-raised to-pink/10 p-6 text-center sm:flex-row sm:text-left">
         <Mascot size={110} mood={all?.due ? "think" : "happy"} />
         <div className="flex-1">
           <h1 className="text-2xl font-black">Practice</h1>
@@ -54,9 +54,9 @@ export default function PracticeHub() {
         <>
           <div className="card p-5">
             <div className="grid grid-cols-3 gap-3">
-              <Stat value={all.due} label="Due now" tone="text-flame" />
-              <Stat value={all.mistakes} label="Mistakes" tone="text-bad" />
-              <Stat value={`${all.strong}/${all.total}`} label="Strong" tone="text-primary" />
+              <Stat value={all.due} label="Due now" tint="tint-orange" />
+              <Stat value={all.mistakes} label="Mistakes" tint="tint-red" />
+              <Stat value={`${all.strong}/${all.total}`} label="Strong" tint="tint-teal" />
             </div>
             {ready ? (
               <Link href="/review" className="btn-primary mt-5 w-full">
@@ -71,8 +71,8 @@ export default function PracticeHub() {
             {data.courses.map((c) => {
               const canPractise = c.total >= data.min_items;
               return (
-                <div key={c.slug} className="flex items-center gap-4 p-4">
-                  <span className="text-2xl" aria-hidden="true">
+                <div key={c.slug} className={`flex items-center gap-4 p-4 ${courseTint(c.slug)}`}>
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/15 text-2xl" aria-hidden="true">
                     {c.icon}
                   </span>
                   <div className="min-w-0 flex-1">

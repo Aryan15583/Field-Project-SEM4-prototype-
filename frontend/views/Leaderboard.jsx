@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { ErrorNote, Icon, Spinner } from "@/components/ui";
+import { ErrorNote, Icon, nameTint, PageTitle, Spinner } from "@/components/ui";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 const TABS = [
@@ -13,7 +13,7 @@ const TABS = [
 
 function Avatar({ name, url, size = "h-10 w-10" }) {
   if (url) return <img src={url} alt="" referrerPolicy="no-referrer" className={`${size} rounded-full object-cover`} />;
-  return <span className={`grid ${size} shrink-0 place-items-center rounded-full bg-primary/15 font-black text-primary`}>{name.slice(0, 1).toUpperCase()}</span>;
+  return <span className={`grid ${size} shrink-0 place-items-center rounded-full bg-primary/15 font-black text-primary ${nameTint(name)}`}>{name.slice(0, 1).toUpperCase()}</span>;
 }
 
 /** "ABCD2345" -> "ABCD-2345": easier to read out or type. */
@@ -33,7 +33,7 @@ function Board({ entries, scope, onFollow }) {
             </span>
             {e.streak > 0 && (
               <span className="flex items-center gap-1 text-xs font-bold text-muted">
-                <Icon name="flame" className="h-3.5 w-3.5 text-orange-500" /> {e.streak}-day streak
+                <Icon name="flame" className="h-3.5 w-3.5 text-flame" /> {e.streak}-day streak
               </span>
             )}
           </span>
@@ -210,24 +210,18 @@ export default function Leaderboard() {
   if (!friends) return <Spinner />;
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-gold/15 text-gold">
-          <Icon name="trophy" className="h-9 w-9" />
-        </div>
-        <h1 className="text-2xl font-black">Weekly League</h1>
-        <p className="text-sm text-muted">Earn XP this week to climb the ranks. Resets every Monday.</p>
-      </div>
+    <div className="tint-gold mx-auto max-w-2xl">
+      <PageTitle icon="trophy" title="Weekly League" subtitle="Earn XP this week to climb the ranks. Resets every Monday." center />
 
-      <Link href="/contests" className="card mb-5 flex items-center gap-4 p-4 transition-colors hover:bg-surface">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gold/15 text-gold">
+      <Link href="/contests" className="tint-pink mb-5 flex items-center gap-4 rounded-3xl bg-gradient-to-r from-pink to-violet p-4 text-on-primary shadow-lg shadow-pink/20 transition-transform hover:-translate-y-0.5">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/20">
           <Icon name="bolt" className="h-6 w-6" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-extrabold">Weekly contests</span>
-          <span className="block text-sm font-semibold text-muted">10 questions, 10 minutes, a live leaderboard for every language.</span>
+          <span className="block text-sm font-semibold opacity-90">10 questions, 10 minutes, a live leaderboard for every language.</span>
         </span>
-        <span className="text-xl font-black text-muted" aria-hidden="true">›</span>
+        <span className="text-xl font-black" aria-hidden="true">›</span>
       </Link>
 
       <div className="mb-4 flex justify-center gap-2" role="tablist" aria-label="League">

@@ -333,7 +333,7 @@ export default function Lesson({ id }) {
   const verdict = feedback ? (feedback.correct ? "right" : "wrong") : null;
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-bg text-ink">
+    <div className="flex min-h-[100dvh] flex-col text-ink">
       {/* header */}
       <div className="mx-auto flex w-full max-w-3xl items-center gap-4 px-4 pb-2 pt-9">
         <button className="text-muted transition-colors hover:text-ink" onClick={() => setConfirmExit(true)} aria-label="Quit lesson">

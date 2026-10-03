@@ -7,21 +7,22 @@ import { useAuth } from "@/lib/auth";
 import { usePwa } from "@/lib/pwa";
 import { Icon, Logo, StatPill, ThemeToggle } from "./ui";
 
+// each section has its own colour (a .tint-* class re-colours "primary" inside it - see globals.css)
 const NAV = [
-  { to: "/learn", label: "Learn", icon: "learn" },
-  { to: "/daily", label: "Daily", icon: "target" },
-  { to: "/practice", label: "Practice", icon: "review" },
-  { to: "/leaderboard", label: "Leagues", icon: "trophy" },
-  { to: "/contests", label: "Contests", icon: "bolt", desktopOnly: true }, // phones reach it from Leagues
-  { to: "/stats", label: "Progress", icon: "chart" },
-  { to: "/profile", label: "Profile", icon: "user" },
+  { to: "/learn", label: "Learn", icon: "learn", tint: "" },
+  { to: "/daily", label: "Daily", icon: "target", tint: "tint-orange" },
+  { to: "/practice", label: "Practice", icon: "review", tint: "tint-violet" },
+  { to: "/leaderboard", label: "Leagues", icon: "trophy", tint: "tint-gold" },
+  { to: "/contests", label: "Contests", icon: "bolt", tint: "tint-pink", desktopOnly: true }, // phones reach it from Leagues
+  { to: "/stats", label: "Progress", icon: "chart", tint: "tint-teal" },
+  { to: "/profile", label: "Profile", icon: "user", tint: "tint-sky" },
 ];
 
-function NavLink({ to, className, children, pill }) {
+function NavLink({ to, tint = "", className, children, pill }) {
   const pathname = usePathname();
   const isActive = pathname === to || pathname.startsWith(`${to}/`);
   return (
-    <Link href={to} className={`relative ${className({ isActive })}`} aria-current={isActive ? "page" : undefined}>
+    <Link href={to} className={`relative ${tint} ${className({ isActive })}`} aria-current={isActive ? "page" : undefined}>
       {isActive && pill && (
         // one highlight that glides between items (shared layout animation, transform-only)
         <motion.span layoutId={pill} className="absolute inset-0 rounded-2xl border-2 border-primary/50 bg-primary/10" transition={{ type: "spring", stiffness: 500, damping: 38 }} />
@@ -61,17 +62,17 @@ function InstallButton() {
 
 export default function AppShell({ children }) {
   const { user } = useAuth();
-  const items = user?.role === "admin" ? [...NAV, { to: "/admin", label: "Admin", icon: "shield" }] : NAV;
+  const items = user?.role === "admin" ? [...NAV, { to: "/admin", label: "Admin", icon: "shield", tint: "tint-red" }] : NAV;
 
   return (
-    <div className="min-h-screen bg-bg text-ink">
+    <div className="min-h-screen text-ink">
       {/* desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r-2 border-line px-4 py-6 lg:flex">
         <Logo className="mb-8 px-3" />
         <nav className="flex flex-1 flex-col gap-2" aria-label="Main">
           {items.map((n) => (
-            <NavLink key={n.to} to={n.to} className={navClass} pill="side-pill">
-              <Icon name={n.icon} className="h-6 w-6" />
+            <NavLink key={n.to} to={n.to} tint={n.tint} className={navClass} pill="side-pill">
+              <Icon name={n.icon} className="h-6 w-6 text-primary" />
               {n.label}
             </NavLink>
           ))}
@@ -107,11 +108,12 @@ export default function AppShell({ children }) {
           <NavLink
             key={n.to}
             to={n.to}
+            tint={n.tint}
             className={({ isActive }) =>
-              `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[0.625rem] font-extrabold uppercase ${isActive ? "text-primary" : "text-muted"}`
+              `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[0.625rem] font-extrabold uppercase ${isActive ? "bg-primary/10 text-primary" : "text-muted"}`
             }
           >
-            <Icon name={n.icon} className="h-6 w-6" />
+            <Icon name={n.icon} className="h-6 w-6 text-primary" />
             {n.label}
           </NavLink>
         ))}

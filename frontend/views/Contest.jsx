@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import QuizRunner, { QuizMessage, QuizSkeleton } from "@/components/QuizRunner";
-import { Icon, Logo, Mascot } from "@/components/ui";
+import { Icon, Logo, Mascot, nameTint } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { timeLeft } from "./Contests";
@@ -24,7 +24,7 @@ function Board({ board }) {
       {board.entries.map((e, i) => (
         <li key={`${e.name}-${i}`} className={`flex items-center gap-3 px-4 py-3 ${e.me ? "bg-primary/10" : ""}`}>
           <span className="w-8 shrink-0 text-center text-lg font-black text-muted">{e.rank ? MEDALS[e.rank - 1] || e.rank : "·"}</span>
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 font-black text-primary">{e.name.slice(0, 1).toUpperCase()}</span>
+          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 font-black text-primary ${nameTint(e.name)}`}>{e.name.slice(0, 1).toUpperCase()}</span>
           <span className="min-w-0 flex-1">
             <span className={`block truncate font-bold ${e.me ? "text-primary" : ""}`}>
               {e.name} {e.me && <span className="text-xs">(you)</span>}
@@ -139,7 +139,7 @@ export default function Contest({ id }) {
 
   const mine = board.entries.find((e) => e.me);
   return (
-    <div className="min-h-screen bg-bg px-4 pb-16 pt-6 text-ink">
+    <div className="min-h-screen px-4 pb-16 pt-6 text-ink">
       <div className="mx-auto max-w-2xl space-y-5">
         <div className="flex items-center justify-between">
           <Link href="/contests" className="flex items-center gap-1 text-sm font-extrabold uppercase text-muted hover:text-ink">

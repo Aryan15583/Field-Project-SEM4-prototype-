@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Exercise, { initialValue, isAnswered } from "@/components/Exercise";
-import { ErrorNote, Mascot, NoCopy, Spinner } from "@/components/ui";
+import { ErrorNote, Mascot, NoCopy, PageTitle, Spinner } from "@/components/ui";
 import { sfx } from "@/lib/feedback";
 
 export default function Daily() {
@@ -48,7 +48,7 @@ export default function Daily() {
 
   if (daily.answered && !result)
     return (
-      <div className="card mx-auto max-w-xl p-8 text-center">
+      <div className="tint-orange card card-accent mx-auto max-w-xl p-8 text-center">
         <Mascot size={100} mood={daily.correct ? "happy" : "think"} className="mx-auto" />
         <h1 className="mt-4 text-2xl font-black">{daily.correct ? "Challenge crushed!" : "See you tomorrow!"}</h1>
         <p className="mt-1 text-muted">A new daily challenge unlocks at midnight UTC.</p>
@@ -59,14 +59,9 @@ export default function Daily() {
     );
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-center gap-3">
-        <span className="chip bg-gold/15 text-gold">🎯 Daily challenge</span>
-        <span className="text-sm font-bold text-muted">
-          {daily.course} · +{daily.bonus_xp} XP · one attempt
-        </span>
-      </div>
-      <div className="card p-6">
+    <div className="tint-orange mx-auto max-w-2xl">
+      <PageTitle icon="target" title="Daily challenge" subtitle={`${daily.course} · +${daily.bonus_xp} XP · one attempt`} />
+      <div className="card card-accent p-6">
         <Exercise exercise={daily.exercise} value={value} onChange={setValue} result={result ? (result.correct ? "right" : "wrong") : null} />
         <ErrorNote>{error}</ErrorNote>
         {result ? (

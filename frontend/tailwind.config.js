@@ -25,6 +25,11 @@ module.exports = {
         "bad-strong": v("bad-strong"),
         gold: v("gold"),
         flame: v("flame"),
+        violet: v("c-violet"),
+        pink: v("c-pink"),
+        orange: v("c-orange"),
+        teal: v("c-teal"),
+        sky: v("c-sky"),
       },
       fontFamily: {
         sans: ["var(--font-nunito)", "ui-rounded", '"Segoe UI"', "system-ui", "sans-serif"],

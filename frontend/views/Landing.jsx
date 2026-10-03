@@ -14,6 +14,7 @@ const FEATURES = [
   { icon: "shield", title: "Secure by default", text: "Google sign-in with mandatory 2-step verification, or a passkey (Face ID, fingerprint or PIN)." },
 ];
 
+const CHIP_TINTS = ["tint-sky", "tint-gold", "", "tint-orange", "tint-violet", "tint-teal", "tint-pink"];
 const LANGS = ["Python", "JavaScript", "TypeScript", "Java", "C++", "C", "SQL", "HTML & CSS", "Git", "Algorithms"];
 
 function GoogleG() {
@@ -76,7 +77,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-ink">
+    <div className="min-h-screen text-ink">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
         <Logo />
         <ThemeToggle />
@@ -91,7 +92,7 @@ export default function Landing() {
         </div>
         <div className="order-1 text-center md:order-2 md:text-left">
           <h1 className="text-4xl font-black leading-tight md:text-5xl">
-            The free, fun and effective way to <span className="text-primary">learn to code!</span>
+            The free, fun and effective way to <span className="bg-gradient-to-r from-primary via-violet to-pink bg-clip-text text-transparent">learn to code!</span>
           </h1>
           <p className="mt-4 text-lg text-muted">Short daily lessons, instant feedback and a streak you won't want to break.</p>
 
@@ -132,10 +133,10 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="border-y-2 border-line bg-surface">
+      <section className="border-y-2 border-line bg-surface/70">
         <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-3 px-4 py-6">
-          {LANGS.map((l) => (
-            <span key={l} className="chip border-2 border-line bg-raised text-muted">
+          {LANGS.map((l, i) => (
+            <span key={l} className={`chip border-2 border-primary/30 bg-primary/10 text-primary ${CHIP_TINTS[i % CHIP_TINTS.length]}`}>
               {l}
             </span>
           ))}
@@ -143,9 +144,9 @@ export default function Landing() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4">
-        {FEATURES.map((f) => (
-          <div key={f.title} className="card p-6">
-            <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+        {FEATURES.map((f, i) => (
+          <div key={f.title} className={`card card-accent p-6 ${CHIP_TINTS[(i * 2 + 1) % CHIP_TINTS.length]}`}>
+            <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-primary/15 text-primary">
               <Icon name={f.icon} className="h-6 w-6" />
             </span>
             <h3 className="text-lg font-extrabold">{f.title}</h3>

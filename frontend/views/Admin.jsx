@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { ErrorNote, Modal, Spinner } from "@/components/ui";
+import { ErrorNote, Modal, PageTitle, Spinner } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 
 const TEMPLATE = (unitId) =>
@@ -337,8 +337,8 @@ function Audit() {
 export default function Admin() {
   const [tab, setTab] = useState("content");
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-black">Admin</h1>
+    <div className="tint-red">
+      <PageTitle icon="shield" title="Admin" subtitle="Content, users and the security log." />
       <div className="mb-6 flex gap-2" role="tablist">
         {[
           ["content", "Content"],

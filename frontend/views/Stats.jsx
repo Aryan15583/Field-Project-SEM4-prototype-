@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { ErrorNote, Icon, Spinner } from "@/components/ui";
+import { ErrorNote, IconTile, PageTitle, Spinner } from "@/components/ui";
 import { chartColors, useTheme } from "@/lib/theme";
 
-function StatTile({ icon, tone, value, label }) {
+const BADGE_TINTS = ["tint-orange", "tint-violet", "tint-pink", "", "tint-teal", "tint-sky", "tint-gold"];
+
+function StatTile({ icon, tint, value, label }) {
   return (
-    <div className="card flex items-center gap-3 p-4">
-      <Icon name={icon} className={`h-8 w-8 ${tone}`} />
+    <div className={`card card-accent flex items-center gap-3 p-4 ${tint}`}>
+      <IconTile icon={icon} />
       <div>
         <p className="text-2xl font-black leading-none">{value}</p>
         <p className="mt-1 text-xs font-bold text-muted">{label}</p>
@@ -78,13 +80,13 @@ export default function Stats() {
   const axis = { stroke: c.axis, fontSize: 12, tickLine: false, axisLine: false };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-black">Your progress</h1>
+    <div className="tint-teal space-y-6">
+      <PageTitle icon="chart" title="Your progress" subtitle="Streaks, XP and everything you've unlocked." />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatTile icon="flame" tone="text-flame" value={user.streak} label="Day streak" />
-        <StatTile icon="bolt" tone="text-gold" value={user.xp_total} label="Total XP" />
-        <StatTile icon="check" tone="text-primary" value={data.lessons_completed} label="Lessons done" />
-        <StatTile icon="star" tone="text-primary" value={user.streak_best} label="Best streak" />
+        <StatTile icon="flame" tint="tint-orange" value={user.streak} label="Day streak" />
+        <StatTile icon="bolt" tint="tint-gold" value={user.xp_total} label="Total XP" />
+        <StatTile icon="check" tint="tint-teal" value={data.lessons_completed} label="Lessons done" />
+        <StatTile icon="star" tint="tint-pink" value={user.streak_best} label="Best streak" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
@@ -95,15 +97,15 @@ export default function Stats() {
               <AreaChart data={data.xp_by_day} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="xpFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={c.primary} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={c.primary} stopOpacity={0} />
+                    <stop offset="0%" stopColor={c.teal} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={c.teal} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} stroke={c.grid} strokeDasharray="3 3" />
                 <XAxis dataKey="day" {...axis} interval="preserveStartEnd" minTickGap={24} />
                 <YAxis {...axis} allowDecimals={false} />
                 <Tooltip content={<ChartTooltip unit="XP" />} cursor={{ stroke: c.axis, strokeDasharray: "3 3" }} />
-                <Area type="monotone" dataKey="xp" stroke={c.primary} strokeWidth={2} fill="url(#xpFill)" activeDot={{ r: 5, stroke: c.surface, strokeWidth: 2 }} />
+                <Area type="monotone" dataKey="xp" stroke={c.teal} strokeWidth={2} fill="url(#xpFill)" activeDot={{ r: 5, stroke: c.surface, strokeWidth: 2 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -123,7 +125,7 @@ export default function Stats() {
                     <XAxis type="number" {...axis} allowDecimals={false} />
                     <YAxis type="category" dataKey="course" {...axis} width={90} />
                     <Tooltip content={<ChartTooltip unit="lessons" />} cursor={{ fill: c.grid, opacity: 0.4 }} />
-                    <Bar dataKey="lessons" fill={c.primary} radius={[0, 4, 4, 0]} maxBarSize={22} />
+                    <Bar dataKey="lessons" fill={c.teal} radius={[0, 4, 4, 0]} maxBarSize={22} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -136,8 +138,8 @@ export default function Stats() {
       <section>
         <h2 className="mb-3 text-xl font-black">Achievements</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {data.badges.map((b) => (
-            <div key={b.key} className={`card p-4 text-center ${b.earned ? "" : "opacity-45 grayscale"}`}>
+          {data.badges.map((b, i) => (
+            <div key={b.key} className={`card p-4 text-center ${b.earned ? `card-accent bg-primary/10 ${BADGE_TINTS[i % BADGE_TINTS.length]}` : "opacity-45 grayscale"}`}>
               <div className="text-4xl" aria-hidden="true">
                 {b.icon}
               </div>

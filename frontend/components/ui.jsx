@@ -123,7 +123,7 @@ export function ProgressBar({ value, max = 100, className = "" }) {
   const pct = Math.max(0, Math.min(1, value / Math.max(1, max)));
   return (
     <div
-      className={`relative h-4 overflow-hidden rounded-full bg-line ${className}`}
+      className={`relative h-4 overflow-hidden rounded-full bg-primary/15 ${className}`}
       role="progressbar"
       aria-valuenow={Math.round(pct * 100)}
       aria-valuemin={0}
@@ -166,7 +166,7 @@ export function AnimatedNumber({ value, duration = 0.6 }) {
 }
 
 export function StatPill({ icon, value, tone, label }) {
-  const tones = { flame: "text-flame", bad: "text-bad", primary: "text-primary", gold: "text-gold" };
+  const tones = { flame: "bg-flame/10 text-flame", bad: "bg-bad/10 text-bad", primary: "bg-primary/10 text-primary", gold: "bg-gold/10 text-gold" };
   return (
     <span className={`chip ${tones[tone]}`} title={label} aria-label={`${label}: ${value}`}>
       <motion.span key={value} initial={{ scale: 1.35 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 15 }}>
@@ -174,6 +174,47 @@ export function StatPill({ icon, value, tone, label }) {
       </motion.span>
       <AnimatedNumber value={value} />
     </span>
+  );
+}
+
+/** Each course's colour (a .tint-* class), used for its tabs, rows and cards. */
+const COURSE_TINTS = {
+  python: "tint-sky", javascript: "tint-gold", typescript: "", java: "tint-orange", cpp: "tint-violet", c: "tint-teal",
+  sql: "tint-pink", "html-css": "tint-orange", git: "tint-pink", dsa: "tint-violet",
+};
+export const courseTint = (slug) => COURSE_TINTS[slug] ?? "";
+
+/** A stable colour per person (from their name), for initials avatars on leaderboards. */
+const PEOPLE_TINTS = ["", "tint-violet", "tint-pink", "tint-orange", "tint-teal", "tint-sky", "tint-gold"];
+export function nameTint(name = "") {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return PEOPLE_TINTS[h % PEOPLE_TINTS.length];
+}
+
+/** A rounded, tinted square holding an icon - takes the colour of the nearest .tint-* wrapper (or primary). */
+export function IconTile({ icon, size = "md", className = "" }) {
+  const box = { sm: "h-9 w-9 rounded-xl", md: "h-11 w-11 rounded-2xl", lg: "h-16 w-16 rounded-2xl" }[size];
+  const glyph = { sm: "h-5 w-5", md: "h-6 w-6", lg: "h-9 w-9" }[size];
+  return (
+    <span className={`grid shrink-0 place-items-center bg-primary/15 text-primary ${box} ${className}`} aria-hidden="true">
+      <Icon name={icon} className={glyph} />
+    </span>
+  );
+}
+
+/** Page heading with a coloured icon tile - wrap the page in a .tint-* class to pick its colour. */
+export function PageTitle({ icon, title, subtitle, center = false }) {
+  return (
+    <div className={`mb-6 flex items-center gap-4 ${center ? "flex-col text-center" : ""}`}>
+      <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-strong text-on-primary shadow-lg shadow-primary/25" aria-hidden="true">
+        <Icon name={icon} className="h-9 w-9" />
+      </span>
+      <div>
+        <h1 className="text-2xl font-black">{title}</h1>
+        {subtitle && <p className="text-sm font-semibold text-muted">{subtitle}</p>}
+      </div>
+    </div>
   );
 }
 

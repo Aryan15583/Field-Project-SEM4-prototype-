@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { ErrorNote, Icon, Modal } from "@/components/ui";
+import { ErrorNote, Icon, IconTile, Modal } from "@/components/ui";
 import { setSoundEnabled, sfx, soundEnabled } from "@/lib/feedback";
 import { usePwa } from "@/lib/pwa";
 import { useTheme } from "@/lib/theme";
@@ -65,21 +65,28 @@ export default function Profile() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-4">
-        {user.avatar_url ? (
-          <img src={user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-20 w-20 rounded-full" />
-        ) : (
-          <span className="grid h-20 w-20 place-items-center rounded-full bg-primary/15 text-3xl font-black text-primary">{user.name.slice(0, 1).toUpperCase()}</span>
-        )}
+    <div className="tint-sky mx-auto max-w-2xl space-y-6">
+      <div className="flex items-center gap-4 rounded-3xl bg-gradient-to-r from-primary/15 via-violet/10 to-pink/10 p-5">
+        {/* gradient ring around the avatar */}
+        <span className="rounded-full bg-gradient-to-br from-primary via-violet to-pink p-1">
+          {user.avatar_url ? (
+            <img src={user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-20 w-20 rounded-full border-4 border-raised" />
+          ) : (
+            <span className="grid h-20 w-20 place-items-center rounded-full border-4 border-raised bg-raised text-3xl font-black text-primary">
+              {user.name.slice(0, 1).toUpperCase()}
+            </span>
+          )}
+        </span>
         <div>
           <h1 className="text-2xl font-black">{user.name}</h1>
           <p className="text-sm text-muted">{user.email}</p>
         </div>
       </div>
 
-      <section className="card space-y-3 p-5">
-        <h2 className="font-extrabold">Certificates</h2>
+      <section className="tint-gold card card-accent space-y-3 p-5">
+        <h2 className="flex items-center gap-3 font-extrabold">
+          <IconTile icon="star" size="sm" /> Certificates
+        </h2>
         {certs.length ? (
           <ul className="space-y-2">
             {certs.map((c) => (
@@ -102,8 +109,10 @@ export default function Profile() {
         )}
       </section>
 
-      <section className="card space-y-4 p-5">
-        <h2 className="font-extrabold">Profile</h2>
+      <section className="card card-accent space-y-4 p-5">
+        <h2 className="flex items-center gap-3 font-extrabold">
+          <IconTile icon="user" size="sm" /> Profile
+        </h2>
         <form onSubmit={(e) => (e.preventDefault(), save({ name }))} className="flex gap-2">
           <input className="input" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} aria-label="Display name" />
           <button className="btn-primary" disabled={!name.trim() || name === user.name}>
@@ -166,9 +175,9 @@ export default function Profile() {
 
       <AppInstall />
 
-      <section className="card space-y-4 p-5">
-        <h2 className="flex items-center gap-2 font-extrabold">
-          <Icon name="shield" className="h-5 w-5 text-primary" /> Security
+      <section className="tint-teal card card-accent space-y-4 p-5">
+        <h2 className="flex items-center gap-3 font-extrabold">
+          <IconTile icon="shield" size="sm" /> Security
         </h2>
         <p className="flex items-center gap-2 text-sm">
           <Icon name="check" className="h-5 w-5 text-primary" /> 2-step verification is on ·{" "}
@@ -295,9 +304,11 @@ function Passkeys() {
 function AppInstall() {
   const { canInstall, installed, ios, install } = usePwa();
   return (
-    <section className="card flex flex-wrap items-center justify-between gap-4 p-5">
+    <section className="tint-violet card card-accent flex flex-wrap items-center justify-between gap-4 p-5">
       <div className="min-w-0 flex-1">
-        <h2 className="font-extrabold">Codeingo app</h2>
+        <h2 className="mb-1 flex items-center gap-3 font-extrabold">
+          <IconTile icon="bolt" size="sm" /> Codeingo app
+        </h2>
         <p className="text-sm font-semibold text-muted">
           {installed
             ? "You're using the installed app."

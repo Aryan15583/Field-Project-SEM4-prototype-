@@ -56,6 +56,6 @@ export const useTheme = () => useContext(ThemeContext);
 /** Concrete colours for SVG charts (Recharts can't resolve CSS variables in attributes). */
 export function chartColors(dark) {
   return dark
-    ? { primary: "#16a34a", grid: "#203025", axis: "#8aa596", surface: "#101712", ink: "#e8f5ec", gold: "#facc15" }
-    : { primary: "#1d6ff2", grid: "#dbe4f5", axis: "#525b6e", surface: "#ffffff", ink: "#0a0a0a", gold: "#f5b00b" };
+    ? { primary: "#16a34a", teal: "#2dd4bf", grid: "#203025", axis: "#8aa596", surface: "#101712", ink: "#e8f5ec", gold: "#facc15" }
+    : { primary: "#1d6ff2", teal: "#0f766e", grid: "#dbe4f5", axis: "#525b6e", surface: "#ffffff", ink: "#0a0a0a", gold: "#f5b00b" };
 }

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ErrorNote, Icon, Mascot, ProgressBar } from "@/components/ui";
+import { courseTint, ErrorNote, Icon, IconTile, Mascot, ProgressBar } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -20,6 +20,8 @@ const SECTION_BLURB = {
 };
 
 /** Groups consecutive units by their section, keeping per-section lesson counts. */
+const UNIT_TINTS = ["", "tint-violet", "tint-pink", "tint-orange", "tint-teal", "tint-sky"];
+
 function groupSections(units) {
   const sections = [];
   for (const u of units) {
@@ -431,10 +433,10 @@ export default function Learn() {
                 onClick={() =>
                   c.slug !== slug ? (setPath(null), setSlug(c.slug)) : null
                 }
-                className={`chip shrink-0 border-2 border-b-4 transition-colors active:translate-y-[0.125rem] ${
+                className={`chip shrink-0 border-2 border-b-4 transition-colors active:translate-y-[0.125rem] ${courseTint(c.slug)} ${
                   c.slug === slug
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-line text-muted hover:bg-surface"
+                    : "border-line text-muted hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                 }`}
               >
                 <span aria-hidden="true">{c.icon}</span> {c.title}
@@ -465,7 +467,8 @@ export default function Learn() {
                 (sec) => sec.units[0] === unit,
               );
               return (
-                <section key={unit.id} className="mb-14">
+                // every unit has its own colour, like Duolingo (re-colours its banner, nodes and bubbles)
+                <section key={unit.id} className={`mb-14 ${UNIT_TINTS[ui % UNIT_TINTS.length]}`}>
                   {startsSection && (
                     <SectionHeader
                       section={startsSection}
@@ -549,9 +552,11 @@ export default function Learn() {
 
       {/* right rail */}
       <aside className="space-y-5 lg:sticky lg:top-[5.5rem] lg:self-start">
-        <div className="card p-5">
+        <div className="card tint-orange card-accent p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-extrabold">Daily goal</h3>
+            <h3 className="flex items-center gap-3 font-extrabold">
+              <IconTile icon="target" size="sm" /> Daily goal
+            </h3>
             <span className="text-sm font-bold text-muted">
               {Math.min(user.xp_today, user.daily_goal)}/{user.daily_goal} XP
             </span>
@@ -566,10 +571,10 @@ export default function Learn() {
         </div>
 
         {practice && (
-          <div className="card p-5">
+          <div className="card tint-violet card-accent p-5">
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 font-extrabold">
-                <Icon name="review" className="h-5 w-5 text-flame" /> Practice
+              <h3 className="flex items-center gap-3 font-extrabold">
+                <IconTile icon="review" size="sm" /> Practice
               </h3>
               {practice.due > 0 && <span className="chip border-2 border-flame text-flame">{practice.due} due</span>}
             </div>
@@ -589,19 +594,19 @@ export default function Learn() {
         )}
 
         {daily?.exercise && (
-          <div className="card p-5">
-            <p className="label mb-1">Daily challenge · {daily.course}</p>
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-pink to-violet p-5 text-on-primary shadow-lg shadow-pink/20">
+            <p className="mb-1 flex items-center gap-2 text-xs font-black uppercase tracking-widest opacity-90">
+              <Icon name="star" className="h-4 w-4" /> Daily challenge · {daily.course}
+            </p>
             <p className="mb-4 font-bold">{daily.exercise.prompt}</p>
             {daily.answered ? (
-              <p
-                className={`text-sm font-extrabold ${daily.correct ? "text-ok" : "text-muted"}`}
-              >
+              <p className="text-sm font-extrabold">
                 {daily.correct
                   ? `✓ Solved! +${daily.bonus_xp} XP`
                   : "Answered - come back tomorrow!"}
               </p>
             ) : (
-              <Link href="/daily" className="btn-primary w-full">
+              <Link href="/daily" className="btn w-full bg-raised text-pink">
                 Solve for +{daily.bonus_xp} XP
               </Link>
             )}
@@ -609,9 +614,12 @@ export default function Learn() {
         )}
 
         {course && (
-          <div className="card p-5">
-            <h3 className="mb-2 font-extrabold">
-              {course.icon} {course.title}
+          <div className="card card-accent p-5">
+            <h3 className="mb-2 flex items-center gap-3 font-extrabold">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-lg" aria-hidden="true">
+                {course.icon}
+              </span>
+              {course.title}
             </h3>
             <p className="mb-3 text-sm font-semibold text-muted">
               {course.description}
@@ -628,8 +636,10 @@ export default function Learn() {
         )}
 
         {sections.length > 1 && (
-          <nav className="card p-5" aria-label="Course sections">
-            <h3 className="mb-3 font-extrabold">Sections</h3>
+          <nav className="card tint-teal card-accent p-5" aria-label="Course sections">
+            <h3 className="mb-3 flex items-center gap-3 font-extrabold">
+              <IconTile icon="chart" size="sm" /> Sections
+            </h3>
             <ul className="space-y-3">
               {sections.map((sec) => (
                 <li key={sec.id}>

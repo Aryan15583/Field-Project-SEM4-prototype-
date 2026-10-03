@@ -22,6 +22,19 @@
   --codi-screen: 255 255 255;
   --codi-eye: 10 10 10;
   --codi-shine: 219 228 245;
+  /* accent palette - extra colour around the blue (white text reads on every one) */
+  --c-violet: 124 58 237;
+  --c-violet-strong: 91 33 182;
+  --c-pink: 190 24 93;
+  --c-pink-strong: 131 24 67;
+  --c-orange: 194 65 12;
+  --c-orange-strong: 124 45 18;
+  --c-teal: 15 118 110;
+  --c-teal-strong: 19 78 74;
+  --c-sky: 3 105 161;
+  --c-sky-strong: 12 74 110;
+  --c-amber: 180 83 9; /* gold you can read as text on white */
+  --c-amber-strong: 120 53 15;
   color-scheme: light;
 }
 
@@ -45,10 +58,52 @@
   --codi-screen: 4 18 9;       /* dark terminal screen */
   --codi-eye: 74 222 128;      /* glowing green eyes */
   --codi-shine: 32 58 40;
+  /* brighter accents for a black background (black text reads on every one) */
+  --c-violet: 167 139 250;
+  --c-violet-strong: 109 40 217;
+  --c-pink: 244 114 182;
+  --c-pink-strong: 190 24 93;
+  --c-orange: 251 146 60;
+  --c-orange-strong: 194 65 12;
+  --c-teal: 45 212 191;
+  --c-teal-strong: 15 118 110;
+  --c-sky: 56 189 248;
+  --c-sky-strong: 3 105 161;
+  --c-amber: 250 204 21;
+  --c-amber-strong: 161 98 7;
   color-scheme: dark;
 }
 
+/*
+ * Re-colour a whole area: put .tint-violet (etc.) on a wrapper and everything inside that uses
+ * "primary" (buttons, nodes, banners, progress bars, active nav pills) takes that colour instead.
+ */
+.tint-violet { --primary: var(--c-violet); --primary-strong: var(--c-violet-strong); }
+.tint-pink { --primary: var(--c-pink); --primary-strong: var(--c-pink-strong); }
+.tint-orange { --primary: var(--c-orange); --primary-strong: var(--c-orange-strong); }
+.tint-teal { --primary: var(--c-teal); --primary-strong: var(--c-teal-strong); }
+.tint-sky { --primary: var(--c-sky); --primary-strong: var(--c-sky-strong); }
+.tint-gold { --primary: var(--c-amber); --primary-strong: var(--c-amber-strong); }
+.tint-red { --primary: var(--bad); --primary-strong: var(--bad-strong); }
+
 html, body { min-height: 100%; }
+
+/* soft colour glow behind the page (fixed, so it doesn't repaint while scrolling) */
+body {
+  background-image:
+    radial-gradient(42rem 30rem at 0% 0%, rgb(var(--c-sky) / 0.10), transparent 70%),
+    radial-gradient(36rem 28rem at 100% 0%, rgb(var(--c-violet) / 0.09), transparent 70%),
+    radial-gradient(40rem 30rem at 100% 100%, rgb(var(--c-pink) / 0.07), transparent 70%),
+    radial-gradient(36rem 28rem at 0% 100%, rgb(var(--primary) / 0.08), transparent 70%);
+  background-attachment: fixed;
+}
+.dark body {
+  background-image:
+    radial-gradient(42rem 30rem at 0% 0%, rgb(var(--primary) / 0.10), transparent 70%),
+    radial-gradient(36rem 28rem at 100% 0%, rgb(var(--c-violet) / 0.09), transparent 70%),
+    radial-gradient(40rem 30rem at 100% 100%, rgb(var(--c-teal) / 0.08), transparent 70%),
+    radial-gradient(36rem 28rem at 0% 100%, rgb(var(--c-sky) / 0.06), transparent 70%);
+}
 
 /*
  * Big-screen scaling. Everything is sized in rem, so stepping up the root size scales the whole UI
@@ -92,6 +147,8 @@ button, a { touch-action: manipulation; } /* no 300ms tap delay, no double-tap z
   .btn-link { @apply font-extrabold text-primary hover:underline underline-offset-4; }
 
   .card { @apply rounded-3xl border-2 border-line bg-raised; }
+  /* a card with a coloured top edge in its section's colour (see .tint-*) */
+  .card-accent { border-top-width: 0.3125rem; border-top-color: rgb(var(--primary)); }
   .input {
     @apply w-full rounded-2xl border-2 border-line bg-surface px-4 py-3 text-ink placeholder:text-muted
       focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20;
