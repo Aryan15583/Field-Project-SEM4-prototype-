@@ -1,36 +1,33 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { DEFAULT_MASCOT, MASCOT_IDS } from "./mascots";
 
-// The learner's chosen mascot, remembered in this browser. Server render and first paint use the
-// default, then the saved choice is applied (useSyncExternalStore avoids a hydration mismatch).
-const KEY = "codeingo.mascot";
-const listeners = new Set();
+// Mascots take turns: each time a mascot appears (a new page, a new result screen) it is the next one
+// from a shuffled deck, so learners see Codi, then someone else, then another friend - never the same
+// one twice in a row. Server render and the first paint always use Codi (so hydration matches); the
+// real pick is made right after mount.
+let deck = [];
+let last = null;
 
-function read() {
-  try {
-    const v = window.localStorage.getItem(KEY);
-    return MASCOT_IDS.includes(v) ? v : DEFAULT_MASCOT;
-  } catch {
-    return DEFAULT_MASCOT;
+function nextMascot() {
+  if (!deck.length) {
+    deck = [...MASCOT_IDS];
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    if (deck[deck.length - 1] === last && deck.length > 1) [deck[0], deck[deck.length - 1]] = [deck[deck.length - 1], deck[0]];
   }
-}
-function subscribe(fn) {
-  listeners.add(fn);
-  window.addEventListener("storage", fn);
-  return () => {
-    listeners.delete(fn);
-    window.removeEventListener("storage", fn);
-  };
+  last = deck.pop();
+  return last;
 }
 
-export function setMascot(id) {
-  if (!MASCOT_IDS.includes(id)) return;
-  try {
-    window.localStorage.setItem(KEY, id);
-  } catch {}
-  listeners.forEach((fn) => fn());
+/** A mascot id that stays the same for the lifetime of the component and changes on the next appearance. */
+export function useRandomMascot(enabled = true) {
+  const [id, setId] = useState(DEFAULT_MASCOT);
+  useEffect(() => {
+    if (enabled) setId(nextMascot());
+  }, [enabled]);
+  return id;
 }
-
-export const useMascotId = () => useSyncExternalStore(subscribe, read, () => DEFAULT_MASCOT);

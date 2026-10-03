@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { cancelled, passkeysSupported, signInWithPasskey } from "@/lib/webauthn";
 import { ErrorNote, Icon, Logo, Mascot, ThemeToggle } from "@/components/ui";
 import { getMascot } from "@/lib/mascots";
-import { useMascotId } from "@/lib/mascotPref";
+import { useRandomMascot } from "@/lib/mascotPref";
 
 const FEATURES = [
   { icon: "bolt", title: "Bite-sized lessons", text: "5-minute lessons with quizzes, fill-in-the-blanks and real code." },
@@ -32,7 +32,8 @@ function GoogleG() {
 }
 
 export default function Landing() {
-  const buddy = getMascot(useMascotId()).name;
+  const buddyId = useRandomMascot();
+  const buddy = getMascot(buddyId).name;
   const params = useSearchParams();
   const router = useRouter();
   const [config, setConfig] = useState({ google: false, devLogin: false });
@@ -91,7 +92,7 @@ export default function Landing() {
         <div className="order-2 flex justify-center md:order-1">
           <div className="relative">
             <div className="absolute inset-0 -z-10 rounded-full bg-primary/15 blur-3xl" />
-            <Mascot size={300} mood={greeting ? "wave" : "idle"} />
+            <Mascot size={300} mascot={buddyId} mood={greeting ? "wave" : "idle"} />
           </div>
         </div>
         <div className="order-1 text-center md:order-2 md:text-left">

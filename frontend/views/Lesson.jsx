@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { sfx } from "@/lib/feedback";
 import { getMascot } from "@/lib/mascots";
-import { useMascotId } from "@/lib/mascotPref";
+import { useRandomMascot } from "@/lib/mascotPref";
 import { useTheme } from "@/lib/theme";
 
 const PRAISE = ["Nice!", "Great job!", "Awesome!", "You got it!", "Correct!", "Brilliant!", "Amazing!"];
@@ -164,7 +164,8 @@ function Finished({ result, elapsed, accuracy, onContinue }) {
 
 /* ---------------------------------------------------------------- lesson */
 export default function Lesson({ id }) {
-  const buddy = getMascot(useMascotId()).name;
+  const buddyId = useRandomMascot(); // the helper who gives hints in this lesson
+  const buddy = getMascot(buddyId).name;
   const router = useRouter();
   const { reload } = useAuth();
   const [session, setSession] = useState(null); // { attempt_id, lesson, exercises, hearts }
@@ -392,7 +393,7 @@ export default function Lesson({ id }) {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           transition={{ type: "spring", stiffness: 420, damping: 30 }}
                         >
-                          <Mascot size={60} mood={hint.loading ? "think" : "idle"} className="shrink-0" />
+                          <Mascot size={60} mascot={buddyId} mood={hint.loading ? "think" : "idle"} className="shrink-0" />
                           <div className="card relative flex-1 p-4 text-sm font-semibold">
                             {hint.loading ? <span className="animate-pulse">{buddy} is thinking…</span> : hint.hint}
                             {hint.source === "ai" && <span className="mt-2 block text-[0.6875rem] font-bold uppercase text-muted">AI hint</span>}

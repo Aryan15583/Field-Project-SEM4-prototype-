@@ -9,9 +9,6 @@ import { setSoundEnabled, sfx, soundEnabled } from "@/lib/feedback";
 import { usePwa } from "@/lib/pwa";
 import { useTheme } from "@/lib/theme";
 import { addPasskey, cancelled, deviceName, passkeysSupported } from "@/lib/webauthn";
-import { MASCOTS } from "@/lib/mascots";
-import { setMascot, useMascotId } from "@/lib/mascotPref";
-import Codi from "@/components/Codi";
 import { RecoveryCodes } from "./TwoFactor";
 
 const GOALS = [
@@ -176,8 +173,6 @@ export default function Profile() {
         <ErrorNote>{!regen && error}</ErrorNote>
       </section>
 
-      <BuddyPicker />
-
       <AppInstall />
 
       <YourData />
@@ -305,37 +300,6 @@ function Passkeys() {
       )}
       <ErrorNote>{error}</ErrorNote>
     </div>
-  );
-}
-
-function BuddyPicker() {
-  const chosen = useMascotId();
-  const current = MASCOTS.find((m) => m.id === chosen) || MASCOTS[0];
-  return (
-    <section className="card space-y-4 p-5">
-      <h2 className="flex items-center gap-3 font-extrabold">
-        <IconTile icon="heart" size="sm" /> Your study buddy
-      </h2>
-      <p className="text-sm font-semibold text-muted">
-        Pick the mascot that cheers you on in lessons, tests and contests. Now: <b className="text-ink">{current.name}</b> - {current.tagline}.
-      </p>
-      <div role="radiogroup" aria-label="Study buddy" className="grid grid-cols-4 gap-2 sm:grid-cols-8">
-        {MASCOTS.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            role="radio"
-            aria-checked={m.id === chosen}
-            aria-label={m.name}
-            onClick={() => setMascot(m.id)}
-            className={`flex flex-col items-center gap-1 rounded-2xl border-2 p-2 text-xs font-bold transition ${m.id === chosen ? "border-primary bg-primary/10" : "border-line hover:border-primary/50"}`}
-          >
-            <Codi mascot={m.id} size={52} interactive={false} mood="idle" title={m.name} />
-            {m.name}
-          </button>
-        ))}
-      </div>
-    </section>
   );
 }
 

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { MASCOT_ARMS, getMascot } from "../lib/mascots";
-import { useMascotId } from "../lib/mascotPref";
+import { useRandomMascot } from "../lib/mascotPref";
 
 /*
  * Codi and friends - Codeingo's pixel-art mascots (see lib/mascots.js); Codi: a little screen-faced bot with </> bracket arms.
@@ -131,8 +131,8 @@ function hashString(str) {
 }
 
 export default function Codi({ size = 120, mood = "idle", className = "", interactive = true, mascot, title }) {
-  const chosen = useMascotId();
-  const m = getMascot(mascot || chosen); // an explicit `mascot` wins over the learner's saved choice
+  const random = useRandomMascot(!mascot); // mascots take turns; pass `mascot` to pin a specific one
+  const m = getMascot(mascot || random);
   const art = pathsFor(m);
   const pal = m.palette;
   const label = title || `${m.name}, a Codeingo mascot`;
