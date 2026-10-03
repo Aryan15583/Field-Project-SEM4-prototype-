@@ -62,6 +62,9 @@ class Settings(BaseSettings):
 
     # --- outgoing email (sign-in codes). Gmail: smtp.gmail.com, port 587, an App Password. ---
     # Empty SMTP_HOST in development -> codes are printed to the API console instead of sent.
+    # Development/test only: also append every email the app would send to this file (one JSON object per line),
+    # so automated browser tests can read sign-in codes. Rejected in production.
+    mail_outbox_file: str = ""
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_username: str = ""
@@ -119,6 +122,8 @@ class Settings(BaseSettings):
             problems.append("PUBLIC_URL must use https:// in production")
         if not self.smtp_host or not (self.smtp_from or self.smtp_username):
             problems.append("SMTP_HOST and SMTP_FROM (or SMTP_USERNAME) are required to email sign-in codes")
+        if self.mail_outbox_file:
+            problems.append("MAIL_OUTBOX_FILE is for development and tests only")
         if self.smtp_security not in ("starttls", "ssl"):
             problems.append("SMTP_SECURITY must be starttls or ssl")
         if not self.redis_url:

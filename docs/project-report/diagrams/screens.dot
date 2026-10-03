@@ -1,0 +1,14 @@
+digraph G {
+  rankdir=TB; nodesep=0.25; ranksep=0.5; bgcolor="white";
+  node [shape=box, style="rounded,filled", fontname="Liberation Sans", fontsize=12, penwidth=1.4, margin="0.16,0.09", fillcolor="#e8f0ff", color="#1d4ed8"];
+  edge [color="#64748b", penwidth=1.2, arrowsize=0.7];
+  land [label="Landing / Sign in\n(Google · passkey)", fillcolor="#dcfce7", color="#15803d"];
+  legal [label="Privacy · Terms", fillcolor="#f1f5f9", color="#64748b"];
+  mfa [label="2-step setup / verify", fillcolor="#f3e8ff", color="#7c3aed"];
+  shell [label="App shell\nsidebar (desktop) · bottom bar (phone)", fillcolor="#fff7ed", color="#c2410c"];
+  learn [label="Learn\ncourse tabs · path"]; daily [label="Daily challenge"]; practice [label="Practice\nreview hub"]; leagues [label="Leagues\neveryone · friends"]; contests [label="Contests"]; progress [label="Progress\ncharts · badges"]; profile [label="Profile\nsettings · passkeys · data"]; admin [label="Admin (hidden)\ncontent · users · audit", fillcolor="#fee2e2", color="#b91c1c"];
+  lesson [label="Lesson player\nexercises + code editor"]; test [label="Chapter / readiness test"]; review [label="Practice session"]; contest [label="Contest run\ntimer + live board"]; cert [label="Certificate page\n(public, printable)"]; unsub [label="Unsubscribe page", fillcolor="#f1f5f9", color="#64748b"];
+  land -> mfa -> shell; land -> legal [style=dashed];
+  shell -> {learn daily practice leagues contests progress profile admin};
+  learn -> lesson; learn -> test; practice -> review; contests -> contest; profile -> cert; leagues -> contests [style=dashed];
+}

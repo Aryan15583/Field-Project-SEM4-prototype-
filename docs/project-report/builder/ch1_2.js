@@ -1,0 +1,197 @@
+const L = require("./lib");
+const { run, p, bullets, numbered, lb, h2, h3, h4, chapter, table, captionTable, guideReport, center } = L;
+const T = "CODEINGO";
+const st = require(L.ROOT + "/data_stats.json");
+
+function ch1() {
+  return [
+    chapter(1, "Introduction"),
+    h2("1.1", "Background"),
+    p("Software now sits underneath almost every industry, and the ability to write code has become a basic skill for students, not only for those who plan a career in computing. Yet learning to program is hard to start and even harder to continue. Beginners meet an unfamiliar syntax, tools that must be installed and configured before the first line can run, and long video courses that never check whether anything was understood. Many of them give up in the first weeks."),
+    p("The survey conducted for this project (Section 3.6, 43 respondents aged 15 to 22) confirms this picture: 28% of the learners had already tried programming and given up, 33% of those who answered said that confusing syntax made learning difficult or boring, and a further 28% said that they would stop using a learning platform because of a lack of guidance. At the same time 65% rated the idea of learning to code through a game-like experience as appealing (4 or 5 out of 5), and the learners named building real projects (40%) and competing with friends (23%) as the things that would keep them going."),
+    p("Language-learning applications such as Duolingo showed that short daily lessons, immediate feedback, streaks, points and friendly competition can turn a difficult subject into a habit. Recent advances in web technology make the same approach possible for programming: WebAssembly lets a real Python interpreter or an SQL database run safely inside the learner's own browser, and modern web frameworks make it possible to build fast, installable applications that work on a phone as well as on a desktop."),
+    p([run(T, { bold: true }), " (\"Duolingo for coding\") applies these ideas. It is a web platform in which a learner follows a guided path from beginner to advanced level, answers quick-check questions, writes and runs real programs in every lesson, builds a project at the end of each section, proves progress with chapter tests, and earns a public certificate when a course is complete. Security is treated as a core feature, not an add-on: every account is protected by 2-step verification, answers are graded on the server so they cannot be copied from the page, and the administrator panel is hidden from everyone who is not an administrator."]),
+
+    h2("1.2", "Objective"),
+    p([run("The primary objective of ", {}), run(T, { bold: true }), " is to develop a secure, gamified web platform that teaches programming from beginner to advanced level through short interactive lessons, real code execution in the browser, instant feedback and social motivation, so that learners stay engaged and can show what they have learned."]),
+    h4("Specific Objectives"),
+    ...numbered([
+      "To provide a structured learning path of courses, sections, units and lessons, unlocked in order, covering ten subjects: Python, JavaScript, TypeScript, Java, C++, C, SQL, HTML & CSS, Git and Data Structures & Algorithms.",
+      "To let learners write and run real code inside the browser (Python, JavaScript, TypeScript, SQL, HTML/CSS and Git) without installing anything, using sandboxed runtimes with time limits and no network access.",
+      "To grade every answer on the server and never send the expected output to the browser, and to block copy-and-paste into answer boxes, so that learners must understand the solution.",
+      "To motivate learners with XP, daily goals, streaks, hearts, badges and a daily challenge, and to offer friendly competition through friends, weekly leagues and timed weekly contests with a live leaderboard.",
+      "To check understanding with chapter tests, and to let confident learners skip ahead with 15-question readiness tests at the end of each section.",
+      "To help memory with a spaced-repetition practice mode that brings missed questions back at growing intervals.",
+      "To end every section with a multi-step project in which each step continues from the learner's own code, and to issue a public, verifiable, printable certificate for every completed course.",
+      "To secure access with Google sign-in plus mandatory 2-step verification (emailed code, authenticator app or passkey), CSRF protection, rate limiting, a strict content-security policy, hashed and encrypted secrets and a complete audit log.",
+      "To provide a hidden administration panel for managing lessons and users, in which only an administrator can grant or remove administrator access, and only after re-entering a 2-step code.",
+      "To respect privacy: collect only the data the platform needs, let every user download all of their data and delete their account permanently, and publish a clear Privacy Policy and Terms of Service.",
+      "To offer a modern, accessible and responsive interface in a light theme (white, blue, black) and a dark theme (black, green), usable from a phone to a 4K monitor, and installable as an app with an offline page.",
+      "To send optional streak-reminder e-mails with a one-click unsubscribe, at most once per day.",
+      "To make the platform easy to deploy (Docker and a free Vercel + Render + Neon setup), and to verify the quality of the content by automatically executing every reference solution of every exercise.",
+      "To base the feature set on evidence by running a requirement survey among prospective learners before and during design.",
+    ]),
+
+    h2("1.3", "Purpose, Scope, Applicability"),
+    h3("1.3.1", "Purpose"),
+    p([run(T, { bold: true }), " exists to make learning to code approachable, habit-forming and trustworthy. It lowers the barrier to the first line of code (nothing to install), keeps learners returning through game mechanics that were chosen from survey evidence, gives them real problems and projects instead of passive reading, and protects their accounts and data with professional-grade security. For teachers and mentors it provides a ready, verified curriculum and an administration panel to maintain it."]),
+    h3("1.3.2", "Scope"),
+    p("The scope of the project covers the design, development, testing and documentation of a web-based learning platform with the following functionality:"),
+    ...bullets([
+      "Registration and sign-in with Google, mandatory 2-step verification, passkeys, recovery codes and session management.",
+      "Ten courses with 438 lessons, 2,130 exercises of five types (multiple choice, fill-in-the-blank, arrange-the-code, write-a-snippet, write-and-run a program) and 30 projects.",
+      "In-browser code runners for Python, JavaScript, TypeScript, SQL, HTML/CSS and Git; an optional sandboxed server runner for Java, C and C++.",
+      "Server-side grading, XP, streaks, hearts, badges, daily challenge, daily goal.",
+      "Chapter tests, readiness (jump-ahead) tests, spaced-repetition practice, section projects and public certificates.",
+      "Friends, friend codes and invite links, global and friends leagues, weekly contests with a live leaderboard.",
+      "Streak reminder e-mails with unsubscribe; installable progressive web app with offline page.",
+      "Admin panel with content editing, user management, role management and a security audit log.",
+      "Privacy features: data export, account deletion, Privacy Policy and Terms of Service.",
+      "Light and dark themes, responsive layout, accessibility features.",
+    ]),
+    p("The following are outside the scope of this version: native mobile applications, live video lessons, a discussion forum, payments, and an AI model that generates new lessons. An optional AI tutor (\"Codi\") that gives hints is supported if the administrator supplies an API key, but the platform works fully without it."),
+    h3("1.3.3", "Applicability"),
+    p("The platform can be used by:"),
+    ...bullets([
+      "School and college students (the survey respondents were aged 15 to 22) who want to start programming without installing tools.",
+      "Self-learners and career-switchers who need a guided path from beginner to advanced level and a certificate to show.",
+      "Teachers and training institutes that want a ready curriculum with tests, projects and a leaderboard to run a class or a coding club.",
+      "Colleges for coding contests: the weekly timed contest with a live leaderboard can be used for inter-class competitions.",
+      "Developers preparing for interviews (data structures and algorithms, SQL, Git, TypeScript).",
+      "Students of web development who need practice in HTML & CSS with an instant live preview.",
+    ]),
+    p("Because the lessons are stored in the database and edited from the administration panel, the same platform can host additional courses, or the curriculum of a single institution, without changes to the code."),
+  ];
+}
+
+function ch1Report() {
+  return guideReport("CHAPTER 1: INTRODUCTION", T, {
+    overview: "This chapter introduces why a gamified coding platform is needed. Many beginners quit because of confusing syntax, installation problems and lack of guidance, while game mechanics such as streaks, points and friendly competition keep people learning. It describes Codeingo as \"Duolingo for coding\", lists fourteen objectives (learning path, in-browser code running, server-side grading, gamification, tests, spaced repetition, projects and certificates, strong security, admin panel, privacy, themes, reminders, deployment, survey-based design), and defines purpose, scope and applicability.",
+    outcomes: "We learned to identify a real problem for beginner programmers and to turn it into a clear objective list. We understood the difference between purpose, scope and applicability, and why a scope must also say what is not included. We learned that a project should be based on evidence, so we ran a survey of 43 learners instead of guessing which features are important. We also learned that security and privacy are objectives of the project, not extras.",
+    challenges: "Our first idea was very wide: many languages, many game features and many social features. It was difficult to decide what belongs to this version and what must wait. Writing objectives that can be tested, and not only wishes, took several attempts. We also had to decide how a free project can still be trusted with real accounts, which is why 2-step verification became mandatory early.",
+  });
+}
+
+function ch2() {
+  const w = [1900, 2700, 2450, 1976];
+  return [
+    chapter(2, "Survey of Technologies"),
+    h2("2.1", "Existing Systems"),
+    p("Many websites and apps help people learn programming. Before designing Codeingo we studied the kinds of systems that the survey respondents said they already use (Codecademy, freeCodeCamp, Scratch, LeetCode, YouTube channels, and local compilers such as Turbo C). A summary of the existing systems is given below."),
+    h4("1. Interactive course platforms (for example Codecademy)"),
+    p("Features:", { bold: true, after: 40 }),
+    ...bullets(["Lessons with an in-browser editor and automatic checking.", "Structured courses and career paths.", "Projects and quizzes."]),
+    p("Limitations:", { bold: true, after: 40 }),
+    ...bullets(["Many projects, certificates and advanced content require a paid subscription.", "Little social or competitive motivation; progress is mostly private.", "The path is largely text-based and can feel dry to a beginner."]),
+    h4("2. Free curriculum sites (for example freeCodeCamp)"),
+    p("Features:", { bold: true, after: 40 }),
+    ...bullets(["Free and very large curriculum with projects and certifications.", "Runs in the browser without installation."]),
+    p("Limitations:", { bold: true, after: 40 }),
+    ...bullets(["Minimal game elements, so motivation depends on the learner.", "Beginners often report too little guidance when a task is hard.", "Mostly web development; few languages such as C, C++ or Java."]),
+    h4("3. Visual block-based tools (for example Scratch)"),
+    p("Features:", { bold: true, after: 40 }),
+    ...bullets(["Drag-and-drop blocks, immediate visual results.", "Excellent for young children and for learning logic."]),
+    p("Limitations:", { bold: true, after: 40 }),
+    ...bullets(["Does not teach real text syntax, so the next step to Python or Java is a big jump.", "Not suitable for learning databases, version control or algorithms in depth."]),
+    h4("4. Practice and contest sites (for example LeetCode, HackerRank)"),
+    p("Features:", { bold: true, after: 40 }),
+    ...bullets(["Thousands of problems, contests and interview preparation.", "Strong community and rankings."]),
+    p("Limitations:", { bold: true, after: 40 }),
+    ...bullets(["Assume that the learner already knows the language; unsuitable for absolute beginners.", "Little teaching content; feedback is a pass/fail verdict."]),
+    h4("5. Video tutorials and local tools (for example YouTube channels, Turbo C, editors)"),
+    p("Features:", { bold: true, after: 40 }),
+    ...bullets(["Free, large amount of explanation; 30% of our respondents prefer learning by watching videos.", "Local compilers show how real tools work."]),
+    p("Limitations:", { bold: true, after: 40 }),
+    ...bullets(["Passive: nobody checks whether the learner understood.", "Installation and setup are a barrier; old tools may be outdated.", "No progress tracking, no reminders, no motivation system."]),
+    captionTable("Table 2.1.1", "Summary of existing systems compared with Codeingo"),
+    table([2200, 1500, 1300, 1300, 1300, 1426], ["Feature", "Course platforms", "Free curriculum", "Block tools", "Contest sites", "Codeingo"], [
+      ["Real code runs in the browser, no install", "Yes", "Yes", "Blocks only", "Yes", "Yes"],
+      ["Beginner to advanced path", "Yes", "Partly", "No", "No", "Yes"],
+      ["Game mechanics (XP, streak, hearts, badges)", "Partly", "No", "Partly", "Rankings", "Yes"],
+      ["Tests and jump-ahead tests", "Partly", "No", "No", "No", "Yes"],
+      ["Spaced-repetition practice of mistakes", "No", "No", "No", "No", "Yes"],
+      ["Friends, leagues and live contests", "No", "No", "No", "Yes", "Yes"],
+      ["Projects that build on your own code", "Paid", "Yes", "Yes", "No", "Yes"],
+      ["Verifiable public certificates", "Paid", "Yes", "No", "No", "Yes"],
+      ["Mandatory 2-step verification / passkeys", "Optional", "Optional", "No", "Optional", "Yes"],
+      ["Data download and account deletion in-app", "Varies", "Varies", "Varies", "Varies", "Yes"],
+    ], { size: 19, zebra: true }),
+    p("The comparison is a general summary of the categories above, not a review of any specific product; individual products change over time.", { size: 20, italics: true, before: 100 }),
+    p("The study shows a gap: no single free system combines guided beginner-to-advanced learning, real code execution without installation, game mechanics, tests, practice, social competition and strong account security. Codeingo is designed to fill this gap."),
+
+    h2("2.2", "List of Technologies"),
+    h4("1. Frontend Technologies"),
+    lb("Next.js 16 (App Router) and React 19", "Used to build the user interface as pages and reusable components; server rendering for fast first load; the Next.js proxy file creates a fresh Content-Security-Policy nonce for every request."),
+    lb("JavaScript (ES2022)", "Used for all client-side behaviour, including the lesson player, the answer checking flow and the code-runner workers."),
+    lb("Recharts", "Draws the XP-over-time and lessons-by-language charts on the Progress page, with a table view for accessibility."),
+    lb("Motion (animation library)", "Smooth, compositor-only animations (transform and opacity) for the feedback sheets, path highlights and confetti."),
+    h4("2. Styling Technologies"),
+    lb("Tailwind CSS 3 and CSS variables", "Utility-first styling; colours are CSS variables, so the light theme (white, blue, black) and the dark theme (black, green) swap by changing one class. Accent tints re-colour whole sections."),
+    lb("Nunito (self-hosted by Next.js)", "A rounded, friendly typeface loaded at build time, so no request is made to a font server at run time."),
+    h4("3. Backend Technologies"),
+    lb("Python 3.11+", "The language of the server and of the curriculum definitions."),
+    lb("FastAPI and Uvicorn", "Web framework and server for the REST API; automatic request validation with Pydantic; OpenAPI description."),
+    lb("SQLAlchemy 2", "Object-relational mapper; the same models run on PostgreSQL (production) and SQLite (development and tests)."),
+    lb("PyJWT, cryptography (Fernet), pyotp, qrcode, webauthn", "Access tokens, encryption of authenticator secrets, time-based one-time passwords (RFC 6238), QR codes for authenticator set-up, and passkeys (WebAuthn)."),
+    h4("4. Database and Cache"),
+    lb("PostgreSQL 16", "Primary database in production (SQLite is used in development)."),
+    lb("Redis", "Shared, fixed-window rate limiting across several server processes."),
+    h4("5. In-browser Code Runtimes"),
+    lb("Pyodide (CPython compiled to WebAssembly)", "Runs learner Python programs inside a Web Worker."),
+    lb("sql.js (SQLite compiled to WebAssembly)", "Runs learner SQL on an in-browser database."),
+    lb("TypeScript 6 compiler (JavaScript build)", "Type-checks learner TypeScript in strict mode in the browser, then the compiled code runs like JavaScript."),
+    lb("Custom Git simulator", "A deterministic in-memory implementation of the common Git commands used by the Git course."),
+    lb("Piston (optional)", "A self-hosted sandbox for compiling and running Java, C and C++ on the server side, if configured."),
+    h4("6. Communication Technologies"),
+    lb("HTTP / REST APIs (JSON)", "Communication between the browser and the FastAPI server; the browser always talks to one origin."),
+    lb("SMTP over TLS", "Sends sign-in codes and reminders (for example through a Gmail App Password)."),
+    lb("Google OpenID Connect with PKCE", "Secure sign-in with a Google account."),
+    h4("7. Testing, DevOps and Development Tools"),
+    lb("pytest and Playwright", "95 automated back-end tests; a browser-test suite and screenshot automation."),
+    lb("Docker, nginx, GitHub Actions", "Container images, reverse proxy and continuous integration."),
+    lb("Vercel, Render, Neon", "Hosting for the web site, the API with Redis, and the PostgreSQL database in the free deployment option."),
+    lb("Visual Studio Code, Git and GitHub, npm, pip", "Development environment, version control and package management."),
+
+    h2("2.3", "Comparative Study"),
+    captionTable("Table 2.3.1", "Comparative study of the technology choices"),
+    table(w, ["Technology", "Features", "Advantages", "Disadvantages"], [
+      ["Next.js (React)", "Server rendering, routing, build tooling, per-request headers", "Fast first load, one framework for pages and proxying, large ecosystem", "Frequent major changes; larger learning curve than plain React"],
+      ["Plain React single-page app", "Client-side rendering only", "Simple hosting", "Slower first load; no server-side nonce for a strict CSP"],
+      ["FastAPI (Python)", "Async REST framework, typed validation, auto docs", "Fast, concise, the same language as the curriculum tools, strong typing with Pydantic", "Younger ecosystem than Django"],
+      ["Django / Flask", "Full-stack framework / micro framework", "Mature, many plugins", "Django is heavier for an API-only service; Flask needs many add-ons"],
+      ["Node.js + Express", "JavaScript on the server", "One language on both sides", "Less built-in validation; weaker typing"],
+      ["PostgreSQL", "Relational, transactions, cascade rules, JSON columns", "Strong integrity, ideal for progress and relations, free hosting available", "Needs a server; migrations need care"],
+      ["MongoDB", "Document store", "Flexible schema", "Weaker joins for leaderboards and progress queries; manual integrity"],
+      ["SQLite", "Embedded file database", "Zero setup for development and tests", "Not for several server processes in production"],
+      ["Pyodide / WebAssembly in the browser", "Runs real interpreters on the learner's machine", "No server cost, instant results, safe sandbox, no install", "First load of the runtime is large (cached afterwards)"],
+      ["Server-side code containers", "Run learner code on the server", "Works for compiled languages", "Costly, harder to secure, slower, needs Docker hosts"],
+      ["Tailwind CSS", "Utility classes with design tokens", "Consistent design, small CSS, easy theming", "Long class lists in markup"],
+      ["Cookie sessions with short JWT + rotating refresh token", "HttpOnly cookies, CSRF token", "Not readable by scripts, revocable, reuse detection", "Needs CSRF protection"],
+      ["Redis rate limiter", "Shared counters with expiry", "Works with many processes", "An extra service to run"],
+    ], { size: 18, zebra: true }),
+
+    h2("2.4", "Selected Technologies"),
+    p("Based on the requirements and the comparison above, the following technologies were selected for Codeingo:"),
+    ...numbered([
+      [run("Next.js 16 with React 19 and Tailwind CSS", { bold: true }), " for the front end. The framework gives fast, server-rendered pages, a place to create a fresh Content-Security-Policy nonce for each request, and a single origin when the API is proxied. Tailwind and CSS variables make the two required colour themes simple and consistent."],
+      [run("FastAPI with SQLAlchemy 2 and Pydantic", { bold: true }), " for the back end. It produces a typed, validated REST API quickly, and the same Python code base also contains the curriculum and the validation scripts."],
+      [run("PostgreSQL (production) and SQLite (development, tests)", { bold: true }), " for data. The relational model fits users, progress, tests and leaderboards, and cascading deletes make account deletion reliable. The same test suite passes on both databases."],
+      [run("Redis", { bold: true }), " for shared rate limiting, so abuse protection works with several server processes."],
+      [run("Pyodide, sql.js, the TypeScript compiler and a Git simulator inside sandboxed Web Workers", { bold: true }), " for running learner code. Code stays on the learner's device, costs the server nothing, cannot reach the network (worker-level CSP and removal of network APIs) and is stopped by a time limit if it loops forever."],
+      [run("Google OIDC + e-mail codes + TOTP + WebAuthn passkeys", { bold: true }), " for authentication, giving every learner a mandatory second factor without forcing them to own a special app."],
+      [run("pytest, Playwright, GitHub Actions", { bold: true }), " for quality: automated tests, browser tests and a pipeline that also executes every reference solution of every exercise."],
+      [run("Docker, nginx, Vercel, Render and Neon", { bold: true }), " for deployment, from a single-server container setup to a free three-service cloud setup."],
+    ], "numbers2"),
+    p("Together these technologies give a clear separation between the user interface (Next.js), the server logic and security (FastAPI), the data (PostgreSQL and Redis) and the code-execution layer (browser runtimes)."),
+  ];
+}
+
+function ch2Report() {
+  return guideReport("CHAPTER 2: SURVEY OF TECHNOLOGIES", T, {
+    overview: "As part of Chapter 2 we studied existing learning systems (course platforms, free curriculum sites, block tools, contest sites, videos) and listed their features and limitations. We listed the technologies we could use for the front end, back end, database, code execution, authentication, testing and deployment, compared them in a table, and selected Next.js, React, Tailwind, FastAPI, SQLAlchemy, PostgreSQL, Redis, Pyodide/WebAssembly runtimes, Google sign-in with 2-step verification and passkeys.",
+    outcomes: "We learned how to do a proper survey of existing systems and to find their gaps. We learned to compare technologies in a table by features, advantages and disadvantages, and to choose by project needs and not by fashion. We understood that running learner code on the learner's own device in WebAssembly is cheaper and safer than running it on the server, and we learned how a strict content-security policy works with a per-request nonce.",
+    challenges: "The technologies changed faster than the tutorials: Next.js 16 behaves differently from older versions, so we had to read its own documentation. On a Windows computer with application-control rules the default native compiler was blocked, and we had to switch to the webpack build. Choosing between running code on a server and in the browser needed experiments, because compiled languages such as Java and C cannot run in the browser easily.",
+  });
+}
+
+module.exports = { ch1, ch1Report, ch2, ch2Report };

@@ -1,0 +1,76 @@
+{
+ "courses": 10,
+ "lessons": 438,
+ "exercises": 2130,
+ "projects": 30,
+ "runnable": 492,
+ "by_course": [
+  {
+   "slug": "python",
+   "title": "Python",
+   "units": 16,
+   "lessons": 51
+  },
+  {
+   "slug": "javascript",
+   "title": "JavaScript",
+   "units": 16,
+   "lessons": 51
+  },
+  {
+   "slug": "typescript",
+   "title": "TypeScript",
+   "units": 8,
+   "lessons": 27
+  },
+  {
+   "slug": "java",
+   "title": "Java",
+   "units": 16,
+   "lessons": 51
+  },
+  {
+   "slug": "cpp",
+   "title": "C++",
+   "units": 16,
+   "lessons": 51
+  },
+  {
+   "slug": "c",
+   "title": "C",
+   "units": 16,
+   "lessons": 51
+  },
+  {
+   "slug": "sql",
+   "title": "SQL",
+   "units": 16,
+   "lessons": 51
+  },
+  {
+   "slug": "html-css",
+   "title": "HTML & CSS",
+   "units": 16,
+   "lessons": 51
+  },
+  {
+   "slug": "git",
+   "title": "Git",
+   "units": 8,
+   "lessons": 27
+  },
+  {
+   "slug": "dsa",
+   "title": "Data Structures & Algorithms",
+   "units": 8,
+   "lessons": 27
+  }
+ ],
+ "code_lines": {
+  "backend_py": 4641,
+  "tests_py": 1670,
+  "frontend_js": 6390,
+  "runners_js": 1157,
+  "curriculum_py": 8545
+ }
+}

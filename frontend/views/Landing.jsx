@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
@@ -117,6 +118,17 @@ export default function Landing() {
             <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted md:justify-start">
               <Icon name="shield" className="h-4 w-4 text-primary" /> 2-step verification is required for every account
             </p>
+            <p className="text-center text-xs font-semibold text-muted md:text-left">
+              By continuing you agree to our{" "}
+              <Link href="/terms" className="btn-link">
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="btn-link">
+                Privacy Policy
+              </Link>
+              .
+            </p>
             <ErrorNote>{error}</ErrorNote>
 
             {config.devLogin && (
@@ -155,7 +167,17 @@ export default function Landing() {
         ))}
       </section>
 
-      <footer className="border-t-2 border-line py-8 text-center text-sm text-muted">© {new Date().getFullYear()} Codeingo · Learn to code, one lesson a day.</footer>
+      <footer className="border-t-2 border-line py-8 text-center text-sm text-muted">
+        © {new Date().getFullYear()} Codeingo · Learn to code, one lesson a day.
+        <span className="mt-2 flex justify-center gap-4 font-bold">
+          <Link href="/privacy" className="btn-link">
+            Privacy
+          </Link>
+          <Link href="/terms" className="btn-link">
+            Terms
+          </Link>
+        </span>
+      </footer>
     </div>
   );
 }

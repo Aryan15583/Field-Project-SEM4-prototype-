@@ -1,0 +1,24 @@
+digraph G {
+  rankdir=TB; nodesep=0.35; ranksep=0.42; bgcolor="white";
+  node [shape=box, style="rounded,filled", fontname="Liberation Sans", fontsize=13, color="#1d4ed8", fillcolor="#e8f0ff", penwidth=1.5, margin="0.22,0.12"];
+  edge [color="#475569", penwidth=1.4, fontname="Liberation Sans", fontsize=11, arrowsize=0.8];
+  start [label="Learner opens Codeingo", shape=oval, fillcolor="#dcfce7", color="#15803d"];
+  signin [label="Sign in with Google\n(or a passkey)"];
+  mfa [label="2-step verification\nemailed code / authenticator / passkey"];
+  learn [label="Learning path\n10 courses · units · lessons"];
+  choose [label="Choose an activity", shape=diamond, fillcolor="#fff7ed", color="#c2410c", margin="0.1,0.05"];
+  lesson [label="Lesson\nquick checks + write & run a program"];
+  test [label="Chapter test /\nreadiness test"];
+  practice [label="Practice\n(spaced repetition)"];
+  social [label="Friends, leagues &\nweekly contests"];
+  engine [label="Server: grade answer\n(expected output never sent to browser)", fillcolor="#f3e8ff", color="#7c3aed"];
+  reward [label="Award XP · streak · hearts · badges", fillcolor="#fef9c3", color="#b45309"];
+  cert [label="All lessons + tests done?\nIssue public certificate", shape=diamond, fillcolor="#fff7ed", color="#c2410c", margin="0.1,0.05"];
+  end [label="Keep learning / share certificate", shape=oval, fillcolor="#dcfce7", color="#15803d"];
+  start -> signin -> mfa -> learn -> choose;
+  choose -> lesson; choose -> test; choose -> practice; choose -> social;
+  lesson -> engine; test -> engine; practice -> engine; social -> engine;
+  engine -> reward -> cert;
+  cert -> end [label="yes"];
+  cert -> learn [label="no", constraint=false];
+}

@@ -1,0 +1,21 @@
+digraph G {
+  rankdir=LR; nodesep=0.18; ranksep=0.55; bgcolor="white";
+  node [shape=box, style="rounded,filled", fontname="Liberation Sans", fontsize=11.5, penwidth=1.3, margin="0.14,0.07", fillcolor="#e8f0ff", color="#1d4ed8"];
+  edge [color="#94a3b8", arrowhead=none];
+  root [label="Codeingo\nproject", fillcolor="#1d4ed8", fontcolor="white", color="#1d4ed8", fontsize=13];
+  a [label="1. Planning & survey", fillcolor="#dcfce7", color="#15803d"];
+  b [label="2. Design", fillcolor="#f3e8ff", color="#7c3aed"];
+  c [label="3. Backend (FastAPI)", fillcolor="#ccfbf1", color="#0f766e"];
+  d [label="4. Frontend (Next.js)", fillcolor="#e8f0ff", color="#1d4ed8"];
+  e [label="5. Content", fillcolor="#fef9c3", color="#b45309"];
+  f [label="6. Testing & quality", fillcolor="#fee2e2", color="#b91c1c"];
+  g [label="7. Deployment & docs", fillcolor="#fff7ed", color="#c2410c"];
+  root -> {a b c d e f g};
+  a1 [label="Requirement survey (43 responses)"]; a2 [label="Competitor study"]; a -> {a1 a2};
+  b1 [label="Modules & database design"]; b2 [label="UI design: light & dark themes"]; b -> {b1 b2};
+  c1 [label="Auth: Google, email code, TOTP, passkeys"]; c2 [label="Learning, tests, practice, certificates"]; c3 [label="Friends, contests, reminders"]; c4 [label="Admin panel & audit log"]; c -> {c1 c2 c3 c4};
+  d1 [label="App shell, learn path, lesson player"]; d2 [label="In-browser code runners"]; d3 [label="Pages: practice, leagues, contests, profile"]; d4 [label="PWA, offline page, colour system"]; d -> {d1 d2 d3 d4};
+  e1 [label="10 courses · 438 lessons · 2,130 exercises"]; e2 [label="30 projects"]; e3 [label="Verify every program by running it"]; e -> {e1 e2 e3};
+  f1 [label="92 automated backend tests"]; f2 [label="Browser tests (Playwright)"]; f3 [label="Security review & hardening"]; f -> {f1 f2 f3};
+  g1 [label="Docker, nginx, Vercel + Render + Neon"]; g2 [label="README, SECURITY, privacy & terms"]; g3 [label="Project report"]; g -> {g1 g2 g3};
+}

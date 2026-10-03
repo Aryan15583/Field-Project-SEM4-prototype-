@@ -13,3 +13,4 @@ next-env.d.ts
 frontend/public/pyodide/
 frontend/public/sqljs/
 frontend/public/typescript/
+frontend/test-results/

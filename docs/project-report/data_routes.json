@@ -1,0 +1,357 @@
+[
+ {
+  "m": "POST",
+  "p": "/api/account/confirm-code",
+  "tag": "account"
+ },
+ {
+  "m": "POST",
+  "p": "/api/account/delete",
+  "tag": "account"
+ },
+ {
+  "m": "GET",
+  "p": "/api/account/export",
+  "tag": "account"
+ },
+ {
+  "m": "GET",
+  "p": "/api/admin/audit",
+  "tag": "admin"
+ },
+ {
+  "m": "POST",
+  "p": "/api/admin/confirm-code",
+  "tag": "admin"
+ },
+ {
+  "m": "POST",
+  "p": "/api/admin/courses",
+  "tag": "admin"
+ },
+ {
+  "m": "POST",
+  "p": "/api/admin/lessons",
+  "tag": "admin"
+ },
+ {
+  "m": "DELETE",
+  "p": "/api/admin/lessons/{lesson_id}",
+  "tag": "admin"
+ },
+ {
+  "m": "GET",
+  "p": "/api/admin/lessons/{lesson_id}",
+  "tag": "admin"
+ },
+ {
+  "m": "PUT",
+  "p": "/api/admin/lessons/{lesson_id}",
+  "tag": "admin"
+ },
+ {
+  "m": "GET",
+  "p": "/api/admin/tree",
+  "tag": "admin"
+ },
+ {
+  "m": "POST",
+  "p": "/api/admin/units",
+  "tag": "admin"
+ },
+ {
+  "m": "GET",
+  "p": "/api/admin/users",
+  "tag": "admin"
+ },
+ {
+  "m": "POST",
+  "p": "/api/admin/users/{user_id}/active",
+  "tag": "admin"
+ },
+ {
+  "m": "POST",
+  "p": "/api/admin/users/{user_id}/role",
+  "tag": "admin"
+ },
+ {
+  "m": "POST",
+  "p": "/api/ai/hint",
+  "tag": "ai"
+ },
+ {
+  "m": "GET",
+  "p": "/api/ai/status",
+  "tag": "ai"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/2fa/email/enable",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/2fa/email/send",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/2fa/enable",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/2fa/setup",
+  "tag": "auth"
+ },
+ {
+  "m": "GET",
+  "p": "/api/auth/2fa/status",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/2fa/verify",
+  "tag": "auth"
+ },
+ {
+  "m": "GET",
+  "p": "/api/auth/config",
+  "tag": "auth"
+ },
+ {
+  "m": "GET",
+  "p": "/api/auth/csrf",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/dev-login",
+  "tag": "auth"
+ },
+ {
+  "m": "GET",
+  "p": "/api/auth/google/callback",
+  "tag": "auth"
+ },
+ {
+  "m": "GET",
+  "p": "/api/auth/google/login",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/logout",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/logout-all",
+  "tag": "auth"
+ },
+ {
+  "m": "GET",
+  "p": "/api/auth/me",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/recovery-codes",
+  "tag": "auth"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/refresh",
+  "tag": "auth"
+ },
+ {
+  "m": "GET",
+  "p": "/api/contests",
+  "tag": "contests"
+ },
+ {
+  "m": "POST",
+  "p": "/api/contests/{contest_id}/answer",
+  "tag": "contests"
+ },
+ {
+  "m": "POST",
+  "p": "/api/contests/{contest_id}/enter",
+  "tag": "contests"
+ },
+ {
+  "m": "POST",
+  "p": "/api/contests/{contest_id}/finish",
+  "tag": "contests"
+ },
+ {
+  "m": "GET",
+  "p": "/api/contests/{contest_id}/leaderboard",
+  "tag": "contests"
+ },
+ {
+  "m": "POST",
+  "p": "/api/attempts/{attempt_id}/answer",
+  "tag": "learn"
+ },
+ {
+  "m": "POST",
+  "p": "/api/attempts/{attempt_id}/complete",
+  "tag": "learn"
+ },
+ {
+  "m": "GET",
+  "p": "/api/certificates",
+  "tag": "learn"
+ },
+ {
+  "m": "GET",
+  "p": "/api/courses",
+  "tag": "learn"
+ },
+ {
+  "m": "GET",
+  "p": "/api/courses/{slug}",
+  "tag": "learn"
+ },
+ {
+  "m": "GET",
+  "p": "/api/daily",
+  "tag": "learn"
+ },
+ {
+  "m": "POST",
+  "p": "/api/daily/answer",
+  "tag": "learn"
+ },
+ {
+  "m": "POST",
+  "p": "/api/lessons/{lesson_id}/start",
+  "tag": "learn"
+ },
+ {
+  "m": "GET",
+  "p": "/api/public/certificates/{code}",
+  "tag": "learn"
+ },
+ {
+  "m": "POST",
+  "p": "/api/run",
+  "tag": "learn"
+ },
+ {
+  "m": "GET",
+  "p": "/api/health",
+  "tag": "misc"
+ },
+ {
+  "m": "GET",
+  "p": "/api/auth/passkeys",
+  "tag": "passkeys"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/passkeys/login",
+  "tag": "passkeys"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/passkeys/login/options",
+  "tag": "passkeys"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/passkeys/register",
+  "tag": "passkeys"
+ },
+ {
+  "m": "POST",
+  "p": "/api/auth/passkeys/register/options",
+  "tag": "passkeys"
+ },
+ {
+  "m": "DELETE",
+  "p": "/api/auth/passkeys/{passkey_id}",
+  "tag": "passkeys"
+ },
+ {
+  "m": "GET",
+  "p": "/api/practice/overview",
+  "tag": "practice"
+ },
+ {
+  "m": "POST",
+  "p": "/api/practice/start",
+  "tag": "practice"
+ },
+ {
+  "m": "GET",
+  "p": "/api/practice/summary",
+  "tag": "practice"
+ },
+ {
+  "m": "POST",
+  "p": "/api/practice/{attempt_id}/answer",
+  "tag": "practice"
+ },
+ {
+  "m": "POST",
+  "p": "/api/practice/{attempt_id}/complete",
+  "tag": "practice"
+ },
+ {
+  "m": "GET",
+  "p": "/api/friends",
+  "tag": "social"
+ },
+ {
+  "m": "POST",
+  "p": "/api/friends",
+  "tag": "social"
+ },
+ {
+  "m": "GET",
+  "p": "/api/friends/lookup",
+  "tag": "social"
+ },
+ {
+  "m": "DELETE",
+  "p": "/api/friends/{code}",
+  "tag": "social"
+ },
+ {
+  "m": "POST",
+  "p": "/api/public/unsubscribe",
+  "tag": "social"
+ },
+ {
+  "m": "GET",
+  "p": "/api/leaderboard",
+  "tag": "stats"
+ },
+ {
+  "m": "PATCH",
+  "p": "/api/profile",
+  "tag": "stats"
+ },
+ {
+  "m": "GET",
+  "p": "/api/stats",
+  "tag": "stats"
+ },
+ {
+  "m": "POST",
+  "p": "/api/tests/start",
+  "tag": "tests"
+ },
+ {
+  "m": "POST",
+  "p": "/api/tests/{attempt_id}/answer",
+  "tag": "tests"
+ },
+ {
+  "m": "POST",
+  "p": "/api/tests/{attempt_id}/complete",
+  "tag": "tests"
+ }
+]

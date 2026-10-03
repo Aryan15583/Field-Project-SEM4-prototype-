@@ -10,7 +10,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .config import get_settings
 from .db import Base, SessionLocal, engine, ensure_columns
-from .routers import admin, ai, auth, checkpoints, contests, learn, passkeys, practice, social, stats
+from .routers import account, admin, ai, auth, checkpoints, contests, learn, passkeys, practice, social, stats
 from .security.middleware import (
     BodySizeLimitMiddleware,
     CSRFMiddleware,
@@ -58,7 +58,7 @@ def create_app() -> FastAPI:
     # No CORSMiddleware on purpose: the SPA is served from the same origin, so browsers
     # block every cross-origin read of the API by default.
 
-    for r in (auth.router, passkeys.router, learn.router, checkpoints.router, contests.router, practice.router, social.router, stats.router, ai.router, admin.router):
+    for r in (account.router, auth.router, passkeys.router, learn.router, checkpoints.router, contests.router, practice.router, social.router, stats.router, ai.router, admin.router):
         app.include_router(r)
 
     @app.get("/api/health")

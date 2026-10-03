@@ -175,6 +175,8 @@ export default function Profile() {
 
       <AppInstall />
 
+      <YourData />
+
       <section className="tint-teal card card-accent space-y-4 p-5">
         <h2 className="flex items-center gap-3 font-extrabold">
           <IconTile icon="shield" size="sm" /> Security
@@ -324,6 +326,113 @@ function AppInstall() {
           Install the app
         </button>
       )}
+    </section>
+  );
+}
+
+function YourData() {
+  const router = useRouter();
+  const { setUser } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [info, setInfo] = useState(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const download = async () => {
+    setError("");
+    try {
+      const res = await fetch("/api/account/export", { credentials: "same-origin" });
+      if (!res.ok) throw new Error("Couldn't prepare your data. Please try again.");
+      const url = URL.createObjectURL(await res.blob());
+      const a = Object.assign(document.createElement("a"), { href: url, download: "codeingo-my-data.json" });
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const start = () => {
+    setOpen(true);
+    setCode("");
+    setError("");
+    setInfo(null);
+    api("/api/account/confirm-code", { method: "POST" })
+      .then(setInfo)
+      .catch((e) => setError(e.message));
+  };
+
+  const remove = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await api("/api/account/delete", { method: "POST", body: { code: code.replace(/\s/g, "") } });
+      setUser(null);
+      router.replace("/");
+    } catch (err) {
+      setError(err.message);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="tint-sky card card-accent space-y-4 p-5">
+      <h2 className="flex items-center gap-3 font-extrabold">
+        <IconTile icon="shield" size="sm" /> Your data
+      </h2>
+      <p className="text-sm font-semibold text-muted">
+        Download everything we hold about you, or delete your account and all of it for good. See the{" "}
+        <a href="/privacy" className="btn-link">
+          Privacy Policy
+        </a>
+        .
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button className="btn-ghost" onClick={download}>
+          Download my data
+        </button>
+        <button className="btn-bad" onClick={start}>
+          Delete my account
+        </button>
+      </div>
+      <ErrorNote>{!open && error}</ErrorNote>
+
+      <Modal open={open} onClose={() => setOpen(false)} label="Delete account">
+        <form onSubmit={remove} className="space-y-4">
+          <h2 className="text-xl font-black">Delete your account?</h2>
+          <p className="font-semibold text-muted">
+            This permanently deletes your progress, streak, badges, certificates, friends and contest results. It can't be undone.
+          </p>
+          <p className="text-sm font-semibold">
+            {info?.method === "email"
+              ? `To confirm it's you, enter the code we just emailed to ${info.sent_to}.`
+              : info?.method === "totp"
+                ? "To confirm it's you, enter the 6-digit code from your authenticator app."
+                : "Sending a confirmation code…"}
+          </p>
+          <input
+            className="input text-center font-mono text-2xl tracking-[0.4em]"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={8}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            aria-label="Confirmation code"
+            autoFocus
+          />
+          <ErrorNote>{error}</ErrorNote>
+          <div className="flex gap-2">
+            <button type="button" className="btn-ghost flex-1" onClick={() => setOpen(false)}>
+              Keep my account
+            </button>
+            <button className="btn-bad flex-1" disabled={busy || code.replace(/\s/g, "").length < 6}>
+              Delete everything
+            </button>
+          </div>
+        </form>
+      </Modal>
     </section>
   );
 }

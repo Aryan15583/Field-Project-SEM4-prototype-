@@ -1,0 +1,28 @@
+digraph G {
+  rankdir=TB; nodesep=0.35; ranksep=0.65; bgcolor="white"; compound=true;
+  node [shape=box, style="rounded,filled", fontname="Liberation Sans", fontsize=12, penwidth=1.4, margin="0.18,0.1"];
+  edge [color="#475569", penwidth=1.3, fontname="Liberation Sans", fontsize=10, arrowsize=0.8];
+  subgraph cluster_browser { label="Learner's browser"; fontname="Liberation Sans Bold"; fontsize=13; style="rounded,dashed"; color="#1d4ed8";
+    ui [label="Next.js 16 app (React 19)\nTailwind CSS · light & dark themes", fillcolor="#e8f0ff", color="#1d4ed8"];
+    workers [label="Sandboxed Web Workers\nPython (Pyodide) · JavaScript · TypeScript\nSQL (SQLite) · Git simulator · HTML/CSS", fillcolor="#e8f0ff", color="#1d4ed8"];
+    sw [label="Service worker + manifest\n(installable app, offline page)", fillcolor="#e8f0ff", color="#1d4ed8"];
+  }
+  subgraph cluster_edge { label="Hosting edge"; fontname="Liberation Sans Bold"; fontsize=13; style="rounded,dashed"; color="#7c3aed";
+    proxy [label="Vercel / nginx\nHTTPS · /api proxy · security headers\nCSP nonce per request", fillcolor="#f3e8ff", color="#7c3aed"];
+  }
+  subgraph cluster_api { label="FastAPI backend (Python)"; fontname="Liberation Sans Bold"; fontsize=13; style="rounded,dashed"; color="#0f766e";
+    auth [label="Auth & security\nGoogle OIDC · email codes · TOTP\npasskeys (WebAuthn) · JWT cookies", fillcolor="#ccfbf1", color="#0f766e"];
+    learn [label="Learning services\ncourses · lessons · tests · practice\ncertificates · contests · social", fillcolor="#ccfbf1", color="#0f766e"];
+    grade [label="Grading & gamification\nXP · streaks · hearts · badges", fillcolor="#ccfbf1", color="#0f766e"];
+    admin [label="Admin & audit log", fillcolor="#ccfbf1", color="#0f766e"];
+    mail [label="Mailer + reminder job\n(SMTP over TLS)", fillcolor="#ccfbf1", color="#0f766e"];
+  }
+  db [label="PostgreSQL\n(SQLite in development)", shape=cylinder, fillcolor="#fef9c3", color="#b45309"];
+  redis [label="Redis\nshared rate limiting", shape=cylinder, fillcolor="#fef9c3", color="#b45309"];
+  ext [label="Google sign-in\nSMTP e-mail\nOptional: AI hints,\ncode sandbox (Piston)", shape=box, fillcolor="#fee2e2", color="#b91c1c"];
+  ui -> proxy [label="HTTPS"]; workers -> ui [dir=both, label="run code"]; sw -> ui [style=dashed, arrowhead=none];
+  proxy -> auth; proxy -> learn; proxy -> admin;
+  learn -> grade; auth -> db; learn -> db; grade -> db; admin -> db;
+  auth -> redis [style=dashed]; learn -> redis [style=dashed];
+  auth -> ext; mail -> ext; learn -> mail [style=dashed];
+}

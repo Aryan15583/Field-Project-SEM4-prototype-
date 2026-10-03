@@ -1,4 +1,5 @@
 """Outgoing email over SMTP (TLS required). Used for sign-in codes and streak reminders."""
+import json
 import logging
 import smtplib
 import ssl
@@ -21,6 +22,9 @@ def send(to: str, subject: str, text: str, html: str | None = None, headers: dic
             raise MailError("email is not configured")
         # Development only: no mail server, so show the message in the API console instead.
         log.warning("EMAIL (dev, not sent) to=%s subject=%r\n%s", to, subject, text)
+        if s.mail_outbox_file:
+            with open(s.mail_outbox_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps({"to": to, "subject": subject, "text": text}) + "\n")
         return
 
     sender = s.smtp_from or s.smtp_username

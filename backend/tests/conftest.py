@@ -5,7 +5,8 @@ import time
 _db = os.path.join(tempfile.mkdtemp(), "test.db")
 os.environ.update(
     ENV="test",
-    DATABASE_URL=f"sqlite:///{_db}",
+    # TEST_DATABASE_URL runs the whole suite on PostgreSQL (CI does this); otherwise a throwaway SQLite file
+    DATABASE_URL=os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{_db}",
     DEV_LOGIN_ENABLED="true",
     ADMIN_EMAILS='["admin@example.com"]',
     COOKIE_SECURE="false",  # TestClient talks plain http://testserver

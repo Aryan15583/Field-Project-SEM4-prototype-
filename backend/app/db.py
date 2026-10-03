@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from .config import get_settings
@@ -22,7 +22,14 @@ def normalise_url(url: str) -> str:
 def _make_engine(url: str):
     url = normalise_url(url)
     if url.startswith("sqlite"):
-        return create_engine(url, connect_args={"check_same_thread": False})
+        engine = create_engine(url, connect_args={"check_same_thread": False})
+
+        @event.listens_for(engine, "connect")
+        def _foreign_keys(dbapi_conn, _):
+            # SQLite ignores ON DELETE CASCADE unless this is on (PostgreSQL always enforces it)
+            dbapi_conn.execute("PRAGMA foreign_keys=ON")
+
+        return engine
     # Bounded pool + statement timeout so a flood of slow queries can't exhaust the database.
     return create_engine(
         url,
