@@ -34,7 +34,7 @@ export default defineConfig({
         ENV: "development",
         DATABASE_URL: "sqlite:///./e2e.db",
         DEV_LOGIN_ENABLED: "true",
-        ADMIN_EMAILS: '["owner@e2e.test"]',
+        ADMIN_EMAILS: '["owner@e2e.example.com"]',
         PUBLIC_URL: `http://localhost:${PORT}`,
         ALLOWED_HOSTS: '["localhost","127.0.0.1"]',
         MAIL_OUTBOX_FILE: OUTBOX,

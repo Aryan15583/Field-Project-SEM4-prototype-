@@ -14,3 +14,5 @@ frontend/public/pyodide/
 frontend/public/sqljs/
 frontend/public/typescript/
 frontend/test-results/
+backend/e2e.db
+backend/e2e-outbox.jsonl

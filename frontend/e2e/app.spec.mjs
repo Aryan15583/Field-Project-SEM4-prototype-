@@ -126,7 +126,7 @@ test.describe("admin", () => {
     expect((await learner.request.get("/api/admin/users")).status()).toBe(404);
 
     const owner = await (await browser.newContext()).newPage();
-    await signIn(owner, "owner@e2e.test", "Owner");
+    await signIn(owner, "owner@e2e.example.com", "Owner");
     await owner.goto("/admin");
     await owner.getByRole("tab", { name: "Users" }).click();
     await owner.getByLabel("Search users").fill(learnerEmail);
@@ -134,7 +134,7 @@ test.describe("admin", () => {
     const row = owner.getByRole("row", { name: new RegExp(learnerEmail) });
     await row.getByRole("button", { name: "Make admin" }).click();
     const { emailedCode } = await import("./helpers.mjs");
-    await owner.getByLabel("Confirmation code").fill(await emailedCode("owner@e2e.test"));
+    await owner.getByLabel("Confirmation code").fill(await emailedCode("owner@e2e.example.com"));
     await owner.locator("form").getByRole("button", { name: "Make admin" }).click();
     await expect(row.getByText("admin", { exact: true })).toBeVisible();
 

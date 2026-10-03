@@ -332,7 +332,7 @@ function AppInstall() {
 
 function YourData() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { reload } = useAuth();
   const [open, setOpen] = useState(false);
   const [info, setInfo] = useState(null);
   const [code, setCode] = useState("");
@@ -369,7 +369,7 @@ function YourData() {
     setError("");
     try {
       await api("/api/account/delete", { method: "POST", body: { code: code.replace(/\s/g, "") } });
-      setUser(null);
+      await reload(); // the session is gone, so this marks the app signed-out and the guards steer to "/"
       router.replace("/");
     } catch (err) {
       setError(err.message);

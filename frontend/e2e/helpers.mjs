@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { OUTBOX } from "../playwright.config.mjs";
 
 let n = 0;
-export const uniqueEmail = (name) => `${name}${Date.now()}${++n}@e2e.test`;
+export const uniqueEmail = (name) => `${name}${Date.now()}${++n}@e2e.example.com`;
 
 /** The newest 6-digit code the API "emailed" to this address. */
 export async function emailedCode(email) {
