@@ -163,9 +163,36 @@ function Finished({ result, elapsed, accuracy, onContinue }) {
 }
 
 /* ---------------------------------------------------------------- lesson */
-export default function Lesson({ id }) {
-  const buddyId = useRandomMascot(); // the helper who gives hints in this lesson
+/** The helper who gives hints: a different mascot for every question (the parent re-keys it per exercise). */
+function HintHelper({ hint, askHint }) {
+  const buddyId = useRandomMascot();
   const buddy = getMascot(buddyId).name;
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {hint ? (
+        <motion.div
+          key="hint"
+          className="flex items-start gap-3"
+          initial={{ opacity: 0, y: 10, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: "spring", stiffness: 420, damping: 30 }}
+        >
+          <Mascot size={60} mascot={buddyId} mood={hint.loading ? "think" : "idle"} className="shrink-0" />
+          <div className="card relative flex-1 p-4 text-sm font-semibold">
+            {hint.loading ? <span className="animate-pulse">{buddy} is thinking…</span> : hint.hint}
+            {hint.source === "ai" && <span className="mt-2 block text-[0.6875rem] font-bold uppercase text-muted">AI hint</span>}
+          </div>
+        </motion.div>
+      ) : (
+        <motion.button key="ask" type="button" className="btn-link inline-flex items-center gap-1 text-sm" onClick={askHint} exit={{ opacity: 0 }}>
+          <Icon name="bulb" className="h-4 w-4" /> Stuck? Ask {buddy} for a hint
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+}
+
+export default function Lesson({ id }) {
   const router = useRouter();
   const { reload } = useAuth();
   const [session, setSession] = useState(null); // { attempt_id, lesson, exercises, hearts }
@@ -384,27 +411,7 @@ export default function Lesson({ id }) {
                 </motion.div>
                 {!feedback && (
                   <div className="mt-8">
-                    <AnimatePresence mode="wait" initial={false}>
-                      {hint ? (
-                        <motion.div
-                          key="hint"
-                          className="flex items-start gap-3"
-                          initial={{ opacity: 0, y: 10, scale: 0.97 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ type: "spring", stiffness: 420, damping: 30 }}
-                        >
-                          <Mascot size={60} mascot={buddyId} mood={hint.loading ? "think" : "idle"} className="shrink-0" />
-                          <div className="card relative flex-1 p-4 text-sm font-semibold">
-                            {hint.loading ? <span className="animate-pulse">{buddy} is thinking…</span> : hint.hint}
-                            {hint.source === "ai" && <span className="mt-2 block text-[0.6875rem] font-bold uppercase text-muted">AI hint</span>}
-                          </div>
-                        </motion.div>
-                      ) : (
-                        <motion.button key="ask" type="button" className="btn-link inline-flex items-center gap-1 text-sm" onClick={askHint} exit={{ opacity: 0 }}>
-                          <Icon name="bulb" className="h-4 w-4" /> Stuck? Ask {buddy} for a hint
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
+                    <HintHelper key={current.id} hint={hint} askHint={askHint} />
                   </div>
                 )}
                 <div className="mt-4">
