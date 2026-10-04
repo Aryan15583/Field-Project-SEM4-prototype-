@@ -1,5 +1,7 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
 from .java_adv import ADVANCED, INTERMEDIATE
+from .java_expert import EXPERT
+from .java_expert2 import EXPERT2
 
 MAIN = "public class Main {\n    public static void main(String[] args) {\n        \n    }\n}\n"
 SCAN = "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner in = new Scanner(System.in);\n        \n    }\n}\n"
@@ -349,4 +351,6 @@ COURSE = course(
     ),
     INTERMEDIATE,
     ADVANCED,
+    EXPERT,
+    EXPERT2,
 )
