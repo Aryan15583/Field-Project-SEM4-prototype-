@@ -213,7 +213,7 @@ export default function Leaderboard() {
     <div className="tint-gold mx-auto max-w-2xl">
       <PageTitle icon="trophy" title="Weekly League" subtitle="Earn XP this week to climb the ranks. Resets every Monday." center />
 
-      <Link href="/contests" className="tint-pink mb-5 flex items-center gap-4 rounded-3xl bg-gradient-to-r from-pink to-violet p-4 text-on-primary shadow-lg shadow-pink/20 transition-transform hover:-translate-y-0.5">
+      <Link href="/contests" className="tint-pink mb-5 flex items-center gap-4 rounded-3xl bg-primary p-4 text-on-primary shadow-[0_4px_0_rgb(var(--primary-strong))] transition-transform hover:-translate-y-0.5">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/20">
           <Icon name="bolt" className="h-6 w-6" />
         </span>

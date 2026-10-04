@@ -2,39 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light theme: white background, blue accents, black text */
+/* Light theme: warm paper, deep ink-blue accent, near-black warm text. Calm and printed-feeling,
+   not stark white with electric blue. */
 :root {
-  --bg: 255 255 255;
-  --surface: 244 247 255;
-  --raised: 255 255 255;
-  --line: 219 228 245;
-  --ink: 10 10 10;
-  --muted: 82 91 110;
-  --primary: 29 111 242;
-  --primary-strong: 20 83 184;
+  --bg: 250 248 243;
+  --surface: 241 237 228;
+  --raised: 255 254 251;
+  --line: 224 218 205;
+  --ink: 29 27 24;
+  --muted: 104 98 88;
+  --primary: 37 78 196;
+  --primary-strong: 26 52 138;
   --on-primary: 255 255 255;
-  --ok: 29 111 242;
-  --ok-strong: 20 83 184;
-  --bad: 234 43 43;
-  --bad-strong: 178 30 30;
-  --gold: 245 176 11;
-  --flame: 255 122 0;
-  --codi-screen: 255 255 255;
-  --codi-eye: 10 10 10;
-  --codi-shine: 219 228 245;
-  /* accent palette - extra colour around the blue (white text reads on every one) */
-  --c-violet: 124 58 237;
-  --c-violet-strong: 91 33 182;
-  --c-pink: 190 24 93;
-  --c-pink-strong: 131 24 67;
-  --c-orange: 194 65 12;
-  --c-orange-strong: 124 45 18;
-  --c-teal: 15 118 110;
-  --c-teal-strong: 19 78 74;
-  --c-sky: 3 105 161;
-  --c-sky-strong: 12 74 110;
-  --c-amber: 180 83 9; /* gold you can read as text on white */
-  --c-amber-strong: 120 53 15;
+  --ok: 22 128 74;
+  --ok-strong: 14 88 50;
+  --bad: 205 48 48;
+  --bad-strong: 150 30 30;
+  --gold: 226 158 14;
+  --flame: 232 106 16;
+  --codi-screen: 255 254 251;
+  --codi-eye: 29 27 24;
+  --codi-shine: 224 218 205;
+  /* accent palette - earthy, slightly muted (white text reads on every one) */
+  --c-violet: 104 72 190;
+  --c-violet-strong: 74 48 144;
+  --c-pink: 168 42 98;
+  --c-pink-strong: 116 28 68;
+  --c-orange: 184 76 18;
+  --c-orange-strong: 124 48 14;
+  --c-teal: 16 112 102;
+  --c-teal-strong: 14 76 70;
+  --c-sky: 8 100 150;
+  --c-sky-strong: 10 70 104;
+  --c-amber: 168 96 8; /* gold you can read as text on paper */
+  --c-amber-strong: 116 62 10;
   color-scheme: light;
 }
 
@@ -90,14 +91,12 @@ html, body { min-height: 100%; }
 
 /* soft colour glow behind the page (fixed, so it doesn't repaint while scrolling) */
 body {
-  background-image:
-    radial-gradient(42rem 30rem at 0% 0%, rgb(var(--c-sky) / 0.10), transparent 70%),
-    radial-gradient(36rem 28rem at 100% 0%, rgb(var(--c-violet) / 0.09), transparent 70%),
-    radial-gradient(40rem 30rem at 100% 100%, rgb(var(--c-pink) / 0.07), transparent 70%),
-    radial-gradient(36rem 28rem at 0% 100%, rgb(var(--primary) / 0.08), transparent 70%);
+  /* light: flat warm paper (no rainbow blobs) with the faintest top light */
+  background-image: radial-gradient(60rem 26rem at 50% -8rem, rgb(255 255 255 / 0.7), transparent 70%);
   background-attachment: fixed;
 }
 .dark body {
+  background-attachment: fixed;
   background-image:
     radial-gradient(42rem 30rem at 0% 0%, rgb(var(--primary) / 0.10), transparent 70%),
     radial-gradient(36rem 28rem at 100% 0%, rgb(var(--c-violet) / 0.09), transparent 70%),
@@ -147,6 +146,7 @@ button, a { touch-action: manipulation; } /* no 300ms tap delay, no double-tap z
   .btn-link { @apply font-extrabold text-primary hover:underline underline-offset-4; }
 
   .card { @apply rounded-3xl border-2 border-line bg-raised; }
+  :root:not(.dark) .card { box-shadow: 0 1px 0 rgb(255 255 255 / 0.8) inset, 0 10px 28px -18px rgb(60 45 20 / 0.28); }
   /* a card with a coloured top edge in its section's colour (see .tint-*) */
   .card-accent { border-top-width: 0.3125rem; border-top-color: rgb(var(--primary)); }
   .input {

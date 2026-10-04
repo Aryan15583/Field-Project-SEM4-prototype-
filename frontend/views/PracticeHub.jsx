@@ -31,7 +31,7 @@ export default function PracticeHub() {
 
   return (
     <div className="tint-violet mx-auto max-w-2xl space-y-6">
-      <div className="card card-accent flex flex-col items-center gap-5 bg-gradient-to-br from-primary/15 via-raised to-pink/10 p-6 text-center sm:flex-row sm:text-left">
+      <div className="card card-accent flex flex-col items-center gap-5 bg-surface p-6 text-center sm:flex-row sm:text-left">
         <Mascot size={110} mood={all?.due ? "think" : "happy"} />
         <div className="flex-1">
           <h1 className="text-2xl font-black">Practice</h1>

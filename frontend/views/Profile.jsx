@@ -66,9 +66,9 @@ export default function Profile() {
 
   return (
     <div className="tint-sky mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-4 rounded-3xl bg-gradient-to-r from-primary/15 via-violet/10 to-pink/10 p-5">
+      <div className="flex items-center gap-4 rounded-3xl border-2 border-line bg-surface p-5">
         {/* gradient ring around the avatar */}
-        <span className="rounded-full bg-gradient-to-br from-primary via-violet to-pink p-1">
+        <span className="rounded-full bg-primary p-1">
           {user.avatar_url ? (
             <img src={user.avatar_url} alt="" referrerPolicy="no-referrer" className="h-20 w-20 rounded-full border-4 border-raised" />
           ) : (

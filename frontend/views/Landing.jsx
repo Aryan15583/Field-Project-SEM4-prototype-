@@ -94,7 +94,7 @@ export default function Landing() {
         </div>
         <div className="order-1 text-center md:order-2 md:text-left">
           <h1 className="text-4xl font-black leading-tight md:text-5xl">
-            The free, fun and effective way to <span className="bg-gradient-to-r from-primary via-violet to-pink bg-clip-text text-transparent">learn to code!</span>
+            The free, fun and effective way to <span className="text-primary underline decoration-gold/70 decoration-[0.35rem] underline-offset-[0.35rem]">learn to code!</span>
           </h1>
           <p className="mt-4 text-lg text-muted">Short daily lessons, instant feedback and a streak you won't want to break.</p>
 

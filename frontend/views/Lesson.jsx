@@ -81,7 +81,7 @@ function Combo({ count }) {
 function Finished({ result, elapsed, accuracy, onContinue }) {
   const { dark } = useTheme();
   const colors = useMemo(
-    () => (dark ? ["#22c55e", "#16a34a", "#facc15", "#e8f5ec", "#ff8c1e"] : ["#1d6ff2", "#60a5fa", "#f5b00b", "#0a0a0a", "#ff7a00"]),
+    () => (dark ? ["#22c55e", "#16a34a", "#facc15", "#e8f5ec", "#ff8c1e"] : ["#254ec4", "#7f9be0", "#e29e0e", "#1d1b18", "#e86a10"]),
     [dark],
   );
   useEffect(() => sfx.complete(), []);

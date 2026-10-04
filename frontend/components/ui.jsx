@@ -207,7 +207,7 @@ export function IconTile({ icon, size = "md", className = "" }) {
 export function PageTitle({ icon, title, subtitle, center = false }) {
   return (
     <div className={`mb-6 flex items-center gap-4 ${center ? "flex-col text-center" : ""}`}>
-      <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-strong text-on-primary shadow-lg shadow-primary/25" aria-hidden="true">
+      <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary text-on-primary shadow-[0_4px_0_rgb(var(--primary-strong))]" aria-hidden="true">
         <Icon name={icon} className="h-9 w-9" />
       </span>
       <div>

@@ -622,7 +622,7 @@ export default function Learn() {
         )}
 
         {daily?.exercise && (
-          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-pink to-violet p-5 text-on-primary shadow-lg shadow-pink/20">
+          <div className="overflow-hidden rounded-3xl bg-primary p-5 text-on-primary shadow-[0_4px_0_rgb(var(--primary-strong))]">
             <p className="mb-1 flex items-center gap-2 text-xs font-black uppercase tracking-widest opacity-90">
               <Icon name="star" className="h-4 w-4" /> Daily challenge · {daily.course}
             </p>
