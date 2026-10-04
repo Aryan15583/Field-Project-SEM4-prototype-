@@ -435,7 +435,7 @@ export default function Learn() {
           aria-controls="learn-side-panel"
           aria-label="Open side panel"
           title="Daily goal, streak and more"
-          className="fixed right-0 top-1/2 z-20 grid h-12 w-9 -translate-y-1/2 place-items-center rounded-l-2xl border-2 border-r-0 border-line bg-raised text-primary shadow-lg transition-transform hover:-translate-x-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 lg:bottom-auto"
+          className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-3 z-20 grid h-12 w-12 place-items-center rounded-full border-2 border-line bg-raised text-primary shadow-lg transition-transform active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 lg:bottom-auto lg:right-0 lg:top-1/2 lg:h-12 lg:w-9 lg:-translate-y-1/2 lg:rounded-full lg:rounded-r-none lg:border-r-0 lg:active:scale-100 lg:hover:-translate-x-0.5"
         >
           <Icon name="target" className="h-5 w-5" />
         </button>
@@ -589,18 +589,23 @@ export default function Learn() {
               id="learn-side-panel"
               role="dialog"
               aria-label="Side panel"
-              className="fixed inset-y-0 right-0 z-50 w-[min(22rem,92vw)] overflow-y-auto border-l-2 border-line bg-bg p-4 pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl [scrollbar-width:thin]"
+              className="fixed inset-y-0 right-0 z-50 w-[min(22rem,90vw)] touch-pan-y overflow-y-auto overscroll-contain border-l-2 border-line bg-bg p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl [scrollbar-width:thin]"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{ left: 0, right: 0.6 }}
+              onDragEnd={(_, info) => (info.offset.x > 80 || info.velocity.x > 500) && setRailOpen(false)}
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 420, damping: 38 }}
             >
-              <div className="mb-3 flex justify-end">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="label">Today</span>
                 <button
                   type="button"
                   onClick={() => setRailOpen(false)}
                   aria-label="Close side panel"
-                  className="grid h-10 w-10 place-items-center rounded-xl text-xl font-black text-muted hover:bg-surface hover:text-ink focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
+                  className="grid h-11 w-11 place-items-center rounded-xl text-xl font-black text-muted hover:bg-surface hover:text-ink focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
                 >
                   ✕
                 </button>
