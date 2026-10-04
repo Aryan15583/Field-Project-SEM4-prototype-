@@ -6,6 +6,7 @@ import httpx
 
 from ..config import get_settings
 from ..models import Exercise
+from . import hints
 
 log = logging.getLogger("codeingo.ai")
 
@@ -22,11 +23,12 @@ def configured() -> bool:
     return bool(s.ai_api_key and s.ai_model)
 
 
-async def hint(ex: Exercise, attempt: str | None) -> tuple[str, str]:
-    """Returns (hint_text, source) where source is 'ai' or 'author'."""
-    fallback = ex.hint or "Re-read the question carefully and look at each part of the code step by step."
-    if not configured():
-        return fallback, "author"
+async def hint(ex: Exercise, attempt: str | None, level: int = 1) -> tuple[str, str, bool]:
+    """Returns (hint_text, source, more): source is 'ai' or 'author' (hints built from the question itself), and
+    `more` says a stronger hint can be asked for."""
+    fallback, more = hints.local_hint(ex, level)
+    if not configured() or level > 1:
+        return fallback, "author", more
     s = get_settings()
     options = ex.data.get("options") if ex.kind == "mcq" else None
     user_msg = (
@@ -50,7 +52,7 @@ async def hint(ex: Exercise, attempt: str | None) -> tuple[str, str]:
             )
         resp.raise_for_status()
         text = resp.json()["choices"][0]["message"]["content"].strip()
-        return text[:600], "ai"
+        return text[:600], "ai", True
     except Exception as exc:  # AI outage must never break a lesson
         log.warning("AI hint failed: %s", exc)
-        return fallback, "author"
+        return fallback, "author", more

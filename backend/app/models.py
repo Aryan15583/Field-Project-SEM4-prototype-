@@ -180,6 +180,7 @@ class LessonAttempt(Base):
     mistakes: Mapped[int] = mapped_column(Integer, default=0)
     correct_ids: Mapped[list] = mapped_column(JSON, default=list)
     xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
+    chances: Mapped[list | None] = mapped_column(JSON, default=list)  # exercises whose free "almost right" second chance is used
 
 
 class UserLesson(Base):

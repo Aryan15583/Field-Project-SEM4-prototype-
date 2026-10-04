@@ -181,10 +181,15 @@ function HintHelper({ hint, askHint }) {
           <div className="card relative flex-1 p-4 text-sm font-semibold">
             {hint.loading ? <span className="animate-pulse">{buddy} is thinking…</span> : hint.hint}
             {hint.source === "ai" && <span className="mt-2 block text-[0.6875rem] font-bold uppercase text-muted">AI hint</span>}
+            {!hint.loading && hint.more && (
+              <button type="button" className="btn-link mt-2 block text-sm" onClick={() => askHint(2)}>
+                I need a bigger hint
+              </button>
+            )}
           </div>
         </motion.div>
       ) : (
-        <motion.button key="ask" type="button" className="btn-link inline-flex items-center gap-1 text-sm" onClick={askHint} exit={{ opacity: 0 }}>
+        <motion.button key="ask" type="button" className="btn-link inline-flex items-center gap-1 text-sm" onClick={() => askHint(1)} exit={{ opacity: 0 }}>
           <Icon name="bulb" className="h-4 w-4" /> Stuck? Ask {buddy} for a hint
         </motion.button>
       )}
@@ -256,6 +261,12 @@ export default function Lesson({ id }) {
       // Programs are executed first (in the browser, or by the server's sandbox) and graded on their output.
       const answer = current.kind === "run" ? await prepareRunAnswer(current, value, setValue) : value;
       const res = await api(`/api/attempts/${session.attempt_id}/answer`, { method: "POST", body: { exercise_id: current.id, answer } });
+      if (res.close) {
+        // "Almost" - a free second chance: nothing is lost, the answer stays editable
+        sfx.tap();
+        setFeedback({ ...res });
+        return;
+      }
       (res.correct ? sfx.correct : sfx.wrong)();
       setFeedback({ ...res, praise: PRAISE[Math.floor(Math.random() * PRAISE.length)] });
       setHearts(res.hearts);
@@ -271,6 +282,10 @@ export default function Lesson({ id }) {
 
   const next = useCallback(() => {
     if (!feedback || busy) return;
+    if (feedback.close) {
+      setFeedback(null); // try again with the same answer on screen
+      return;
+    }
     if (feedback.out_of_hearts) {
       setOutOfHearts(true);
       return;
@@ -310,11 +325,11 @@ export default function Lesson({ id }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, feedback, next, check]);
 
-  const askHint = async () => {
-    setHint({ loading: true });
+  const askHint = async (level = 1) => {
+    setHint((h) => ({ ...(h || {}), loading: true }));
     try {
       const attempt = typeof value === "string" ? value : typeof value?.code === "string" ? value.code : undefined;
-      setHint(await api("/api/ai/hint", { method: "POST", body: { exercise_id: current.id, attempt } }));
+      setHint(await api("/api/ai/hint", { method: "POST", body: { exercise_id: current.id, attempt, level } }));
     } catch (e) {
       setHint({ hint: e.message, source: "error" });
     }
@@ -361,7 +376,7 @@ export default function Lesson({ id }) {
       />
     );
 
-  const verdict = feedback ? (feedback.correct ? "right" : "wrong") : null;
+  const verdict = feedback && !feedback.close ? (feedback.correct ? "right" : "wrong") : null;
 
   return (
     <div className="flex min-h-[100dvh] flex-col text-ink">
@@ -435,7 +450,7 @@ export default function Lesson({ id }) {
             </>
           ) : (
             <>
-              <button className="btn-ghost hidden sm:inline-flex" onClick={askHint} disabled={!!hint || !!feedback}>
+              <button className="btn-ghost hidden sm:inline-flex" onClick={() => askHint(1)} disabled={!!hint || !!feedback}>
                 Hint
               </button>
               <button
@@ -461,24 +476,26 @@ export default function Lesson({ id }) {
             transition={SHEET_SPRING}
             aria-live="polite"
           >
-            <div className={`pb-[env(safe-area-inset-bottom)] ${feedback.correct ? "bg-ok/15" : "bg-bad/15"}`}>
+            <div className={`pb-[env(safe-area-inset-bottom)] ${feedback.close ? "border-t-4 border-gold bg-gold/20" : feedback.correct ? "bg-ok/15" : "bg-bad/15"}`}>
               <div className="mx-auto flex max-h-[75dvh] max-w-3xl flex-col gap-3 overflow-y-auto px-4 py-4 sm:max-h-none sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-7">
-                <div className={`flex items-start gap-3 ${feedback.correct ? "text-ok" : "text-bad"}`}>
+                <div className={`flex items-start gap-3 ${feedback.close ? "text-ink" : feedback.correct ? "text-ok" : "text-bad"}`}>
                   <motion.span
                     className="relative shrink-0"
                     initial={{ scale: 0.4, y: 12 }}
                     animate={{ scale: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 700, damping: 18 }}
                   >
-                    <Mascot size={56} mood={feedback.correct ? "happy" : "sad"} interactive={false} className="sm:hidden" />
-                    <Mascot size={72} mood={feedback.correct ? "happy" : "sad"} interactive={false} className="hidden sm:block" />
+                    <Mascot size={56} mood={feedback.close ? "think" : feedback.correct ? "happy" : "sad"} interactive={false} className="sm:hidden" />
+                    <Mascot size={72} mood={feedback.close ? "think" : feedback.correct ? "happy" : "sad"} interactive={false} className="hidden sm:block" />
                     <span className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-raised shadow">
-                      <Icon name={feedback.correct ? "check" : "x"} className="h-5 w-5" />
+                      <Icon name={feedback.close ? "bulb" : feedback.correct ? "check" : "x"} className="h-5 w-5" />
                     </span>
                   </motion.span>
                   <div className="min-w-0">
-                    <p className="text-xl font-black sm:text-2xl">{feedback.correct ? feedback.praise : "Not quite"}</p>
-                    {!feedback.correct && (
+                    <p className="text-xl font-black sm:text-2xl">{feedback.close ? "Almost there!" : feedback.correct ? feedback.praise : "Not quite"}</p>
+                    {feedback.close && <p className="mt-1 text-sm font-bold text-ink">{feedback.message}</p>}
+                    {feedback.close && <p className="mt-1 text-xs font-semibold text-muted">No heart lost - fix it and press Check again.</p>}
+                    {!feedback.correct && !feedback.close && (
                       <>
                         <p className="text-sm font-extrabold">Correct answer:</p>
                         <NoCopy as="pre" className="whitespace-pre-wrap break-words font-mono text-sm">
@@ -489,8 +506,8 @@ export default function Lesson({ id }) {
                     {feedback.explanation && <p className="mt-1 text-sm font-semibold text-ink/80">{feedback.explanation}</p>}
                   </div>
                 </div>
-                <button className={`${feedback.correct ? "btn-ok" : "btn-bad"} w-full sm:w-48`} onClick={next} disabled={busy} autoFocus>
-                  Continue
+                <button className={`${feedback.close ? "btn-primary" : feedback.correct ? "btn-ok" : "btn-bad"} w-full sm:w-48`} onClick={next} disabled={busy} autoFocus>
+                  {feedback.close ? "Try again" : "Continue"}
                 </button>
               </div>
             </div>

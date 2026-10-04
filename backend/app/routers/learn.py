@@ -154,6 +154,14 @@ def answer(attempt_id: str, body: AnswerIn, user: CurrentUser, db: DB):
     if ex is None or ex.lesson_id != attempt.lesson_id:
         raise HTTPException(404, "Exercise not found")
     correct = grading.grade(ex, body.value())
+    if not correct and ex.id not in (attempt.chances or []):
+        note = grading.near_miss(ex, body.value())
+        if note:
+            # "Almost" - a free second chance (once per question): no heart lost, nothing revealed
+            attempt.chances = [*(attempt.chances or []), ex.id]
+            db.commit()
+            return {"correct": False, "close": True, "message": note, "hearts": user.hearts, "out_of_hearts": False,
+                    "correct_answer": "", "explanation": ""}
     review.record(db, user, ex, correct)
     # Replaying a finished lesson is free practice: mistakes there don't cost hearts.
     # (Looked up only when it matters - a correct answer with hearts left needs no extra query.)
@@ -170,6 +178,7 @@ def answer(attempt_id: str, body: AnswerIn, user: CurrentUser, db: DB):
     db.commit()
     return {
         "correct": correct,
+        "close": False,
         "correct_answer": grading.reveal(ex),
         "explanation": ex.explanation,
         "hearts": user.hearts,

@@ -93,6 +93,123 @@ def grade(ex: Exercise, answer) -> bool:
     return False
 
 
+# ------------------------------------------------------------------ "almost right" detection
+# A wrong answer that is CLOSE gets one free second chance with a plain-language note about what is off.
+# The notes describe the kind of difference (capital letters, spaces, a missing line...) without giving the answer away.
+def _edit_distance(a: str, b: str, cap: int = 4) -> int:
+    if abs(len(a) - len(b)) > cap:
+        return cap + 1
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def _strip_punct(s: str) -> str:
+    return regex.sub(r"[^\w]", "", s)
+
+
+def _compare_text(got: str, want: str) -> str | None:
+    """Why two texts differ, if they are close; None when they are not close at all."""
+    if got == want:
+        return None
+    if got.lower() == want.lower():
+        return "Capital letters matter here - check which letters should be upper or lower case."
+    if "".join(got.split()) == "".join(want.split()):
+        return "The words are right, but the spaces or line breaks are not - check the gaps between things."
+    if _strip_punct(got).lower() == _strip_punct(want).lower():
+        return "The letters are right, but check the punctuation - commas, full stops, brackets, quotes and symbols."
+    try:
+        g, w = float(got), float(want)
+        if ("." in got or "." in want or abs(w) >= 10) and abs(g - w) <= max(1.0, abs(w) * 0.2):
+            return "The number is close, but not exact - check your calculation, and rounding or decimals."
+    except ValueError:
+        pass
+    if _edit_distance(got, want) <= max(1, min(3, len(want) // 5)):
+        return "Very close - one or two characters are off. Check your spelling and symbols."
+    return None
+
+
+def _run_outputs(ex: Exercise, answer) -> list[str] | None:
+    if not isinstance(answer, dict):
+        return None
+    data = ex.data or {}
+    lang = data.get("language")
+    if lang in code_runner.SERVER_LANGS:
+        code = answer.get("code", "")
+        try:
+            return [norm_output(r["stdout"]) if r.get("ok") else "" for r in code_runner.run_tests(lang, code, data.get("tests", []))]
+        except Exception:
+            return None
+    outs = answer.get("outputs")
+    if isinstance(outs, list) and all(isinstance(o, str) for o in outs):
+        return [norm_output(o) for o in outs]
+    return None
+
+
+def _near_run(ex: Exercise, answer) -> str | None:
+    sol, data = ex.solution or {}, ex.data or {}
+    expected = [norm_output(e) for e in sol.get("expected", [])]
+    outs = _run_outputs(ex, answer)
+    if not outs or len(outs) != len(expected) or len(expected) > MAX_TESTS:
+        return None
+    names = [(t.get("name") or f"test {i + 1}") for i, t in enumerate(data.get("tests", []))]
+    names += [f"test {i + 1}" for i in range(len(names), len(expected))]
+    if outs == expected:  # the output is right, so a required technique must be missing
+        return "Your output is right, but this exercise asks you to solve it a particular way (for example with a loop, a function or a certain command). Re-read the task and use that approach."
+    failing = [i for i, (o, e) in enumerate(zip(outs, expected)) if o != e]
+    passed = len(expected) - len(failing)
+    i = failing[0]
+    got, want = outs[i], expected[i]
+    gl, wl = got.split("\n"), want.split("\n")
+    detail = None
+    if len(gl) != len(wl):
+        if gl and gl != [""]:
+            detail = f"Your program printed {len(gl)} line{'s' if len(gl) != 1 else ''}, but the task needs {len(wl)}. Check how many times you print."
+    else:
+        for k, (a, b) in enumerate(zip(gl, wl)):
+            if a != b:
+                why = _compare_text(a, b)
+                if why:
+                    detail = f"Line {k + 1} of your output is {chr(34)}{a[:60]}{chr(34)}. {why}"
+                break
+    if passed >= 1 and len(expected) > 1:
+        fails = ", ".join(f'"{names[i]}"' for i in failing[:3])
+        head = f"Your program passed {passed} of {len(expected)} tests. It does not work for: {fails}."
+        return head + (f" For {chr(34)}{names[i]}{chr(34)}: {detail}" if detail else " Think about what is different in those cases.")
+    return detail
+
+
+def near_miss(ex: Exercise, answer) -> str | None:
+    """A short note about what is off when a WRONG answer is close, else None."""
+    sol = ex.solution or {}
+    try:
+        if ex.kind == "fill" and isinstance(answer, str):
+            got = _norm(answer)
+            for acc in sol.get("accepted", []):
+                why = _compare_text(got, _norm(acc))
+                if why:
+                    return why
+            return None
+        if ex.kind == "order":
+            n = len(ex.data.get("lines", []))
+            target = (sol.get("alternatives") or [list(range(n))])[0]
+            if isinstance(answer, list) and len(answer) == n and n >= 3 and sorted(answer) == sorted(target):
+                wrong = [i + 1 for i, (a, b) in enumerate(zip(answer, target)) if a != b]
+                if 0 < len(wrong) <= 2:
+                    where = " and ".join(str(i) for i in wrong)
+                    return f"Almost! {n - len(wrong)} of {n} lines are in the right place. Look again at line{'s' if len(wrong) > 1 else ''} {where} (counting from the top) - {'they belong' if len(wrong) > 1 else 'it belongs'} somewhere else."
+            return None
+        if ex.kind == "run":
+            return _near_run(ex, answer)
+    except TimeoutError:
+        return None
+    return None
+
+
 def reveal(ex: Exercise) -> str:
     """Human-readable correct answer, shown only AFTER the learner has answered."""
     sol = ex.solution or {}

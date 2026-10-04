@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from app.db import SessionLocal
-from app.models import Exercise, LessonAttempt
+from app.models import Exercise, Lesson, LessonAttempt
 from app.services import grading
 
 from .conftest import enroll
@@ -203,3 +203,58 @@ def test_course_path_is_split_into_sections(client):
             u["lessons"][-1]["project"] for i, u in enumerate(units) if i + 1 in (8, 12, 16)
         )
         assert units[-1]["lessons"][-1]["status"] == "locked"
+
+
+def test_every_question_has_its_own_hint_that_never_gives_the_answer_away(client):
+    from app.services import hints
+
+    with SessionLocal() as db:
+        exercises = db.query(Exercise).all()
+        assert exercises
+        seen = set()
+        for ex in exercises:
+            h1, more1 = hints.local_hint(ex, 1)
+            h2, more2 = hints.local_hint(ex, 2)
+            assert h1 and h2 and not more2, ex.id
+            seen.add(h1)
+            sol = ex.solution or {}
+            if ex.kind == "mcq" and not ex.hint:
+                right = ex.data["options"][sol["index"]]
+                assert f"\u201c{right}\u201d" not in h1, ex.id  # level 1 only rules out WRONG options
+            if ex.kind == "fill" and not ex.hint and len(sol["accepted"][0]) > 2:
+                assert f'"{sol["accepted"][0]}"' not in h1 and f"{sol['accepted'][0]}_" not in h1, ex.id
+        assert len(seen) > 1500  # hints are specific, not one repeated sentence
+
+
+def test_close_answer_gets_one_free_second_chance(client):
+    enroll(client)
+    first = _first_lesson(client)[0]["id"]
+    with SessionLocal() as db:
+        from app.models import User, UserLesson
+
+        uid = db.query(User.id).first()[0]
+        db.add(UserLesson(user_id=uid, lesson_id=first, completed_count=1))  # unlock the lesson after it
+        db.commit()
+        ex = db.query(Exercise).filter(Exercise.kind == "fill").join(Lesson).order_by(Lesson.id, Exercise.position).first()
+        lesson_id, ex_id, word = ex.lesson_id, ex.id, ex.solution["accepted"][0]
+    attempt = client.post(f"/api/lessons/{lesson_id}/start").json()["attempt_id"]
+    close = word.upper() if word.upper() != word else word.capitalize()
+    r1 = client.post(f"/api/attempts/{attempt}/answer", json={"exercise_id": ex_id, "answer": close}).json()
+    assert r1["correct"] is False and r1["close"] is True and r1["message"] and not r1["correct_answer"]
+    hearts = r1["hearts"]
+    r2 = client.post(f"/api/attempts/{attempt}/answer", json={"exercise_id": ex_id, "answer": close}).json()  # second try: normal
+    assert r2["correct"] is False and r2["close"] is False and r2["hearts"] == hearts - 1 and r2["correct_answer"]
+
+
+def test_near_miss_messages(client):
+    from app.services import grading
+
+    class Ex:  # the bits near_miss() reads
+        kind, data = "run", {"language": "python", "tests": [{"name": "a"}, {"name": "b"}]}
+        solution = {"expected": ["Hello, World!", "7"]}
+
+    ex = Ex()
+    assert "passed 1 of 2" in grading.near_miss(ex, {"code": "x", "outputs": ["Hello, World!", "8"]})
+    assert "Capital letters" in grading.near_miss(ex, {"code": "x", "outputs": ["hello, world!", "7"]})
+    assert "punctuation" in grading.near_miss(ex, {"code": "x", "outputs": ["Hello World", "7"]})
+    assert grading.near_miss(ex, {"code": "x", "outputs": ["totally", "different"]}) is None
