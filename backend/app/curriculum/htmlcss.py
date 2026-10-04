@@ -1,5 +1,7 @@
 from .dsl import course, fill, lesson, mcq, order, run, t, unit
 from .htmlcss_adv import ADVANCED, INTERMEDIATE
+from .htmlcss_expert import EXPERT
+from .htmlcss_expert2 import EXPERT2
 
 # HTML/CSS "run" exercises render the learner's page in a script-less sandboxed frame (600x400)
 # and read back text, element counts, attributes or COMPUTED CSS values.
@@ -372,4 +374,6 @@ COURSE = course(
     ),
     INTERMEDIATE,
     ADVANCED,
+    EXPERT,
+    EXPERT2,
 )
