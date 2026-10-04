@@ -8,6 +8,8 @@ test. `setup` (where given) silently builds a starting repository first.
 (see projects_git.py).
 """
 from .dsl import course, fill, lesson, mcq, order, run, section, t, unit
+from .git_expert import EXPERT
+from .git_expert2 import EXPERT2
 
 LOG = "git log --format=%s"
 STATUS = "git status --short"
@@ -383,5 +385,5 @@ ADVANCED = section(
 
 COURSE = course(
     "git", "Git", "🌿", "Version control like a pro: commits, branches, merges and team workflows - in a safe practice terminal.",
-    BEGINNER, INTERMEDIATE, ADVANCED,
+    BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
 )

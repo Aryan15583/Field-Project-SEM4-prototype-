@@ -3,6 +3,8 @@
 8 units: Beginner (1-4), Intermediate (5-6), Advanced (7-8). Projects are added to units 4, 6 and 8
 (see projects_dsa.py).
 """
+from .dsa_expert import EXPERT
+from .dsa_expert2 import EXPERT2
 from .dsl import code, course, fill, lesson, mcq, order, run, section, t, unit
 
 BEGINNER = section(
@@ -381,5 +383,5 @@ ADVANCED = section(
 
 COURSE = course(
     "dsa", "Data Structures & Algorithms", "🧮", "Think like an engineer: Big-O, hashing, stacks, trees, graphs and dynamic programming - in Python.",
-    BEGINNER, INTERMEDIATE, ADVANCED,
+    BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
 )
