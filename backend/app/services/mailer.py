@@ -4,7 +4,9 @@ import logging
 import smtplib
 import ssl
 from email.message import EmailMessage
-from email.utils import make_msgid
+from email.utils import make_msgid, parseaddr
+
+import httpx
 
 from ..config import get_settings
 
@@ -25,6 +27,10 @@ def send(to: str, subject: str, text: str, html: str | None = None, headers: dic
         if s.mail_outbox_file:
             with open(s.mail_outbox_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps({"to": to, "subject": subject, "text": text}) + "\n")
+        return
+
+    if s.brevo_api_key:
+        _send_brevo(to, subject, text, html, headers)
         return
 
     sender = s.smtp_from or s.smtp_username
@@ -54,3 +60,34 @@ def send(to: str, subject: str, text: str, html: str | None = None, headers: dic
     except (OSError, smtplib.SMTPException) as exc:
         log.error("sending email failed: %s", exc)
         raise MailError("could not send email") from exc
+
+
+def _send_brevo(to: str, subject: str, text: str, html: str | None, headers: dict[str, str] | None) -> None:
+    """Sends through Brevo's HTTPS API (port 443, so it works where SMTP ports are blocked)."""
+    s = get_settings()
+    name, address = parseaddr(s.mail_from or s.smtp_from)
+    if not address:
+        raise MailError("MAIL_FROM is not set")
+    body: dict = {
+        "sender": {"email": address, **({"name": name} if name else {})},
+        "to": [{"email": to}],
+        "subject": subject,
+        "textContent": text,
+    }
+    if html:
+        body["htmlContent"] = html
+    if headers:
+        body["headers"] = headers
+    try:
+        resp = httpx.post(
+            "https://api.brevo.com/v3/smtp/email",
+            json=body,
+            headers={"api-key": s.brevo_api_key, "accept": "application/json"},
+            timeout=s.smtp_timeout_seconds,
+        )
+    except httpx.HTTPError as exc:
+        log.error("sending email via Brevo failed: %s", exc)
+        raise MailError("could not send email") from exc
+    if resp.status_code >= 300:
+        log.error("Brevo rejected the email: HTTP %s %s", resp.status_code, resp.text[:300])
+        raise MailError("could not send email")

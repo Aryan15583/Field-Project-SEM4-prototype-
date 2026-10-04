@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     smtp_from: str = ""  # e.g. "Codeingo <no-reply@codeingo.dev>"; defaults to SMTP_USERNAME
     smtp_security: str = "starttls"  # starttls (port 587) | ssl (port 465)
     smtp_timeout_seconds: float = 10.0
+    # Alternative to SMTP: send through Brevo's HTTPS API (needed on hosts that block SMTP ports, such as Render's
+    # free plan). Create a key at brevo.com -> SMTP & API -> API keys, and verify the sender address there.
+    # The sender is MAIL_FROM (falls back to SMTP_FROM), e.g. "Codeingo <you@gmail.com>".
+    brevo_api_key: str = ""
+    mail_from: str = ""
 
     # --- AI tutor (any OpenAI-compatible endpoint: OpenAI, Mistral, Llama 3 via Ollama/vLLM...) ---
     ai_api_key: str = ""
@@ -98,7 +103,7 @@ class Settings(BaseSettings):
 
     @property
     def email_configured(self) -> bool:
-        return bool(self.smtp_host)
+        return bool(self.smtp_host or self.brevo_api_key)
 
     @property
     def fernet(self) -> Fernet:
@@ -120,8 +125,11 @@ class Settings(BaseSettings):
             problems.append("COOKIE_SECURE must be true in production")
         if not self.public_url.startswith("https://"):
             problems.append("PUBLIC_URL must use https:// in production")
-        if not self.smtp_host or not (self.smtp_from or self.smtp_username):
-            problems.append("SMTP_HOST and SMTP_FROM (or SMTP_USERNAME) are required to email sign-in codes")
+        if self.brevo_api_key:
+            if not (self.mail_from or self.smtp_from):
+                problems.append("MAIL_FROM is required with BREVO_API_KEY")
+        elif not self.smtp_host or not (self.smtp_from or self.smtp_username):
+            problems.append("BREVO_API_KEY + MAIL_FROM, or SMTP_HOST + SMTP_FROM (or SMTP_USERNAME), are required to email sign-in codes")
         if self.mail_outbox_file:
             problems.append("MAIL_OUTBOX_FILE is for development and tests only")
         if self.smtp_security not in ("starttls", "ssl"):

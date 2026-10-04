@@ -37,7 +37,11 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI # https://YOUR-APP.vercel.app/api/auth/google/callback
         sync: false
-      - key: SMTP_HOST # smtp.gmail.com
+      - key: BREVO_API_KEY # sends the codes over HTTPS (Render's free plan blocks SMTP) - see deploy/EMAIL.md
+        sync: false
+      - key: MAIL_FROM # Codeingo <you@gmail.com> - the sender address verified in Brevo
+        sync: false
+      - key: SMTP_HOST # smtp.gmail.com (not usable on Render's free plan; leave empty when BREVO_API_KEY is set)
         sync: false
       - key: SMTP_PORT
         value: "587"

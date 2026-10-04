@@ -30,3 +30,24 @@ python scripts/send_test_email.py your.own@gmail.com
 Gmail allows a few hundred messages a day. For more users use Brevo, Resend, Postmark, Mailgun or
 Amazon SES with the same six settings (their dashboards show the host, port and credentials), and set
 up SPF/DKIM for your own domain so the codes do not land in spam.
+
+## Render free plan: use Brevo (HTTPS) instead of SMTP
+
+Render's free web services cannot reach any SMTP server ("Network is unreachable" in the logs), so Gmail
+SMTP does not work there. Send over HTTPS instead - free up to about 300 emails a day:
+
+1. Sign up at brevo.com (free).
+2. Senders, Domains & Dedicated IPs -> **Senders** -> add your Gmail address and click the verification link
+   Brevo emails you.
+3. SMTP & API -> **API keys** -> Generate a new API key -> copy it.
+4. On Render -> `codeingo-api` -> Environment, add:
+
+```
+BREVO_API_KEY=the-api-key
+MAIL_FROM=Codeingo <your.verified.address@gmail.com>
+```
+
+5. Save. The SMTP_* values are then ignored. Sign in again: the code arrives from that address.
+
+`MAIL_FROM` must be the address you verified in Brevo, or Brevo rejects the message (the Render log then shows
+"Brevo rejected the email: HTTP 400/403 ...").
