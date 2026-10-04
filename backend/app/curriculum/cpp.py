@@ -1,5 +1,7 @@
 from .dsl import course, fill, lesson, mcq, order, run, t, unit, code
 from .cpp_adv import ADVANCED, INTERMEDIATE
+from .cpp_expert import EXPERT
+from .cpp_expert2 import EXPERT2
 
 STARTER = "#include <iostream>\n\nint main() {\n    \n    return 0;\n}\n"
 
@@ -346,4 +348,6 @@ COURSE = course(
     ),
     INTERMEDIATE,
     ADVANCED,
+    EXPERT,
+    EXPERT2,
 )
