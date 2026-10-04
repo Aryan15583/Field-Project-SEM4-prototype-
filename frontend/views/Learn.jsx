@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { courseTint, ErrorNote, Icon, IconTile, Mascot, ProgressBar } from "@/components/ui";
-import { api } from "@/lib/api";
+import { api, cached } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 const COURSE_KEY = "cg_course";
@@ -344,10 +344,10 @@ export default function Learn() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [railOpen]);
-  const [courses, setCourses] = useState(null);
+  const [courses, setCourses] = useState(() => cached("/api/courses"));
   const [slug, setSlug] = useState(null);
   const [path, setPath] = useState(null);
-  const [daily, setDaily] = useState(null);
+  const [daily, setDaily] = useState(() => cached("/api/daily"));
   const [practice, setPractice] = useState(null);
   const [open, setOpen] = useState(null);
   const [error, setError] = useState("");
@@ -377,6 +377,8 @@ export default function Learn() {
     api(`/api/practice/summary?course=${encodeURIComponent(slug)}`)
       .then((p) => alive && setPractice(p))
       .catch(() => {});
+    const known = cached(`/api/courses/${encodeURIComponent(slug)}`);
+    if (known) setPath(known); // show the last version right away, then refresh it
     api(`/api/courses/${encodeURIComponent(slug)}`)
       .then((p) => alive && setPath(p))
       .catch((e) =>

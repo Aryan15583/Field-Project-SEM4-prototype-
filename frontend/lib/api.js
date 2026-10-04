@@ -40,6 +40,12 @@ async function refreshSession() {
 
 const NO_REFRESH = ["/api/auth/refresh", "/api/auth/2fa", "/api/auth/dev-login", "/api/auth/logout"];
 
+// The last successful GET answers, kept in memory only. Screens use them to show the previous data at once
+// (while the fresh answer loads), so going back to a page after a lesson doesn't start from a blank skeleton.
+const memo = new Map();
+export const cached = (path) => memo.get(path) ?? null;
+export const clearCache = () => memo.clear(); // call on sign-out: never show one account's data to the next
+
 export async function api(path, { method = "GET", body, retry = true } = {}) {
   const headers = { Accept: "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -66,5 +72,6 @@ export async function api(path, { method = "GET", body, retry = true } = {}) {
         : data?.detail || `Request failed (${res.status})`;
     throw new ApiError(res.status, typeof msg === "string" ? msg : "Request failed", data);
   }
+  if (method === "GET") memo.set(path, data);
   return data;
 }

@@ -47,7 +47,8 @@ def _make_engine(url: str):
         return engine
     # Bounded pool + statement timeout so a flood of slow queries can't exhaust the database.
     connect_args: dict = {"options": "-c statement_timeout=5000"}
-    if _is_pooled(url):
+    pooled = _is_pooled(url)
+    if pooled:
         # A PgBouncer pooler rejects startup options and shares connections between sessions, so don't
         # send the timeout as an option and don't use server-side prepared statements. (Use the direct
         # Neon string if you want the 5 s statement timeout.)
@@ -58,7 +59,10 @@ def _make_engine(url: str):
         pool_size=10,
         max_overflow=20,
         pool_timeout=10,
-        pool_pre_ping=True,
+        # The pre-ping is an extra "SELECT 1" network round trip before EVERY request. Behind Neon's pooler
+        # connections are managed for us, so skip it there and just recycle idle connections regularly.
+        pool_pre_ping=not pooled,
+        pool_recycle=240 if pooled else 1800,
         connect_args=connect_args,
     )
 

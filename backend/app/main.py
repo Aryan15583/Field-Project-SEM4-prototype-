@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .config import get_settings
@@ -51,10 +52,12 @@ def create_app() -> FastAPI:
 
     # Starlette runs the LAST added middleware first (outermost).
     app.add_middleware(CSRFMiddleware)
+
     app.add_middleware(BodySizeLimitMiddleware)
     app.add_middleware(GlobalRateLimitMiddleware)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=s.allowed_hosts)
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(GZipMiddleware, minimum_size=800)  # the course path JSON is ~13 kB: send it compressed
     # No CORSMiddleware on purpose: the SPA is served from the same origin, so browsers
     # block every cross-origin read of the API by default.
 

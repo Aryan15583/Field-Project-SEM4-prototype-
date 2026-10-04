@@ -11,7 +11,7 @@ from ..db import get_db
 from ..models import Contest, ContestEntry, Exercise, TestAttempt, User
 from ..security.deps import get_current_user
 from ..security.ratelimit import check
-from ..services import ai_tutor
+from ..services import ai_tutor, catalog
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -28,7 +28,7 @@ async def get_hint(body: HintIn, user: Annotated[User, Depends(get_current_user)
     allowed, retry = check(f"ai:u{user.id}", get_settings().rate_limit_ai_per_hour, 3600)
     if not allowed:
         raise HTTPException(429, "Hint limit reached for this hour. Try solving it on your own!", headers={"Retry-After": str(retry)})
-    ex = db.get(Exercise, body.exercise_id)
+    ex = catalog.exercise(db, body.exercise_id)
     if ex is None:
         raise HTTPException(404, "Exercise not found")
     if _in_open_test(db, user, ex.id):

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { api, ensureCsrf } from "./api";
+import { api, clearCache, ensureCsrf } from "./api";
 
 const AuthContext = createContext(null);
 
@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async (everywhere = false) => {
     try {
+      clearCache();
       await api(everywhere ? "/api/auth/logout-all" : "/api/auth/logout", { method: "POST" });
     } finally {
       setUser(null);

@@ -12,7 +12,7 @@ from ..models import AuditLog, Course, Exercise, Lesson, Unit, User
 from ..security import mfa, tokens
 from ..security.deps import audit, is_owner, require_admin
 from ..security.ratelimit import limit
-from ..services import grading
+from ..services import catalog, grading
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -183,6 +183,7 @@ def create_course(body: CourseIn, request: Request, admin: Admin, db: DB):
     db.flush()
     audit(db, request, "admin_course_create", admin.id, body.slug)
     db.commit()
+    catalog.invalidate()
     return {"id": course.id}
 
 
@@ -196,6 +197,7 @@ def create_unit(body: UnitIn, request: Request, admin: Admin, db: DB):
     db.flush()
     audit(db, request, "admin_unit_create", admin.id, body.title)
     db.commit()
+    catalog.invalidate()
     return {"id": unit.id}
 
 
@@ -210,6 +212,7 @@ def create_lesson(body: LessonIn, request: Request, admin: Admin, db: DB):
     db.flush()
     audit(db, request, "admin_lesson_create", admin.id, f"{lesson.id}:{body.title}")
     db.commit()
+    catalog.invalidate()
     return {"id": lesson.id}
 
 
@@ -223,6 +226,7 @@ def update_lesson(lesson_id: int, body: LessonIn, request: Request, admin: Admin
     lesson.content_hash = None  # customised: curriculum sync will no longer overwrite it
     audit(db, request, "admin_lesson_update", admin.id, str(lesson_id))
     db.commit()
+    catalog.invalidate()
     return {"id": lesson.id}
 
 
@@ -234,6 +238,7 @@ def delete_lesson(lesson_id: int, request: Request, admin: Admin, db: DB):
     db.delete(lesson)
     audit(db, request, "admin_lesson_delete", admin.id, f"{lesson_id}:{lesson.title}")
     db.commit()
+    catalog.invalidate()
     return {"ok": True}
 
 

@@ -16,7 +16,7 @@ from ..security.deps import get_current_user
 from ..security.ratelimit import limit
 from ..config import get_settings
 from ..security.ratelimit import check
-from ..services import certificates, code_runner, gamification, grading, progress, review
+from ..services import catalog, certificates, code_runner, gamification, grading, progress, review
 
 router = APIRouter(prefix="/api", tags=["learn"])
 
@@ -66,9 +66,7 @@ def _load_course(db: Session, course_id: int) -> Course:
 @router.get("/courses")
 def list_courses(user: CurrentUser, db: DB):
     done = _completed_ids(db, user)
-    courses = db.scalars(
-        select(Course).order_by(Course.position).options(selectinload(Course.units).selectinload(Unit.lessons))
-    ).all()
+    courses = catalog.courses(db)  # cached structure: no round trips for the course tree
     out = []
     for c in courses:
         lessons = _ordered_lessons(c)
@@ -81,9 +79,7 @@ def list_courses(user: CurrentUser, db: DB):
 
 @router.get("/courses/{slug}")
 def course_path(slug: Annotated[str, Field(max_length=40)], user: CurrentUser, db: DB):
-    course = db.scalar(
-        select(Course).where(Course.slug == slug).options(selectinload(Course.units).selectinload(Unit.lessons))
-    )
+    course = catalog.by_slug(db, slug)
     if course is None:
         raise HTTPException(404, "Course not found")
     done = _completed_ids(db, user)
@@ -113,10 +109,10 @@ def course_path(slug: Annotated[str, Field(max_length=40)], user: CurrentUser, d
 
 @router.post("/lessons/{lesson_id}/start", dependencies=[Depends(limit("lesson_start", 30))])
 def start_lesson(lesson_id: int, user: CurrentUser, db: DB):
-    lesson = db.get(Lesson, lesson_id)
+    course = catalog.course_of_lesson(db, lesson_id)  # cached structure (the lesson and its exercises are read fresh)
+    lesson = db.scalar(select(Lesson).where(Lesson.id == lesson_id).options(selectinload(Lesson.exercises))) if course else None
     if lesson is None:
         raise HTTPException(404, "Lesson not found")
-    course = _load_course(db, lesson.unit.course_id)
     done = _completed_ids(db, user)
     if progress.lesson_statuses(course, done, progress.passed_targets(db, user), gamification.debug_active(user)).get(lesson.id) == "locked":
         raise HTTPException(403, "Finish the previous lesson (and the chapter test) first")
@@ -151,7 +147,7 @@ def _get_attempt(db: Session, user: User, attempt_id: str) -> LessonAttempt:
 @router.post("/attempts/{attempt_id}/answer", dependencies=[Depends(limit("answer", 60))])
 def answer(attempt_id: str, body: AnswerIn, user: CurrentUser, db: DB):
     attempt = _get_attempt(db, user, attempt_id)
-    ex = db.get(Exercise, body.exercise_id)
+    ex = catalog.exercise(db, body.exercise_id)
     if ex is None or ex.lesson_id != attempt.lesson_id:
         raise HTTPException(404, "Exercise not found")
     correct = grading.grade(ex, body.value())

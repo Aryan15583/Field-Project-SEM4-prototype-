@@ -42,8 +42,7 @@ def refill_hearts(user: User) -> None:
         user.hearts_updated_at = datetime.now(timezone.utc)
         return
     if user.hearts >= s.max_hearts:
-        user.hearts_updated_at = datetime.now(timezone.utc)
-        return
+        return  # (nothing to refill - and no needless database write; lose_heart() restarts the clock)
     elapsed = datetime.now(timezone.utc) - aware(user.hearts_updated_at)
     gained = int(elapsed.total_seconds() // (s.heart_refill_minutes * 60))
     if gained > 0:
