@@ -2,6 +2,7 @@ from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
 from .sql_adv import ADVANCED, INTERMEDIATE
 from .sql_expert import EXPERT
 from .sql_expert2 import EXPERT2
+from .sql_start import START
 
 # Output of a query = its rows, one per line, columns joined by "|" (NULL shown as NULL).
 
@@ -43,6 +44,7 @@ INSERT INTO books VALUES
 
 COURSE = course(
     "sql", "SQL", "🗄️", "Ask databases questions and get answers - the language of data.",
+    START,
     # ------------------------------------------------------------------ 1
     unit(
         "Unit 1 · Querying data",

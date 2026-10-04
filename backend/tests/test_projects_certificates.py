@@ -22,7 +22,8 @@ def test_every_course_has_a_project_per_section(client):
             steps = sorted(p.exercises, key=lambda e: e.position)
             assert len(steps) == 3 and all(e.kind == "run" for e in steps)
             # later steps continue from the learner's own code (the SQL report queries are independent)
-            if not (p.unit.course.slug == "sql" and p.unit.position in (7, 11)):
+            offset = sum(1 for u in p.unit.course.units if "/start" in (u.key or ""))  # gentle intro units in front
+            if not (p.unit.course.slug == "sql" and p.unit.position - offset in (7, 11)):
                 assert all(e.data.get("carry") for e in steps[1:]), p.title
 
 

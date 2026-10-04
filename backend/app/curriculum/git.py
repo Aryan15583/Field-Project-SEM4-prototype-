@@ -25,6 +25,8 @@ git add about.html
 git commit -m "Add about page"
 """
 
+from .git_start import START
+
 BEGINNER = section(
     "Beginner",
     # ------------------------------------------------------------------ 1
@@ -385,5 +387,5 @@ ADVANCED = section(
 
 COURSE = course(
     "git", "Git", "🌿", "Version control like a pro: commits, branches, merges and team workflows - in a safe practice terminal.",
-    BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
+    START, BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
 )
