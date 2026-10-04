@@ -90,7 +90,17 @@ def test_refresh_rotation_and_reuse_detection(client):
     assert client.post("/api/auth/refresh").status_code == 200
     new = client.cookies.get(tokens.REFRESH_COOKIE)
     assert new and new != old
-    # An attacker replays the old (rotated) token -> whole family revoked.
+    # Replaying the old token a few seconds later (two tabs at once) is tolerated and does not log anyone out.
+    client.cookies.set(tokens.REFRESH_COOKIE, old, path=tokens.REFRESH_PATH)
+    assert client.post("/api/auth/refresh").status_code == 200
+    # An attacker replaying it well after rotation -> whole family revoked.
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import update
+    from app.db import SessionLocal
+    from app.models import RefreshToken
+    with SessionLocal() as db:
+        db.execute(update(RefreshToken).values(revoked_at=datetime.now(timezone.utc) - timedelta(minutes=5)))
+        db.commit()
     client.cookies.set(tokens.REFRESH_COOKIE, old, path=tokens.REFRESH_PATH)
     assert client.post("/api/auth/refresh").status_code == 401
     client.cookies.set(tokens.REFRESH_COOKIE, new, path=tokens.REFRESH_PATH)

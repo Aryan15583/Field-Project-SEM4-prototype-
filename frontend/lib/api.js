@@ -21,11 +21,16 @@ let refreshing = null;
 
 async function refreshSession() {
   if (!refreshing) {
-    refreshing = fetch("/api/auth/refresh", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "X-CSRF-Token": csrfToken() },
-    })
+    // After the browser was closed the (session) CSRF cookie may be gone - get a new one first,
+    // otherwise returning users would be rejected and signed out.
+    refreshing = ensureCsrf()
+      .then(() =>
+        fetch("/api/auth/refresh", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "X-CSRF-Token": csrfToken() },
+        }),
+      )
       .then((r) => r.ok)
       .catch(() => false)
       .finally(() => setTimeout(() => (refreshing = null), 0));

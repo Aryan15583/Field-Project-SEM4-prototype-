@@ -43,7 +43,10 @@ class Settings(BaseSettings):
 
     # --- tokens / cookies ---
     access_token_minutes: int = 15
-    refresh_token_days: int = 14
+    # "Stay signed in on this device until you log out": the refresh cookie lasts as long as browsers allow
+    # (~400 days) and is renewed on every use, so an active or returning device never has to sign in again.
+    refresh_token_days: int = 400
+    refresh_grace_seconds: int = 10  # a just-rotated token is tolerated briefly (two tabs refreshing at once)
     mfa_token_minutes: int = 5
     cookie_secure: bool = True  # browsers treat http://localhost as secure, so this works in dev too
 

@@ -87,10 +87,19 @@ def rotate_refresh_token(db: Session, raw: str, ua: str = "", ip: str = "") -> t
         return None, "unknown"
     now = datetime.now(timezone.utc)
     if row.revoked_at is not None:
-        # A rotated token was presented again -> likely stolen. Kill the whole family.
-        revoke_family(db, row.family_id)
+        # Two tabs refreshing at the same moment present the same token; tolerate that for a few seconds
+        # (the second caller simply gets its own fresh token in the same family).
+        if (now - aware(row.revoked_at)).total_seconds() > get_settings().refresh_grace_seconds:
+            # A rotated token was presented again later -> likely stolen. Kill the whole family.
+            revoke_family(db, row.family_id)
+            db.commit()
+            return None, "reuse"
+        user = db.get(User, row.user_id)
+        if user is None or not user.is_active or not user.mfa_enabled or aware(row.expires_at) < now:
+            return None, "inactive"
+        new_raw = issue_refresh_token(db, user, row.family_id, ua, ip)
         db.commit()
-        return None, "reuse"
+        return user, new_raw
     if aware(row.expires_at) < now:
         return None, "expired"
     user = db.get(User, row.user_id)
@@ -132,7 +141,8 @@ def _cookie_kwargs() -> dict:
 def set_csrf_cookie(response: Response) -> str:
     token = secrets.token_urlsafe(32)
     # Readable by JS on purpose (double-submit pattern); useless to an attacker on another origin.
-    response.set_cookie(CSRF_COOKIE, token, httponly=False, secure=get_settings().cookie_secure, samesite="strict", path="/")
+    s = get_settings()
+    response.set_cookie(CSRF_COOKIE, token, max_age=s.refresh_token_days * 86400, httponly=False, secure=s.cookie_secure, samesite="strict", path="/")
     return token
 
 
