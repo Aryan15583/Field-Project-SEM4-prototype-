@@ -3,6 +3,7 @@
 services:
   - type: web
     name: codeingo-api
+    region: singapore # keep this the same as your Neon database region (a Render service's region can't be changed later)
     runtime: docker
     rootDir: backend
     dockerfilePath: ./Dockerfile
@@ -56,5 +57,6 @@ services:
 
   - type: keyvalue
     name: codeingo-redis
+    region: singapore # must match the web service for the private network
     plan: free
     ipAllowList: [] # only reachable from your Render services
