@@ -1,0 +1,28 @@
+name: Uptime monitor
+
+# Pings the API every 10 minutes. Render's free plan puts a service to sleep after 15 minutes without
+# traffic (the next visitor then waits ~30s), so this keeps it awake - and if the API is really down the
+# run fails, which makes GitHub email the repository owner.
+#
+# The URL defaults to the Render service in render.yaml. If yours is different, set a repository variable
+# API_HEALTH_URL (Settings -> Secrets and variables -> Actions -> Variables), e.g.
+#   https://my-service.onrender.com/api/health
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check the API
+        env:
+          URL: ${{ vars.API_HEALTH_URL || 'https://codeingo-api.onrender.com/api/health' }}
+        run: |
+          # a cold start can take ~30-60s, so allow a long first attempt and retry a few times
+          curl --fail --silent --show-error --max-time 90 --retry 3 --retry-delay 10 --retry-all-errors "$URL"
+          echo
