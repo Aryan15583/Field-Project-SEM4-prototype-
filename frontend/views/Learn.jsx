@@ -335,23 +335,15 @@ function PathSkeleton() {
 /* ---------------------------------------------------------------- page */
 export default function Learn() {
   const { user } = useAuth();
-  const [railOpen, setRailOpen] = useState(true); // the right-hand panel can be hidden (remembered in this browser)
+  // The side panel is a slide-out drawer: closed by default, opened from an edge tab, closed with the X, the
+  // backdrop or Escape.
+  const [railOpen, setRailOpen] = useState(false);
   useEffect(() => {
-    try {
-      if (localStorage.getItem("cg_rail") === "0") setRailOpen(false);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-  const toggleRail = () =>
-    setRailOpen((open) => {
-      try {
-        localStorage.setItem("cg_rail", open ? "0" : "1");
-      } catch {
-        /* ignore */
-      }
-      return !open;
-    });
+    if (!railOpen) return undefined;
+    const onKey = (e) => e.key === "Escape" && setRailOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [railOpen]);
   const [courses, setCourses] = useState(null);
   const [slug, setSlug] = useState(null);
   const [path, setPath] = useState(null);
@@ -433,19 +425,20 @@ export default function Learn() {
   }, [path]);
 
   return (
-    <div className={`grid grid-cols-[minmax(0,1fr)] gap-8 ${railOpen ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}>
+    <div>
       <div className="min-w-0">
-        <div className="mb-3 flex justify-end">
-          <button
-            type="button"
-            onClick={toggleRail}
-            aria-expanded={railOpen}
-            aria-controls="learn-side-panel"
-            className="btn-ghost px-3 py-1.5 text-sm"
-          >
-            {railOpen ? "Hide side panel" : "Show side panel"}
-          </button>
-        </div>
+        {/* edge tab that slides the panel back in */}
+        <button
+          type="button"
+          onClick={() => setRailOpen(true)}
+          aria-expanded={railOpen}
+          aria-controls="learn-side-panel"
+          aria-label="Open side panel"
+          title="Daily goal, streak and more"
+          className="fixed right-0 top-1/2 z-20 grid h-12 w-9 -translate-y-1/2 place-items-center rounded-l-2xl border-2 border-r-0 border-line bg-raised text-primary shadow-lg transition-transform hover:-translate-x-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 lg:bottom-auto"
+        >
+          <Icon name="target" className="h-5 w-5" />
+        </button>
         {/* course picker */}
         <div
           className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:thin] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
@@ -578,8 +571,41 @@ export default function Learn() {
         )}
       </div>
 
-      {/* right rail */}
-      <aside id="learn-side-panel" hidden={!railOpen} className="space-y-5 pr-1 lg:sticky lg:top-[5.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:self-start lg:overflow-y-auto [scrollbar-width:thin]">
+      {/* right rail: slide-out drawer */}
+      <AnimatePresence>
+        {railOpen && (
+          <>
+            <motion.div
+              key="rail-backdrop"
+              className="fixed inset-0 z-40 bg-black/40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setRailOpen(false)}
+              aria-hidden="true"
+            />
+            <motion.aside
+              key="rail"
+              id="learn-side-panel"
+              role="dialog"
+              aria-label="Side panel"
+              className="fixed inset-y-0 right-0 z-50 w-[min(22rem,92vw)] overflow-y-auto border-l-2 border-line bg-bg p-4 pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl [scrollbar-width:thin]"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 420, damping: 38 }}
+            >
+              <div className="mb-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setRailOpen(false)}
+                  aria-label="Close side panel"
+                  className="grid h-10 w-10 place-items-center rounded-xl text-xl font-black text-muted hover:bg-surface hover:text-ink focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-5 pb-6">
         <div className="card tint-orange card-accent p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-3 font-extrabold">
@@ -699,7 +725,11 @@ export default function Learn() {
             </ul>
           </nav>
         )}
-      </aside>
+      </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
