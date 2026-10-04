@@ -1,5 +1,7 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
 from .python_adv import ADVANCED, INTERMEDIATE
+from .python_expert import EXPERT
+from .python_expert2 import EXPERT2
 
 Q = r"""(['"])"""  # an opening quote; close it with \1
 
@@ -347,4 +349,6 @@ COURSE = course(
     ),
     INTERMEDIATE,
     ADVANCED,
+    EXPERT,
+    EXPERT2,
 )

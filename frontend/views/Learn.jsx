@@ -420,7 +420,7 @@ export default function Learn() {
       <div className="min-w-0">
         {/* course picker */}
         <div
-          className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]"
+          className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:thin] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
           role="tablist"
           aria-label="Courses"
         >
@@ -551,7 +551,7 @@ export default function Learn() {
       </div>
 
       {/* right rail */}
-      <aside className="space-y-5 lg:sticky lg:top-[5.5rem] lg:self-start">
+      <aside className="space-y-5 pr-1 lg:sticky lg:top-[5.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:self-start lg:overflow-y-auto [scrollbar-width:thin]">
         <div className="card tint-orange card-accent p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-3 font-extrabold">

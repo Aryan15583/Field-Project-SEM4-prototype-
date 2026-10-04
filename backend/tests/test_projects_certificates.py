@@ -56,7 +56,9 @@ def test_certificate_is_issued_when_the_course_is_complete(client):
 
     _, passed = _take_test(client, {"course": "python", "unit_id": last_unit})
     cert = passed["certificate"]
-    assert cert and cert["course"] == "Python" and cert["name"] == "Learner" and cert["lessons"] == 51
+    assert cert and cert["course"] == "Python" and cert["name"] == "Learner" and cert["lessons"] == sum(
+        len(u["lessons"]) for u in client.get("/api/courses/python").json()["units"]
+    )
     assert len(cert["code"]) >= 16
     assert client.get("/api/certificates").json() == [cert]
 

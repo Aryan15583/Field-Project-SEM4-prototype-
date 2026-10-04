@@ -193,9 +193,11 @@ def test_course_path_is_split_into_sections(client):
     for slug in ("python", "javascript", "java", "cpp", "c", "sql", "html-css"):
         units = client.get(f"/api/courses/{slug}").json()["units"]
         sections = [u["section"] for u in units]
-        assert sections == ["Beginner"] * 8 + ["Intermediate"] * 4 + ["Advanced"] * 4, slug
+        # the original 16 units, then an optional Expert section (any number of further units)
+        assert sections[:16] == ["Beginner"] * 8 + ["Intermediate"] * 4 + ["Advanced"] * 4, slug
+        assert set(sections[16:]) <= {"Expert"}, slug
         # 3 lessons per unit, plus a project closing each section (units 8, 12 and 16)
-        assert [len(u["lessons"]) for u in units] == [3] * 7 + [4] + [3] * 3 + [4] + [3] * 3 + [4], slug
+        assert [len(u["lessons"]) for u in units[:16]] == [3] * 7 + [4] + [3] * 3 + [4] + [3] * 3 + [4], slug
         assert [l["title"] for u in units for l in u["lessons"] if l["project"]] and all(
             u["lessons"][-1]["project"] for i, u in enumerate(units) if i + 1 in (8, 12, 16)
         )

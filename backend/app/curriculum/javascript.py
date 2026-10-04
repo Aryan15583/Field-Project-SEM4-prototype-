@@ -1,5 +1,7 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
 from .javascript_adv import ADVANCED, INTERMEDIATE
+from .javascript_expert import EXPERT
+from .javascript_expert2 import EXPERT2
 
 COURSE = course(
     "javascript", "JavaScript", "⚡", "The language of the web - make pages interactive.",
@@ -352,4 +354,6 @@ COURSE = course(
     ),
     INTERMEDIATE,
     ADVANCED,
+    EXPERT,
+    EXPERT2,
 )

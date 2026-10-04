@@ -127,6 +127,7 @@ def test_readiness_test_jumps_to_the_next_section(client):
     assert path["section_tests"] == {
         "Intermediate": {"status": "available", "questions": 15, "pass_mark": 12, "xp": 50},
         "Advanced": {"status": "available", "questions": 15, "pass_mark": 12, "xp": 50},
+        "Expert": {"status": "available", "questions": 15, "pass_mark": 12, "xp": 50},
     }
     first_intermediate = next(u for u in path["units"] if u["section"] == "Intermediate")
 
