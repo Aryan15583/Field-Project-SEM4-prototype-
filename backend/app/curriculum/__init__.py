@@ -27,6 +27,25 @@ from .typescript import COURSE as TYPESCRIPT
 
 
 
+def _soften(course: dict, module: str) -> dict:
+    """Replace Beginner lesson texts with plainer, more explained versions (questions untouched). Keys are
+    "<unit>/<lesson>" counting only numbered units, so they ignore the Start-here units."""
+    try:
+        intros = importlib.import_module(f".{module}", __name__).INTROS
+    except ModuleNotFoundError:
+        return course
+    n = 0
+    for unit in course["units"]:
+        if unit.get("key"):
+            continue
+        n += 1
+        for li, lesson in enumerate(unit["lessons"]):
+            text = intros.get(f"{n}/{li + 1}")
+            if text and not lesson.get("project"):
+                lesson["intro"] = text.strip()
+    return course
+
+
 def _with_projects(course: dict, module: str) -> dict:
     """Append each section's project as the last lesson of the section's final unit (units 8, 12 and 16 in the
     16-unit courses; 4, 6 and 8 in the 8-unit ones) - keeps existing lesson keys stable."""
@@ -52,3 +71,6 @@ CURRICULUM = [
     _with_projects(GIT, "projects_git"),
     _with_projects(DSA, "projects_dsa"),
 ]
+
+# plainer Beginner explanations (python_soft.py, dsa_soft.py, ...) - texts only, questions unchanged
+CURRICULUM = [_soften(c, c["slug"].replace("-", "") + "_soft") for c in CURRICULUM]
