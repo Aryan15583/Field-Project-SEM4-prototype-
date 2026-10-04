@@ -156,7 +156,10 @@ def answer(attempt_id: str, body: AnswerIn, user: CurrentUser, db: DB):
     correct = grading.grade(ex, body.value())
     review.record(db, user, ex, correct)
     # Replaying a finished lesson is free practice: mistakes there don't cost hearts.
-    practice = db.scalar(select(UserLesson.id).where(UserLesson.user_id == user.id, UserLesson.lesson_id == ex.lesson_id)) is not None
+    # (Looked up only when it matters - a correct answer with hearts left needs no extra query.)
+    practice = False
+    if not correct or user.hearts <= 0:
+        practice = db.scalar(select(UserLesson.id).where(UserLesson.user_id == user.id, UserLesson.lesson_id == ex.lesson_id)) is not None
     if correct:
         if ex.id not in attempt.correct_ids:
             attempt.correct_ids = [*attempt.correct_ids, ex.id]

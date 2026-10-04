@@ -16,7 +16,7 @@ import { useTheme } from "@/lib/theme";
 
 const PRAISE = ["Nice!", "Great job!", "Awesome!", "You got it!", "Correct!", "Brilliant!", "Amazing!"];
 const EASE = [0.2, 0.8, 0.2, 1];
-const SHEET_SPRING = { type: "spring", stiffness: 520, damping: 40 };
+const SHEET_SPRING = { type: "spring", stiffness: 760, damping: 48, mass: 0.8 };
 
 function formatTime(ms) {
   const s = Math.max(0, Math.round(ms / 1000));
@@ -366,8 +366,8 @@ export default function Lesson({ id }) {
   return (
     <div className="flex min-h-[100dvh] flex-col text-ink">
       {/* header */}
-      <div className="mx-auto flex w-full max-w-3xl items-center gap-4 px-4 pb-2 pt-9">
-        <button className="text-muted transition-colors hover:text-ink" onClick={() => setConfirmExit(true)} aria-label="Quit lesson">
+      <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-4 pb-1 pt-[max(0.875rem,env(safe-area-inset-top))] sm:gap-4 sm:pb-2 sm:pt-9">
+        <button className="-m-2 grid h-11 w-11 place-items-center rounded-xl text-muted transition-colors hover:text-ink active:bg-surface" onClick={() => setConfirmExit(true)} aria-label="Quit lesson">
           <Icon name="x" className="h-7 w-7" />
         </button>
         <div className="relative flex-1">
@@ -378,7 +378,7 @@ export default function Lesson({ id }) {
       </div>
 
       {/* body */}
-      <div className="mx-auto w-full max-w-3xl flex-1 overflow-x-hidden px-4 pb-56 pt-6">
+      <div className="mx-auto w-full max-w-3xl flex-1 overflow-x-hidden px-4 pb-44 pt-4 sm:pb-56 sm:pt-6">
         <AnimatePresence mode="wait" initial={false}>
           {phase === "intro" ? (
             <motion.div key="intro" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -48 }} transition={{ duration: 0.22, ease: EASE }}>
@@ -395,10 +395,10 @@ export default function Lesson({ id }) {
             current && (
               <motion.div
                 key={`${current.id}-${round}`}
-                initial={{ opacity: 0, x: 56 }}
+                initial={{ opacity: 0, x: 28 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -56 }}
-                transition={{ duration: 0.22, ease: EASE }}
+                exit={{ opacity: 0, x: -28, transition: { duration: 0.1 } }}
+                transition={{ duration: 0.14, ease: EASE }}
               >
                 <motion.div animate={verdict === "wrong" ? { x: [0, -10, 10, -6, 6, 0] } : { x: 0 }} transition={{ duration: 0.35 }}>
                   {session.lesson.project && (
@@ -425,7 +425,7 @@ export default function Lesson({ id }) {
 
       {/* footer: Check bar, with the feedback sheet sliding up over it */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t-2 border-line bg-bg pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-5 sm:py-7">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:py-7">
           {phase === "intro" ? (
             <>
               <span className="hidden sm:block" />
@@ -443,7 +443,7 @@ export default function Lesson({ id }) {
                 onClick={check}
                 disabled={busy || !current || !isAnswered(current.kind, value)}
               >
-                Check
+                {busy ? "Checking…" : "Check"}
               </button>
             </>
           )}
@@ -462,21 +462,22 @@ export default function Lesson({ id }) {
             aria-live="polite"
           >
             <div className={`pb-[env(safe-area-inset-bottom)] ${feedback.correct ? "bg-ok/15" : "bg-bad/15"}`}>
-              <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:py-7">
+              <div className="mx-auto flex max-h-[75dvh] max-w-3xl flex-col gap-3 overflow-y-auto px-4 py-4 sm:max-h-none sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-7">
                 <div className={`flex items-start gap-3 ${feedback.correct ? "text-ok" : "text-bad"}`}>
                   <motion.span
                     className="relative shrink-0"
                     initial={{ scale: 0.4, y: 12 }}
                     animate={{ scale: 1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 600, damping: 16, delay: 0.05 }}
+                    transition={{ type: "spring", stiffness: 700, damping: 18 }}
                   >
-                    <Mascot size={72} mood={feedback.correct ? "happy" : "sad"} interactive={false} />
+                    <Mascot size={56} mood={feedback.correct ? "happy" : "sad"} interactive={false} className="sm:hidden" />
+                    <Mascot size={72} mood={feedback.correct ? "happy" : "sad"} interactive={false} className="hidden sm:block" />
                     <span className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-raised shadow">
                       <Icon name={feedback.correct ? "check" : "x"} className="h-5 w-5" />
                     </span>
                   </motion.span>
                   <div className="min-w-0">
-                    <p className="text-2xl font-black">{feedback.correct ? feedback.praise : "Not quite"}</p>
+                    <p className="text-xl font-black sm:text-2xl">{feedback.correct ? feedback.praise : "Not quite"}</p>
                     {!feedback.correct && (
                       <>
                         <p className="text-sm font-extrabold">Correct answer:</p>

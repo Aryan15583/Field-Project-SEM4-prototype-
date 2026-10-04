@@ -26,7 +26,7 @@ export default function Exercise({ exercise, value, onChange, result }) {
   return (
     <div>
       <p className="label mb-2">{TITLES[exercise.kind]}</p>
-      <h2 className="mb-6 text-2xl font-extrabold leading-snug sm:text-[1.75rem]">{exercise.prompt}</h2>
+      <h2 className="mb-5 text-xl font-extrabold leading-snug sm:mb-6 sm:text-[1.75rem]">{exercise.prompt}</h2>
       {exercise.kind === "mcq" && <Mcq exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
       {exercise.kind === "fill" && <Fill exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
       {exercise.kind === "order" && <Order exercise={exercise} value={value} onChange={onChange} locked={locked} result={result} />}
@@ -88,11 +88,11 @@ function Mcq({ exercise, value, onChange, locked, result }) {
               onClick={() => pick(i)}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.04 * i, duration: 0.2, ease: "easeOut" }}
-              className={`tile flex items-center gap-3 ${selected ? resultClass(result) : ""} ${locked && !selected ? "opacity-60" : ""}`}
+              transition={{ delay: 0.02 * i, duration: 0.14, ease: "easeOut" }}
+              className={`tile flex min-h-[3.5rem] items-center gap-3 ${selected ? resultClass(result) : ""} ${locked && !selected ? "opacity-60" : ""}`}
             >
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border-2 border-current text-xs font-black opacity-70">{i + 1}</span>
-              <span className="font-mono">{opt}</span>
+              <span className="min-w-0 break-words font-mono">{opt}</span>
             </motion.button>
           );
         })}
@@ -122,7 +122,7 @@ function Fill({ exercise, value, onChange, locked, result }) {
           spellCheck={false}
           autoComplete="off"
           autoCapitalize="off"
-          className={`mx-1 w-32 rounded-lg border-b-4 px-2 py-1 font-mono transition-colors focus:outline-none ${tone}`}
+          className={`mx-1 w-40 max-w-full rounded-lg border-b-4 px-2 py-1 font-mono transition-colors focus:outline-none ${tone}`}
         />
         <span className="whitespace-pre-wrap">{after}</span>
       </div>
@@ -144,7 +144,7 @@ function Order({ exercise, value, onChange, locked, result }) {
     sfx.tap();
     onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
   };
-  const tileClass = "tile block w-full whitespace-pre font-mono text-sm";
+  const tileClass = "tile block w-full whitespace-pre-wrap break-words font-mono text-sm";
 
   return (
     <LayoutGroup id={`order-${exercise.id}`}>
@@ -225,7 +225,7 @@ function Code({ value, onChange, locked, result }) {
           autoComplete="off"
           aria-label="Code editor"
           placeholder="Type your code here…"
-          className="block w-full resize-y bg-raised p-4 font-mono text-[0.9375rem] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+          className="block w-full resize-y bg-raised p-4 font-mono text-base leading-relaxed sm:text-[0.9375rem] text-ink placeholder:text-muted focus:outline-none"
         />
       </div>
       {note}

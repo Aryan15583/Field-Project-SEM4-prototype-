@@ -60,7 +60,7 @@ function Editor({ value, onChange, locked, language, border }) {
           <span className="ml-auto text-[0.6875rem] font-black uppercase tracking-wider text-muted">{LANG_LABEL[language]}</span>
         </div>
         <div className="flex bg-raised">
-          <div aria-hidden="true" className="select-none border-r-2 border-line px-3 py-4 text-right font-mono text-[0.9375rem] leading-relaxed text-muted/60">
+          <div aria-hidden="true" className="select-none border-r-2 border-line px-2 py-4 text-right font-mono text-base leading-relaxed text-muted/60 sm:px-3 sm:text-[0.9375rem]">
             {Array.from({ length: lines }, (_, i) => (
               <div key={i}>{i + 1}</div>
             ))}
@@ -80,7 +80,7 @@ function Editor({ value, onChange, locked, language, border }) {
             wrap="off"
             aria-label={`${LANG_LABEL[language]} code editor`}
             placeholder="Write your code here…"
-            className="block min-w-0 flex-1 resize-none overflow-x-auto bg-transparent px-4 py-4 font-mono text-[0.9375rem] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+            className="block min-w-0 flex-1 resize-none overflow-x-auto bg-transparent px-3 py-4 font-mono text-base leading-relaxed sm:px-4 sm:text-[0.9375rem] text-ink placeholder:text-muted focus:outline-none"
           />
         </div>
       </div>
