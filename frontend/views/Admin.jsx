@@ -334,6 +334,43 @@ function Audit() {
   );
 }
 
+/** Admin-only: unlock everything and play with unlimited hearts. Nothing is saved while it is on. */
+function Debug() {
+  const { user, setUser } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const toggle = async (on) => {
+    setBusy(true);
+    setError("");
+    try {
+      setUser(await api("/api/admin/debug", { method: "POST", body: { on } }));
+    } catch (e) {
+      setError(/not found/i.test(e.message) ? "The server doesn't know debug mode yet - redeploy the API on Render (it updates from GitHub), wait until it is live, and try again." : e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="tint-red card card-accent space-y-3 p-5">
+      <h2 className="flex items-center gap-3 font-extrabold">
+        Debug mode <span className="chip bg-primary/10 text-primary">Admin only</span>
+      </h2>
+      <label className="flex cursor-pointer items-center justify-between gap-4">
+        <span>
+          <span className="label block">{user.debug ? "Debug mode is ON" : "Debug mode is off"}</span>
+          <span className="text-sm font-semibold text-muted">
+            Every lesson, test and certificate is open, hearts never run out, and XP and streak show as ∞. Nothing is saved: your real
+            progress, XP and streak stay exactly as they are.
+          </span>
+        </span>
+        <input type="checkbox" className="peer sr-only" checked={!!user.debug} disabled={busy} onChange={(e) => toggle(e.target.checked)} />
+        <span className="relative h-8 w-14 shrink-0 rounded-full bg-line transition-colors peer-checked:bg-primary peer-focus-visible:ring-4 peer-focus-visible:ring-primary/30 after:absolute after:left-1 after:top-1 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-6" />
+      </label>
+      <ErrorNote>{error}</ErrorNote>
+    </section>
+  );
+}
+
 export default function Admin() {
   const [tab, setTab] = useState("content");
   return (
@@ -344,6 +381,7 @@ export default function Admin() {
           ["content", "Content"],
           ["users", "Users"],
           ["audit", "Security log"],
+          ["debug", "Debug mode"],
         ].map(([k, label]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`chip border-2 ${tab === k ? "border-primary bg-primary/10 text-primary" : "border-line text-muted"}`}>
             {label}
@@ -353,6 +391,7 @@ export default function Admin() {
       {tab === "content" && <Content />}
       {tab === "users" && <Users />}
       {tab === "audit" && <Audit />}
+      {tab === "debug" && <Debug />}
     </div>
   );
 }
