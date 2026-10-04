@@ -6,6 +6,8 @@ in the learner's browser, then run; a type error fails the exercise like a wrong
 types really reject bad calls, so `any` everywhere doesn't work.
 """
 from .dsl import code, course, fill, lesson, mcq, order, run, section, t, unit
+from .typescript_expert import EXPERT
+from .typescript_expert2 import EXPERT2
 
 # appended to a test: the line below MUST be a type error, otherwise the compiler reports the unused directive
 REJECTS = "// @ts-expect-error\n"
@@ -397,5 +399,5 @@ ADVANCED = section(
 
 COURSE = course(
     "typescript", "TypeScript", "🔷", "JavaScript with types - catch bugs before your code runs.",
-    BEGINNER, INTERMEDIATE, ADVANCED,
+    BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
 )
