@@ -2,6 +2,7 @@ from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
 from .c_adv import ADVANCED, INTERMEDIATE
 from .c_expert import EXPERT
 from .c_expert2 import EXPERT2
+from .c_start import START
 
 STARTER = "#include <stdio.h>\n\nint main(void) {\n    \n    return 0;\n}\n"
 
@@ -13,6 +14,7 @@ def prog(body: str, includes: str = "#include <stdio.h>\n", before: str = "") ->
 
 COURSE = course(
     "c", "C", "🔧", "The classic systems language behind operating systems and embedded devices.",
+    START,
     # ------------------------------------------------------------------ 1
     unit(
         "Unit 1 · First programs",

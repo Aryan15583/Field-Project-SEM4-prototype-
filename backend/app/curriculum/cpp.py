@@ -2,6 +2,7 @@ from .dsl import course, fill, lesson, mcq, order, run, t, unit, code
 from .cpp_adv import ADVANCED, INTERMEDIATE
 from .cpp_expert import EXPERT
 from .cpp_expert2 import EXPERT2
+from .cpp_start import START
 
 STARTER = "#include <iostream>\n\nint main() {\n    \n    return 0;\n}\n"
 
@@ -13,6 +14,7 @@ def prog(body: str, includes: str = "#include <iostream>\n", before: str = "") -
 
 COURSE = course(
     "cpp", "C++", "⚙️", "Fast and close to the metal - games, engines and competitive programming.",
+    START,
     # ------------------------------------------------------------------ 1
     unit(
         "Unit 1 · First programs",

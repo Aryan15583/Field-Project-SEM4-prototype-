@@ -12,6 +12,8 @@ from .typescript_expert2 import EXPERT2
 # appended to a test: the line below MUST be a type error, otherwise the compiler reports the unused directive
 REJECTS = "// @ts-expect-error\n"
 
+from .typescript_start import START
+
 BEGINNER = section(
     "Beginner",
     # ------------------------------------------------------------------ 1
@@ -399,5 +401,5 @@ ADVANCED = section(
 
 COURSE = course(
     "typescript", "TypeScript", "🔷", "JavaScript with types - catch bugs before your code runs.",
-    BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
+    START, BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
 )

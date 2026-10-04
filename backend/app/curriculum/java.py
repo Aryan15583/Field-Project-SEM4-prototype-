@@ -1,5 +1,6 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
 from .java_adv import ADVANCED, INTERMEDIATE
+from .java_start import START
 from .java_expert import EXPERT
 from .java_expert2 import EXPERT2
 
@@ -19,6 +20,7 @@ def scan(body: str, extra: str = "") -> str:
 
 COURSE = course(
     "java", "Java", "☕", "Strongly-typed and object-oriented - powers Android apps and big backends.",
+    START,
     # ------------------------------------------------------------------ 1
     unit(
         "Unit 1 · First programs",
