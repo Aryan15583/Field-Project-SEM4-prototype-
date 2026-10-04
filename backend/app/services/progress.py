@@ -57,8 +57,10 @@ def passed_targets(db: Session, user: User) -> set[str]:
     return set(db.scalars(select(UserTest.target).where(UserTest.user_id == user.id, UserTest.passed_at.is_not(None))))
 
 
-def lesson_statuses(course: Course, done: set[int], passed: set[str]) -> dict[int, str]:
+def lesson_statuses(course: Course, done: set[int], passed: set[str], debug: bool = False) -> dict[int, str]:
     units = course.units
+    if debug:  # admin debug mode: everything is open and shown as completed
+        return {l.id: "completed" for u in units for l in u.lessons}
     # does the learner have any completed lesson in unit i or later? (grandfathers old progress)
     reached = [False] * (len(units) + 1)
     for i in range(len(units) - 1, -1, -1):

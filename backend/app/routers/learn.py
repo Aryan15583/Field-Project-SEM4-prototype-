@@ -88,7 +88,8 @@ def course_path(slug: Annotated[str, Field(max_length=40)], user: CurrentUser, d
         raise HTTPException(404, "Course not found")
     done = _completed_ids(db, user)
     passed = progress.passed_targets(db, user)
-    status = progress.lesson_statuses(course, done, passed)
+    debug = gamification.debug_active(user)
+    status = progress.lesson_statuses(course, done, passed, debug)
     unit_q = progress.UNIT_TEST_QUESTIONS
     section_q = progress.SECTION_TEST_QUESTIONS
     return {
@@ -97,7 +98,7 @@ def course_path(slug: Annotated[str, Field(max_length=40)], user: CurrentUser, d
             {
                 "id": u.id, "title": u.title, "section": progress.section_name(u),
                 "lessons": [{"id": l.id, "title": l.title, "xp": l.xp_reward, "status": status[l.id], "project": l.is_project} for l in u.lessons],
-                "test": {"status": progress.unit_test_status(u, status, passed), "questions": unit_q,
+                "test": {"status": "passed" if debug else progress.unit_test_status(u, status, passed), "questions": unit_q,
                          "pass_mark": progress.pass_mark(unit_q), "xp": progress.UNIT_TEST_XP},
             }
             for u in course.units
@@ -117,7 +118,7 @@ def start_lesson(lesson_id: int, user: CurrentUser, db: DB):
         raise HTTPException(404, "Lesson not found")
     course = _load_course(db, lesson.unit.course_id)
     done = _completed_ids(db, user)
-    if progress.lesson_statuses(course, done, progress.passed_targets(db, user)).get(lesson.id) == "locked":
+    if progress.lesson_statuses(course, done, progress.passed_targets(db, user), gamification.debug_active(user)).get(lesson.id) == "locked":
         raise HTTPException(403, "Finish the previous lesson (and the chapter test) first")
     gamification.refill_hearts(user)
     if user.hearts <= 0 and lesson.id not in done:
@@ -193,6 +194,12 @@ def complete(attempt_id: str, user: CurrentUser, db: DB):
     required = {e.id for e in lesson.exercises}
     if not required.issubset(set(attempt.correct_ids)):
         raise HTTPException(400, "Answer every exercise correctly to finish the lesson")
+    if gamification.debug_active(user):
+        # debug mode: finish instantly and save nothing (no XP, streak, badges or progress change)
+        attempt.completed_at = datetime.now(timezone.utc)
+        db.commit()
+        return {"certificate": None, "xp_awarded": lesson.xp_reward + (5 if attempt.mistakes == 0 else 0), "perfect": attempt.mistakes == 0,
+                "mistakes": attempt.mistakes, "new_badges": [], "streak": user.streak_current, "xp_total": user.xp_total, "debug": True}
     elapsed = datetime.now(timezone.utc) - gamification.aware(attempt.started_at)
     if elapsed.total_seconds() < MIN_SECONDS_PER_EXERCISE * len(required):
         raise HTTPException(400, "That was suspiciously fast. Take your time!")
@@ -223,6 +230,9 @@ def complete(attempt_id: str, user: CurrentUser, db: DB):
 # ------------------------------------------------------------------ certificates
 @router.get("/certificates")
 def my_certificates(user: CurrentUser, db: DB):
+    if gamification.debug_active(user):
+        certificates.issue_all_debug(db, user)  # debug mode: a (test) certificate for every course
+        db.commit()
     rows = db.scalars(select(Certificate).where(Certificate.user_id == user.id).order_by(Certificate.issued_at)).all()
     return [certificates.public(c) for c in rows]
 

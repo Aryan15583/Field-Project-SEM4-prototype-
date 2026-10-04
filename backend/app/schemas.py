@@ -22,6 +22,7 @@ class MeOut(BaseModel):
     mfa_method: str
     friend_code: str
     reminder_emails: bool
+    debug: bool = False  # admin debug mode is on (the app shows infinite hearts / XP / streak)
 
 
 def me_out(db: Session, user: User) -> dict:
@@ -46,6 +47,7 @@ def me_out(db: Session, user: User) -> dict:
         mfa_method=user.mfa_method,
         friend_code=social.ensure_code(db, user),
         reminder_emails=bool(user.reminder_emails),
+        debug=gamification.debug_active(user),
     ).model_dump()
 
 

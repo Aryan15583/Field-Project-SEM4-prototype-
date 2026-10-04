@@ -34,6 +34,7 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(120))
     avatar_url: Mapped[str | None] = mapped_column(String(512))
     role: Mapped[str] = mapped_column(String(16), default="learner")
+    debug_mode: Mapped[bool] = mapped_column(Boolean, default=False)  # admins only: unlocked, infinite hearts, nothing is saved
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -261,6 +262,7 @@ class Certificate(Base):
     course_title: Mapped[str] = mapped_column(String(120))
     lessons: Mapped[int] = mapped_column(Integer)
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    debug: Mapped[bool] = mapped_column(Boolean, default=False)  # a TEST certificate made by an admin in debug mode
 
 
 class Passkey(Base):

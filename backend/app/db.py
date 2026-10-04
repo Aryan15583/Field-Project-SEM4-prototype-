@@ -82,6 +82,7 @@ _ADDED_COLUMNS = {
     "lessons": {"key": "VARCHAR(80)", "content_hash": "VARCHAR(64)", "is_project": "BOOLEAN DEFAULT FALSE"},
     "user_lessons": {"tested_out": "BOOLEAN DEFAULT FALSE"},
     "lesson_attempts": {"chances": "JSON"},
+    "certificates": {"debug": "BOOLEAN DEFAULT FALSE"},
     # existing accounts were all enrolled with an authenticator app
     "users": {
         "mfa_method": "VARCHAR(10) DEFAULT 'totp'",
@@ -94,6 +95,7 @@ _ADDED_COLUMNS = {
         "friend_code": "VARCHAR(12)",
         "reminder_emails": "BOOLEAN DEFAULT TRUE",
         "last_reminder_on": "DATE",
+        "debug_mode": "BOOLEAN DEFAULT FALSE",
     },
 }
 

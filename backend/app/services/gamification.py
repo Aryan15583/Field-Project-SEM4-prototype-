@@ -30,8 +30,17 @@ def today() -> date:
     return datetime.now(timezone.utc).date()
 
 
+def debug_active(user: User) -> bool:
+    """Admin debug mode: unlimited hearts, everything unlocked, and nothing is saved (XP, streaks, progress)."""
+    return user.role == "admin" and bool(user.debug_mode)
+
+
 def refill_hearts(user: User) -> None:
     s = get_settings()
+    if debug_active(user):
+        user.hearts = s.max_hearts
+        user.hearts_updated_at = datetime.now(timezone.utc)
+        return
     if user.hearts >= s.max_hearts:
         user.hearts_updated_at = datetime.now(timezone.utc)
         return
@@ -43,6 +52,8 @@ def refill_hearts(user: User) -> None:
 
 
 def lose_heart(user: User) -> None:
+    if debug_active(user):
+        return
     refill_hearts(user)
     if user.hearts >= get_settings().max_hearts:
         user.hearts_updated_at = datetime.now(timezone.utc)
@@ -56,8 +67,8 @@ def current_streak(user: User) -> int:
 
 
 def award_xp(db: Session, user: User, amount: int, reason: str) -> None:
-    if amount <= 0:
-        return
+    if amount <= 0 or debug_active(user):
+        return  # (debug mode never changes real XP or streaks)
     db.add(XpEvent(user_id=user.id, amount=amount, reason=reason))
     user.xp_total += amount
     d = today()

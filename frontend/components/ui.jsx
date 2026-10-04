@@ -165,14 +165,14 @@ export function AnimatedNumber({ value, duration = 0.6 }) {
   return <span ref={ref}>{value}</span>;
 }
 
-export function StatPill({ icon, value, tone, label }) {
+export function StatPill({ icon, value, tone, label, infinite = false }) {
   const tones = { flame: "bg-flame/10 text-flame", bad: "bg-bad/10 text-bad", primary: "bg-primary/10 text-primary", gold: "bg-gold/10 text-gold" };
   return (
-    <span className={`chip ${tones[tone]}`} title={label} aria-label={`${label}: ${value}`}>
+    <span className={`chip ${tones[tone]}`} title={label} aria-label={`${label}: ${infinite ? "unlimited" : value}`}>
       <motion.span key={value} initial={{ scale: 1.35 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 15 }}>
         <Icon name={icon} className="h-5 w-5" />
       </motion.span>
-      <AnimatedNumber value={value} />
+      {infinite ? <span className="text-xl leading-none">∞</span> : <AnimatedNumber value={value} />}
     </span>
   );
 }

@@ -16,8 +16,30 @@ from ..services import grading
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
+
 Admin = Annotated[User, Depends(require_admin)]
 DB = Annotated[Session, Depends(get_db)]
+
+
+class DebugIn(BaseModel):
+    on: bool
+
+
+@router.post("/debug")
+def set_debug_mode(body: DebugIn, request: Request, user: Admin, db: DB):
+    """Admin-only debug mode: every lesson open and shown completed, unlimited hearts, ∞ XP / streak (display only -
+    nothing is saved), and a TEST certificate for every course. Turning it off removes those test certificates."""
+    from ..schemas import me_out
+    from ..services import certificates
+
+    user.debug_mode = body.on
+    if body.on:
+        certificates.issue_all_debug(db, user)
+    else:
+        certificates.drop_debug(db, user)
+    audit(db, request, "admin_debug_on" if body.on else "admin_debug_off", user_id=user.id)
+    db.commit()
+    return me_out(db, user)
 
 Short = Annotated[str, Field(min_length=1, max_length=200)]
 

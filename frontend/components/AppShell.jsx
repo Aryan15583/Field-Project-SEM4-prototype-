@@ -43,9 +43,14 @@ export function UserStats() {
   if (!user) return null;
   return (
     <div className="flex items-center gap-0.5 sm:gap-1 [&_.chip]:px-2 [&_.chip]:py-1 sm:[&_.chip]:px-3 sm:[&_.chip]:py-1.5">
-      <StatPill icon="flame" value={user.streak} tone="flame" label="Day streak" />
-      <StatPill icon="bolt" value={user.xp_total} tone="gold" label="Total XP" />
-      <StatPill icon="heart" value={user.hearts} tone="bad" label="Hearts" />
+      {user.debug && (
+        <span className="chip bg-gold/20 text-ink" title="Admin debug mode: everything unlocked, nothing is saved">
+          DEBUG
+        </span>
+      )}
+      <StatPill icon="flame" value={user.streak} tone="flame" label="Day streak" infinite={user.debug} />
+      <StatPill icon="bolt" value={user.xp_total} tone="gold" label="Total XP" infinite={user.debug} />
+      <StatPill icon="heart" value={user.hearts} tone="bad" label="Hearts" infinite={user.debug} />
     </div>
   );
 }

@@ -215,7 +215,9 @@ def test_every_question_has_its_own_hint_that_never_gives_the_answer_away(client
         for ex in exercises:
             h1, more1 = hints.local_hint(ex, 1)
             h2, more2 = hints.local_hint(ex, 2)
-            assert h1 and h2 and not more2, ex.id
+            h3, more3 = hints.local_hint(ex, 3)
+            assert h1 and h2 and h3 and not more3, ex.id
+            assert h1 != h3, ex.id  # the third hint says more than the first
             seen.add(h1)
             sol = ex.solution or {}
             if ex.kind == "mcq" and not ex.hint:
@@ -258,3 +260,36 @@ def test_near_miss_messages(client):
     assert "Capital letters" in grading.near_miss(ex, {"code": "x", "outputs": ["hello, world!", "7"]})
     assert "punctuation" in grading.near_miss(ex, {"code": "x", "outputs": ["Hello World", "7"]})
     assert grading.near_miss(ex, {"code": "x", "outputs": ["totally", "different"]}) is None
+
+
+def test_admin_debug_mode(client):
+    # a normal learner can neither switch it on nor is affected
+    enroll(client)
+    assert client.post("/api/admin/debug", json={"on": True}).status_code == 404
+    assert client.get("/api/auth/me").json()["debug"] is False
+    client.post("/api/auth/logout")
+
+    enroll(client, "admin@example.com", "Admin")
+    me = client.post("/api/admin/debug", json={"on": True}).json()
+    assert me["debug"] is True and me["hearts"] == me["max_hearts"]
+
+    path = client.get("/api/courses/python").json()
+    assert all(l["status"] == "completed" for u in path["units"] for l in u["lessons"])  # everything open
+    lesson = path["units"][3]["lessons"][0]["id"]  # far ahead - normally locked
+
+    attempt = client.post(f"/api/lessons/{lesson}/start").json()
+    with SessionLocal() as db:
+        ex = db.query(Exercise).filter(Exercise.lesson_id == lesson).first()
+    r = client.post(f"/api/attempts/{attempt['attempt_id']}/answer", json={"exercise_id": ex.id, "answer": 3 if ex.kind == "mcq" else "zzz"}).json()
+    assert r["hearts"] == me["max_hearts"]  # mistakes never cost a heart
+    xp_before = client.get("/api/auth/me").json()["xp_total"]
+    done = client.post(f"/api/attempts/{attempt['attempt_id']}/complete")
+    assert done.status_code in (200, 400)  # 400 only because not every question was answered correctly
+    assert client.get("/api/auth/me").json()["xp_total"] == xp_before  # nothing is saved
+
+    certs = client.get("/api/certificates").json()
+    assert len(certs) == 10 and all(c["debug"] for c in certs)
+    assert client.get(f"/api/public/certificates/{certs[0]['code']}").json()["debug"] is True
+
+    off = client.post("/api/admin/debug", json={"on": False}).json()
+    assert off["debug"] is False and client.get("/api/certificates").json() == []

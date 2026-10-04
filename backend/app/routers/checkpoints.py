@@ -51,7 +51,7 @@ def start(body: StartIn, user: CurrentUser, db: DB):
     course = _course(db, body.course)
     done = progress.completed_ids(db, user)
     passed = progress.passed_targets(db, user)
-    status = progress.lesson_statuses(course, done, passed)
+    status = progress.lesson_statuses(course, done, passed, gamification.debug_active(user))
 
     if body.unit_id is not None:
         unit = next((u for u in course.units if u.id == body.unit_id), None)

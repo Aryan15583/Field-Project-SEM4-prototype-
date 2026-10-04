@@ -24,7 +24,7 @@ function formatTime(ms) {
 }
 
 /* ---------------------------------------------------------------- header */
-function Hearts({ hearts }) {
+function Hearts({ hearts, infinite = false }) {
   const prev = useRef(hearts);
   const lost = hearts < prev.current;
   useEffect(() => {
@@ -40,7 +40,7 @@ function Hearts({ hearts }) {
       >
         <Icon name="heart" className="h-7 w-7" />
       </motion.span>
-      <AnimatedNumber value={hearts} duration={0.3} />
+      {infinite ? <span className="text-2xl leading-none">∞</span> : <AnimatedNumber value={hearts} duration={0.3} />}
       <AnimatePresence>
         {lost && (
           <motion.span
@@ -86,7 +86,7 @@ function Finished({ result, elapsed, accuracy, onContinue }) {
   );
   useEffect(() => sfx.complete(), []);
   const stats = [
-    { label: "Total XP", tone: "bg-gold", text: "text-gold", icon: "bolt", value: <AnimatedNumber value={result.xp_awarded} duration={1} />, prefix: "+" },
+    { label: "Total XP", tone: "bg-gold", text: "text-gold", icon: "bolt", value: result.debug ? "∞" : <AnimatedNumber value={result.xp_awarded} duration={1} />, prefix: result.debug ? "" : "+" },
     { label: result.perfect ? "Perfect!" : "Accuracy", tone: "bg-primary", text: "text-primary", icon: "target", value: `${accuracy}%` },
     { label: "Time", tone: "bg-flame", text: "text-flame", icon: "star", value: formatTime(elapsed) },
   ];
@@ -167,6 +167,7 @@ function Finished({ result, elapsed, accuracy, onContinue }) {
 function HintHelper({ hint, askHint }) {
   const buddyId = useRandomMascot();
   const buddy = getMascot(buddyId).name;
+  const items = hint?.items || [];
   return (
     <AnimatePresence mode="wait" initial={false}>
       {hint ? (
@@ -178,12 +179,23 @@ function HintHelper({ hint, askHint }) {
           transition={{ type: "spring", stiffness: 420, damping: 30 }}
         >
           <Mascot size={60} mascot={buddyId} mood={hint.loading ? "think" : "idle"} className="shrink-0" />
-          <div className="card relative flex-1 p-4 text-sm font-semibold">
-            {hint.loading ? <span className="animate-pulse">{buddy} is thinking…</span> : hint.hint}
-            {hint.source === "ai" && <span className="mt-2 block text-[0.6875rem] font-bold uppercase text-muted">AI hint</span>}
+          <div className="min-w-0 flex-1 space-y-2">
+            {items.map((h, i) => (
+              <motion.div key={i} className="card p-4 text-sm font-semibold" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }}>
+                <span className="mb-1 block text-[0.6875rem] font-black uppercase tracking-wider text-muted">
+                  Hint {i + 1} of 3{h.source === "ai" ? " · AI" : ""}
+                </span>
+                <span className="block whitespace-pre-wrap break-words">{h.hint}</span>
+              </motion.div>
+            ))}
+            {hint.loading && (
+              <div className="card p-4 text-sm font-semibold">
+                <span className="animate-pulse">{buddy} is thinking…</span>
+              </div>
+            )}
             {!hint.loading && hint.more && (
-              <button type="button" className="btn-link mt-2 block text-sm" onClick={() => askHint(2)}>
-                I need a bigger hint
+              <button type="button" className="btn-link block text-sm" onClick={() => askHint(items.length + 1)}>
+                I need a bigger hint ({items.length + 1} of 3)
               </button>
             )}
           </div>
@@ -199,7 +211,7 @@ function HintHelper({ hint, askHint }) {
 
 export default function Lesson({ id }) {
   const router = useRouter();
-  const { reload } = useAuth();
+  const { user, reload } = useAuth();
   const [session, setSession] = useState(null); // { attempt_id, lesson, exercises, hearts }
   const [phase, setPhase] = useState("loading"); // loading | intro | play | done | error
   const [queue, setQueue] = useState([]);
@@ -326,12 +338,13 @@ export default function Lesson({ id }) {
   }, [phase, feedback, next, check]);
 
   const askHint = async (level = 1) => {
-    setHint((h) => ({ ...(h || {}), loading: true }));
+    setHint((h) => ({ items: h?.items || [], more: false, loading: true }));
     try {
       const attempt = typeof value === "string" ? value : typeof value?.code === "string" ? value.code : undefined;
-      setHint(await api("/api/ai/hint", { method: "POST", body: { exercise_id: current.id, attempt, level } }));
+      const res = await api("/api/ai/hint", { method: "POST", body: { exercise_id: current.id, attempt, level } });
+      setHint((h) => ({ items: [...(h?.items || []), { hint: res.hint, source: res.source }], more: !!res.more, loading: false }));
     } catch (e) {
-      setHint({ hint: e.message, source: "error" });
+      setHint((h) => ({ items: [...(h?.items || []), { hint: e.message, source: "error" }], more: false, loading: false }));
     }
   };
 
@@ -389,7 +402,7 @@ export default function Lesson({ id }) {
           <Combo count={combo} />
           <ProgressBar value={solved} max={total} />
         </div>
-        <Hearts hearts={hearts} />
+        <Hearts hearts={hearts} infinite={!!user?.debug} />
       </div>
 
       {/* body */}

@@ -60,6 +60,11 @@ export default function Certificate({ code }) {
           </div>
         </div>
 
+        {cert.debug && (
+          <p className="mb-3 rounded-2xl border-2 border-gold bg-gold/20 p-3 text-center text-sm font-black print:hidden">
+            TEST CERTIFICATE - created in admin debug mode. It does not mean the course was completed.
+          </p>
+        )}
         <article
           className="relative overflow-hidden rounded-3xl border-[0.375rem] border-primary bg-white p-8 text-center text-neutral-900 shadow-xl sm:p-14 print:rounded-none print:shadow-none"
           aria-label={`Certificate: ${cert.name} completed ${cert.course}`}

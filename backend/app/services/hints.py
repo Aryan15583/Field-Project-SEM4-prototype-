@@ -1,6 +1,6 @@
 """Question-specific hints, built from each exercise's own content (no AI needed).
 
-Two levels so a learner can ask for a little help, then a bit more:
+Three levels, each giving away a little more (a nudge, then narrowing it down, then nearly the answer):
 - mcq   1: rules out two wrong options          2: the reasoning (author's explanation) or a third option ruled out
 - fill  1: length and first letter              2: the reasoning, or more letters
 - order 1: which line comes first               2: the first and last lines
@@ -14,7 +14,7 @@ import zlib
 
 from ..models import Exercise
 
-MAX_LEVEL = 2
+MAX_LEVEL = 3
 
 # building blocks a learner may need, found in the reference solution -> plain-language phrase
 _CONSTRUCTS = [
@@ -87,11 +87,13 @@ def _first_sentence(text: str) -> str:
 
 
 def local_hint(ex: Exercise, level: int = 1) -> tuple[str, bool]:
-    """Returns (hint, more) - `more` says a stronger hint is available."""
+    """Returns (hint, more) - `more` says a stronger hint is available. Each level gives away a bit more:
+    1 = a nudge, 2 = narrows it down, 3 = nearly the answer."""
     level = max(1, min(level, MAX_LEVEL))
     sol, data = ex.solution or {}, ex.data or {}
     author = (ex.hint or "").strip()
     expl = (ex.explanation or "").strip()
+    more = level < MAX_LEVEL
 
     if ex.kind == "mcq":
         options = data.get("options", [])
@@ -100,48 +102,59 @@ def local_hint(ex: Exercise, level: int = 1) -> tuple[str, bool]:
         q = lambda o: f"\u201c{o}\u201d"  # typographic quotes: options may themselves contain quote marks
         if len(options) <= 2:  # true/false style - nothing to rule out
             if level == 1:
-                return author or "Work it out yourself first: go through the code or the statement one step at a time, then choose.", True
-            return (f"Think about this: {expl}" if expl else "Slow down and trace it line by line; the answer follows from what each part does."), False
+                return author or "Work it out yourself first: go through the code or the statement one step at a time, then choose.", more
+            if level == 2:
+                return "Trace it again, slowly - write down what each part does, one line at a time, and see where it leads.", more
+            return (f"Here is the reasoning: {expl}" if expl else f"The answer is {q(options[right])}."), False
         if level == 1:
             if author:
-                return author, True
+                return author, more
             gone = _pick(ex, wrong, 1)
-            return f"One option you can cross out: {q(gone[0])} is not the answer. Read the rest again carefully and trace the code or idea step by step.", True
-        keep = _pick(ex, wrong, 1)
-        pair = [options[right], keep[0]]
-        random.Random(zlib.crc32(f"p{ex.id}".encode())).shuffle(pair)
-        return f"It is one of these two: {q(pair[0])} or {q(pair[1])}. Think about what separates them.", False
+            return f"One option you can cross out: {q(gone[0])} is not the answer. Read the rest again carefully and trace the code or idea step by step.", more
+        if level == 2:
+            keep = _pick(ex, wrong, 1)
+            pair = [options[right], keep[0]]
+            random.Random(zlib.crc32(f"p{ex.id}".encode())).shuffle(pair)
+            return f"It is one of these two: {q(pair[0])} or {q(pair[1])}. Think about what separates them.", more
+        return (f"Here is the reasoning: {expl}" if expl else f"The answer is {q(options[right])}."), False
 
     if ex.kind == "fill":
         answer = (sol.get("accepted") or [""])[0]
+        short = len(answer) <= 2  # too short to show a letter without giving it away
         if level == 1:
             if author:
-                return author, True
-            if len(answer) <= 2:  # too short to show a letter without giving it away
-                return f"The missing part is only {len(answer)} character{'s' if len(answer) != 1 else ''} long - look at the examples in the lesson text for the same kind of symbol or word.", True
-            return f'The missing part is {len(answer)} characters long and starts with "{answer[:1]}".', True
+                return author, more
+            if short:
+                return f"The missing part is only {len(answer)} character{'s' if len(answer) != 1 else ''} long - look at the examples in the lesson text for the same kind of symbol or word.", more
+            return f'The missing part is {len(answer)} characters long and starts with "{answer[:1]}".', more
+        if level == 2:
+            if short:
+                return "It is the same symbol or word that the lesson example uses in this position - find that example and compare.", more
+            return f"It looks like this: {answer[:2] + '_' * (len(answer) - 2)}", more
         if expl:
-            return f"Think about this: {expl}", False
-        if len(answer) <= 2:
-            return "It is the same symbol or word that the lesson example uses in this position - find that example and compare.", False
-        masked = answer[:2] + "_" * (len(answer) - 2)
-        return f"It looks like this: {masked}", False
+            return f"Here is the reasoning: {expl}", False
+        return f"It is almost fully shown here: {answer[: max(1, len(answer) - 1)]}_", False
 
     if ex.kind == "order":
-        lines = data.get("lines", [])
+        lines = [l.strip() for l in data.get("lines", [])]
         if not lines:
-            return author or "Work out what has to happen first, then what follows.", False
+            return author or "Work out what has to happen first, then what follows.", more
         if level == 1:
-            if author:
-                return author, True
-            return f'The first line is: "{lines[0].strip()}". Now think about what has to come after it.', True
-        last = lines[-1].strip()
-        return f'The first line is "{lines[0].strip()}" and the last line is "{last}". The others go in between - think about what each one needs from the one before it.', False
+            return author or f'The first line is: "{lines[0]}". Now think about what has to come after it.', more
+        if level == 2:
+            return f'The first line is "{lines[0]}" and the last line is "{lines[-1]}". The others go in between - think about what each one needs from the one before it.', more
+        if len(lines) <= 3:
+            return "The order is: " + "  then  ".join(f'"{l}"' for l in lines[:-1]) + f"  and finally \"{lines[-1]}\".", False
+        head = lines[:2]
+        return f'It starts with "{head[0]}", then "{head[1]}", and it ends with "{lines[-1]}". Only the lines in the middle are left to place.', False
 
     if ex.kind == "code":
+        example = (sol.get("example") or "").strip()
         if level == 1:
-            return (author or "Write it the way the example in the lesson does, then check brackets, quotes and spelling."), bool(expl)
-        return (f"Think about this: {expl}" if expl else "Compare each part of your code with the lesson example, character by character."), False
+            return author or "Write it the way the example in the lesson does, then check brackets, quotes and spelling.", more
+        if level == 2:
+            return (f"Think about this: {expl}" if expl else "Compare each part of your code with the lesson example, character by character."), more
+        return (f"One way to write it:\n{example}" if example else "Go back to the lesson example and copy its shape, changing only the parts the question asks about."), False
 
     # run
     example = (sol.get("example") or "").strip()
@@ -159,11 +172,21 @@ def local_hint(ex: Exercise, level: int = 1) -> tuple[str, bool]:
         size = f" The finished program is about {len(lines)} line{'s' if len(lines) != 1 else ''} long." if len(lines) > 1 else " One line is enough."
         tested = f" It is tested with: {', '.join(tests[:4])}." if len(tests) > 1 else ""
         return lead + size + tested + " Use Run to check your output against the task.", bool(example)
-    if lines:
+    if not lines:
+        return "Run your program and compare what it prints with what the task asks for, line by line.", False
+    if level == 2:
         first = lines[0].strip()
         if len(lines) <= 2 and len(first) > 24:  # a short answer: show only its beginning, not all of it
             cut = first[: max(12, len(first) // 3)]
             first = cut.rsplit(" ", 1)[0] if " " in cut[8:] else cut
             first += " ..."
-        return f"Here is how a solution can start: {first}   - now continue from there.", False
-    return "Run your program and compare what it prints with what the task asks for, line by line.", False
+        return f"Here is how a solution can start: {first}   - now continue from there.", bool(example)
+    # level 3: about half of the solution
+    take = max(1, (len(lines) + 1) // 2)
+    shown = lines[:take]
+    if len(lines) <= 2:
+        text = shown[0].strip()
+        cut = text[: max(16, (len(text) * 2) // 3)]
+        text = (cut.rsplit(" ", 1)[0] if " " in cut[10:] else cut) + " ..."
+        shown = [text]
+    return "Here is the first part of a solution:\n" + "\n".join(shown) + "\n...and the rest follows the same idea.", False

@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/ai", tags=["ai"])
 class HintIn(BaseModel):
     exercise_id: int
     attempt: str | None = Field(None, max_length=2000)
-    level: int = Field(1, ge=1, le=2)  # 1 = a nudge, 2 = a stronger hint
+    level: int = Field(1, ge=1, le=3)  # 1 = a nudge, 2 = narrows it down, 3 = nearly the answer
 
 
 @router.post("/hint")
@@ -34,7 +34,7 @@ async def get_hint(body: HintIn, user: Annotated[User, Depends(get_current_user)
     if _in_open_test(db, user, ex.id):
         raise HTTPException(403, "Hints aren't available during a test or contest - you've got this!")
     text, source, more = await ai_tutor.hint(ex, body.attempt, body.level)
-    return {"hint": text, "source": source, "level": body.level, "more": more and body.level < 2}
+    return {"hint": text, "source": source, "level": body.level, "more": more and body.level < 3}
 
 
 @router.get("/status")
