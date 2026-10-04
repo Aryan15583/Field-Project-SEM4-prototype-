@@ -19,6 +19,21 @@ def normalise_url(url: str) -> str:
     return url
 
 
+def _is_pooled(url: str) -> bool:
+    """Neon's pooled endpoint (host contains -pooler) runs through PgBouncer in transaction mode."""
+    host = url.split("@", 1)[-1].split("/", 1)[0]
+    return "-pooler" in host
+
+
+def _drop_param(url: str, name: str) -> str:
+    """Removes one query parameter (e.g. channel_binding, which PgBouncer poolers don't support)."""
+    if "?" not in url:
+        return url
+    base, query = url.split("?", 1)
+    kept = [p for p in query.split("&") if p and p.split("=", 1)[0] != name]
+    return base + ("?" + "&".join(kept) if kept else "")
+
+
 def _make_engine(url: str):
     url = normalise_url(url)
     if url.startswith("sqlite"):
@@ -31,13 +46,20 @@ def _make_engine(url: str):
 
         return engine
     # Bounded pool + statement timeout so a flood of slow queries can't exhaust the database.
+    connect_args: dict = {"options": "-c statement_timeout=5000"}
+    if _is_pooled(url):
+        # A PgBouncer pooler rejects startup options and shares connections between sessions, so don't
+        # send the timeout as an option and don't use server-side prepared statements. (Use the direct
+        # Neon string if you want the 5 s statement timeout.)
+        url = _drop_param(url, "channel_binding")
+        connect_args = {"prepare_threshold": None}
     return create_engine(
         url,
         pool_size=10,
         max_overflow=20,
         pool_timeout=10,
         pool_pre_ping=True,
-        connect_args={"options": "-c statement_timeout=5000"},
+        connect_args=connect_args,
     )
 
 
