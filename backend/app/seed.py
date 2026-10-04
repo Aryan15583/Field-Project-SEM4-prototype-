@@ -4,7 +4,7 @@
 - Built-in lessons whose content changed are updated in place (same lesson id, so learners keep
   their progress).
 - Lessons an admin has edited (content_hash = None) are never overwritten.
-Lessons are keyed "<course>/<unit#>/<lesson#>" unless a lesson sets an explicit `key`, so add new
+Units are keyed "<course>/<n>" (or an explicit key such as "<course>/start1"); lessons "<course>/<unit#>/<lesson#>" unless a lesson sets an explicit `key`, so add new
 lessons at the end of a unit (or give them a key) to keep existing keys stable.
 """
 import hashlib
@@ -40,8 +40,13 @@ def sync_curriculum(db: Session) -> None:
             db.add(course)
         course.title, course.description, course.icon, course.position = spec["title"], spec["description"], spec["icon"], ci
         db.flush()
+        numbered = 0  # units with an explicit "key" (the Start-here units) don't consume a number
         for ui, uspec in enumerate(spec["units"]):
-            ukey = f"{spec['slug']}/{ui + 1}"
+            if uspec.get("key"):
+                ukey = f"{spec['slug']}/{uspec['key']}"
+            else:
+                numbered += 1
+                ukey = f"{spec['slug']}/{numbered}"
             unit = db.scalar(select(Unit).where(Unit.key == ukey))
             if unit is None:
                 unit = Unit(course_id=course.id, key=ukey)

@@ -192,6 +192,7 @@ def test_course_path_is_split_into_sections(client):
     enroll(client)
     for slug in ("python", "javascript", "java", "cpp", "c", "sql", "html-css"):
         units = client.get(f"/api/courses/{slug}").json()["units"]
+        units = [u for u in units if not u["title"].startswith("Start here")]  # gentle intro units sit in front
         sections = [u["section"] for u in units]
         # the original 16 units, then an optional Expert section (any number of further units)
         assert sections[:16] == ["Beginner"] * 8 + ["Intermediate"] * 4 + ["Advanced"] * 4, slug

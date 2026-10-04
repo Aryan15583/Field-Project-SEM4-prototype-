@@ -34,8 +34,9 @@ def _with_projects(course: dict, module: str) -> dict:
         projects = importlib.import_module(f".{module}", __name__).PROJECTS
     except ModuleNotFoundError:
         return course
+    offset = sum(1 for u in course["units"] if u.get("key"))  # leading Start-here units don't count as numbered units
     for unit_number, lesson in projects.items():
-        course["units"][unit_number - 1]["lessons"].append(lesson)
+        course["units"][offset + unit_number - 1]["lessons"].append(lesson)
     return course
 
 

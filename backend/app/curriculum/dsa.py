@@ -4,6 +4,7 @@
 (see projects_dsa.py).
 """
 from .dsa_expert import EXPERT
+from .dsa_start import START
 from .dsa_expert2 import EXPERT2
 from .dsl import code, course, fill, lesson, mcq, order, run, section, t, unit
 
@@ -383,5 +384,5 @@ ADVANCED = section(
 
 COURSE = course(
     "dsa", "Data Structures & Algorithms", "🧮", "Think like an engineer: Big-O, hashing, stacks, trees, graphs and dynamic programming - in Python.",
-    BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
+    START, BEGINNER, INTERMEDIATE, ADVANCED, EXPERT, EXPERT2,
 )

@@ -2,11 +2,13 @@ from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
 from .python_adv import ADVANCED, INTERMEDIATE
 from .python_expert import EXPERT
 from .python_expert2 import EXPERT2
+from .python_start import START
 
 Q = r"""(['"])"""  # an opening quote; close it with \1
 
 COURSE = course(
     "python", "Python", "🐍", "The friendliest first language - readable, powerful and everywhere.",
+    START,
     # ------------------------------------------------------------------ 1
     unit(
         "Unit 1 · First steps",

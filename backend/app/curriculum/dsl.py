@@ -71,6 +71,12 @@ def unit(title, *lessons):
     return {"title": title, "lessons": list(lessons)}
 
 
+def start_unit(number, title, *lessons):
+    """A gentle 'Start here' unit placed in front of Unit 1. It carries its own stable key ("<course>/start<number>")
+    so the positional keys of every existing unit and lesson (and so every learner's progress) stay unchanged."""
+    return {"title": title, "lessons": list(lessons), "key": f"start{number}"}
+
+
 def section(name, *units):
     """Groups units into a path section (Beginner / Intermediate / Advanced), like Duolingo."""
     return [{**u, "section": name} for u in units]

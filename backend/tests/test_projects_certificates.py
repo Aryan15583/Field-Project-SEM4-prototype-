@@ -28,7 +28,9 @@ def test_every_course_has_a_project_per_section(client):
 
 def test_project_flag_reaches_the_path(client):
     enroll(client)
-    project = _path(client)["units"][7]["lessons"][3]
+    units = _path(client)["units"]
+    start = sum(1 for u in units if u["title"].startswith("Start here"))
+    project = units[start + 7]["lessons"][3]
     assert project["project"] and project["title"].startswith("Project:") and project["xp"] == 30
 
 
