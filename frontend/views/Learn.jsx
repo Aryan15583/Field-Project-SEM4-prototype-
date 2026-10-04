@@ -335,6 +335,23 @@ function PathSkeleton() {
 /* ---------------------------------------------------------------- page */
 export default function Learn() {
   const { user } = useAuth();
+  const [railOpen, setRailOpen] = useState(true); // the right-hand panel can be hidden (remembered in this browser)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("cg_rail") === "0") setRailOpen(false);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const toggleRail = () =>
+    setRailOpen((open) => {
+      try {
+        localStorage.setItem("cg_rail", open ? "0" : "1");
+      } catch {
+        /* ignore */
+      }
+      return !open;
+    });
   const [courses, setCourses] = useState(null);
   const [slug, setSlug] = useState(null);
   const [path, setPath] = useState(null);
@@ -416,8 +433,19 @@ export default function Learn() {
   }, [path]);
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className={`grid grid-cols-[minmax(0,1fr)] gap-8 ${railOpen ? "lg:grid-cols-[minmax(0,1fr)_20rem]" : ""}`}>
       <div className="min-w-0">
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={toggleRail}
+            aria-expanded={railOpen}
+            aria-controls="learn-side-panel"
+            className="btn-ghost px-3 py-1.5 text-sm"
+          >
+            {railOpen ? "Hide side panel" : "Show side panel"}
+          </button>
+        </div>
         {/* course picker */}
         <div
           className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:thin] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
@@ -551,7 +579,7 @@ export default function Learn() {
       </div>
 
       {/* right rail */}
-      <aside className="space-y-5 pr-1 lg:sticky lg:top-[5.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:self-start lg:overflow-y-auto [scrollbar-width:thin]">
+      <aside id="learn-side-panel" hidden={!railOpen} className="space-y-5 pr-1 lg:sticky lg:top-[5.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:self-start lg:overflow-y-auto [scrollbar-width:thin]">
         <div className="card tint-orange card-accent p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-3 font-extrabold">

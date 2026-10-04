@@ -1,5 +1,7 @@
 from .dsl import code, course, fill, lesson, mcq, order, run, t, unit
 from .sql_adv import ADVANCED, INTERMEDIATE
+from .sql_expert import EXPERT
+from .sql_expert2 import EXPERT2
 
 # Output of a query = its rows, one per line, columns joined by "|" (NULL shown as NULL).
 
@@ -346,4 +348,6 @@ COURSE = course(
     ),
     INTERMEDIATE,
     ADVANCED,
+    EXPERT,
+    EXPERT2,
 )
