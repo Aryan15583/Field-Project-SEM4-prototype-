@@ -10,17 +10,23 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState("loading"); // loading | authed | anon
 
   const reload = useCallback(async () => {
-    try {
-      await ensureCsrf();
-      const me = await api("/api/auth/me");
-      setUser(me);
-      setStatus("authed");
-      return me;
-    } catch {
-      setUser(null);
-      setStatus("anon");
-      return null;
+    // Only a real "not signed in" (401) shows the sign-in page. A sleeping or briefly unreachable server
+    // must not look like a logout, so other errors are retried before giving up.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        await ensureCsrf();
+        const me = await api("/api/auth/me");
+        setUser(me);
+        setStatus("authed");
+        return me;
+      } catch (e) {
+        if (e?.status === 401 || e?.status === 403) break;
+        await new Promise((r) => setTimeout(r, 3000));
+      }
     }
+    setUser(null);
+    setStatus("anon");
+    return null;
   }, []);
 
   useEffect(() => {

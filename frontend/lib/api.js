@@ -30,16 +30,26 @@ async function refreshSession() {
   if (!refreshing) {
     // After the browser was closed the (session) CSRF cookie may be gone - get a new one first,
     // otherwise returning users would be rejected and signed out.
-    refreshing = ensureCsrf()
-      .then(() =>
+    const attempt = () =>
+      ensureCsrf().then(() =>
         fetch("/api/auth/refresh", {
           method: "POST",
           credentials: "same-origin",
           headers: { "X-CSRF-Token": csrfToken() },
         }),
-      )
-      .then((r) => r.ok)
-      .catch(() => false)
+      );
+    refreshing = attempt()
+      .catch(() => null)
+      .then(async (r) => {
+        if (!r || isWakeResponse(r, "/api/auth/refresh")) {
+          await ensureAwake(); // the server was asleep: wait for it, then renew once more
+          r = await attempt();
+        }
+        // Only a clear "no" from the server means signed out. A server hiccup must never log anyone out.
+        if (r.status === 401 || r.status === 403) return false;
+        if (!r.ok) throw new ApiError(r.status, "The server had a problem. Please try again.");
+        return true;
+      })
       .finally(() => setTimeout(() => (refreshing = null), 0));
   }
   return refreshing;
