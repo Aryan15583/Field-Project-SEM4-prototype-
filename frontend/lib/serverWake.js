@@ -58,6 +58,12 @@ export function ensureAwake() {
   return running;
 }
 
+/** Resolves once the API is up (shows the waking screen if it was asleep). Use before leaving the site for a full-page /api navigation. */
+export async function whenAwake() {
+  if (await healthy()) return;
+  await ensureAwake();
+}
+
 /** "Try again" on the failed screen. */
 export function retryWake() {
   return ensureAwake().catch(() => {});

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { whenAwake } from "@/lib/serverWake";
 import { cancelled, passkeysSupported, signInWithPasskey } from "@/lib/webauthn";
 import { ErrorNote, Icon, Logo, Mascot, ThemeToggle } from "@/components/ui";
 
@@ -111,7 +112,14 @@ export default function Landing() {
             <a
               href="/api/auth/google/login"
               aria-disabled={config?.google === false}
-              onClick={(e) => config?.google === false && (e.preventDefault(), setError("Google sign-in isn't configured on this server yet."))}
+              onClick={(e) => {
+                e.preventDefault();
+                if (config?.google === false) return setError("Google sign-in isn't configured on this server yet.");
+                // a full-page jump to /api would show the host's "waking up" page if the server sleeps - wake it first
+                whenAwake()
+                  .then(() => (window.location.href = "/api/auth/google/login"))
+                  .catch(() => setError("The server isn't responding right now. Please try again in a minute."));
+              }}
               className="btn-primary w-full"
             >
               <span className="grid h-7 w-7 place-items-center rounded-lg bg-white">
