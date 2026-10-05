@@ -33,7 +33,8 @@ export default function Landing() {
   const buddy = "Codi"; // the login page always shows the original mascot
   const params = useSearchParams();
   const router = useRouter();
-  const [config, setConfig] = useState({ google: false, devLogin: false });
+  // null = not known yet. Until the server answers, assume Google sign-in works (a slow or waking server must not look "not configured").
+  const [config, setConfig] = useState(null);
   const [dev, setDev] = useState({ email: "", name: "" });
   const [error, setError] = useState(params.get("error") ? "Sign-in failed or was cancelled. Please try again." : "");
   const [busy, setBusy] = useState(false);
@@ -47,7 +48,15 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    api("/api/auth/config").then(setConfig).catch(() => {});
+    let alive = true;
+    const load = (triesLeft) =>
+      api("/api/auth/config")
+        .then((c) => alive && setConfig(c))
+        .catch(() => alive && triesLeft > 0 && setTimeout(() => load(triesLeft - 1), 3000)); // the server may be waking up
+    load(5);
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const devLogin = async (e) => {
@@ -101,8 +110,8 @@ export default function Landing() {
           <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 md:mx-0">
             <a
               href="/api/auth/google/login"
-              aria-disabled={!config.google}
-              onClick={(e) => !config.google && (e.preventDefault(), setError("Google sign-in isn't configured on this server yet."))}
+              aria-disabled={config?.google === false}
+              onClick={(e) => config?.google === false && (e.preventDefault(), setError("Google sign-in isn't configured on this server yet."))}
               className="btn-primary w-full"
             >
               <span className="grid h-7 w-7 place-items-center rounded-lg bg-white">
@@ -132,7 +141,7 @@ export default function Landing() {
             </p>
             <ErrorNote>{error}</ErrorNote>
 
-            {config.devLogin && (
+            {config?.devLogin && (
               <form onSubmit={devLogin} className="card mt-2 space-y-3 p-4 text-left">
                 <p className="label">Developer login (local only)</p>
                 <input className="input" type="email" required placeholder="you@example.com" value={dev.email} onChange={(e) => setDev({ ...dev, email: e.target.value })} />
