@@ -1,22 +1,130 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Codi from "@/components/Codi";
 import { retryWake, useWakeState } from "@/lib/serverWake";
-import { MIX_QUIZ, MIX_TIPS, TOPICS, TOPIC_IDS, topicForCourse } from "@/lib/wakeTopics";
 
 /*
  * Shown while the (free, sleepy) API server wakes up - usually 30-60 seconds. Instead of a blank wait it offers a
- * tiny game and a quiz, and carries on by itself the moment the server answers (lib/serverWake.js).
+ * tiny coding memory game, and carries on by itself the moment the server answers (lib/serverWake.js).
  */
-const GENERAL_TIPS = [
+const TIPS = [
   "Fun fact: the first computer bug was a real moth stuck in a machine in 1947.",
   "Tip: read an error message from the top - it usually tells you the line.",
   "Tip: small steps beat big leaps. Run your code after every few lines.",
   "Tip: when stuck, explain the problem out loud. It works surprisingly often.",
+  "Fun fact: Python is named after Monty Python, not the snake.",
+  "Fun fact: JavaScript was written in just 10 days.",
+  "Tip: a variable is just a labelled box that holds a value.",
+  "Fun fact: the very first website is still online.",
 ];
 
+// Symbol Match: flip two cards - a coding symbol and its name - to pair them up.
+const PAIRS = [
+  ["{ }", "curly braces"],
+  ["[ ]", "square brackets"],
+  ["( )", "parentheses"],
+  ["==", "equals?"],
+  ["=", "assign"],
+  ["//", "comment"],
+  ["&&", "and"],
+  ["||", "or"],
+  ["!", "not"],
+  ["< >", "tag"],
+  [";", "end of line"],
+  ["\" \"", "string"],
+];
+
+const shuffle = (a) => {
+  const x = [...a];
+  for (let i = x.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [x[i], x[j]] = [x[j], x[i]];
+  }
+  return x;
+};
+
+const deal = () =>
+  shuffle(
+    shuffle(PAIRS)
+      .slice(0, 6)
+      .flatMap(([sym, name], id) => [
+        { key: `${id}a`, id, text: sym, code: true },
+        { key: `${id}b`, id, text: name, code: false },
+      ]),
+  );
+
+function SymbolMatch() {
+  const [cards, setCards] = useState([]);
+  const [open, setOpen] = useState([]); // keys of the face-up, not yet matched cards
+  const [done, setDone] = useState([]); // matched pair ids
+  const [moves, setMoves] = useState(0);
+  const [best, setBest] = useState(0);
+  const newGame = useCallback(() => {
+    setCards(deal());
+    setOpen([]);
+    setDone([]);
+    setMoves(0);
+  }, []);
+  useEffect(() => {
+    newGame();
+    setBest(store.get("cg_match_best"));
+  }, [newGame]);
+
+  const won = cards.length > 0 && done.length === cards.length / 2;
+  useEffect(() => {
+    if (won && (!best || moves < best)) {
+      setBest(moves);
+      store.set("cg_match_best", moves);
+    }
+  }, [won]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const flip = (c) => {
+    if (open.length === 2 || open.includes(c.key) || done.includes(c.id)) return;
+    const next = [...open, c.key];
+    setOpen(next);
+    if (next.length < 2) return;
+    setMoves((m) => m + 1);
+    const [a, b] = next.map((k) => cards.find((x) => x.key === k));
+    setTimeout(() => {
+      if (a.id === b.id) setDone((d) => [...d, a.id]);
+      setOpen([]);
+    }, 750);
+  };
+
+  return (
+    <div>
+      <p className="mb-3 text-sm text-muted">Symbol match: flip two cards to pair a coding symbol with its name.</p>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {cards.map((c) => {
+          const up = open.includes(c.key) || done.includes(c.id);
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => flip(c)}
+              aria-label={up ? c.text : "Hidden card"}
+              className={`grid h-16 place-items-center rounded-2xl border-2 px-1 text-center text-sm font-bold active:scale-95 ${
+                done.includes(c.id) ? "border-primary bg-primary/10" : up ? "border-primary bg-raised" : "border-line bg-surface text-muted"
+              } ${up && c.code ? "font-mono text-lg" : ""}`}
+            >
+              {up ? c.text : "?"}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex items-center justify-between text-sm">
+        <p className="font-bold">
+          {won ? `Done in ${moves} moves! 🎉` : `Moves ${moves}`} <span className="font-normal text-muted">{best ? `· best ${best}` : ""}</span>
+        </p>
+        <button type="button" onClick={newGame} className="rounded-full bg-surface px-3 py-1.5 font-bold text-muted">
+          New game
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const store = {
   get: (k) => {
@@ -33,120 +141,15 @@ const store = {
   },
 };
 
-function Bugs() {
-  const [on, setOn] = useState(-1);
-  const [score, setScore] = useState(0);
-  const [best, setBest] = useState(0);
-  const [miss, setMiss] = useState(false);
-  const scoreRef = useRef(0);
-  useEffect(() => setBest(store.get("cg_bugs_best")), []);
-  useEffect(() => {
-    const t = setInterval(() => setOn(Math.floor(Math.random() * 9)), 850);
-    return () => clearInterval(t);
-  }, []);
-  const hit = (i) => {
-    if (i !== on) {
-      scoreRef.current = 0;
-      setScore(0);
-      setMiss(true);
-      setTimeout(() => setMiss(false), 250);
-      return;
-    }
-    scoreRef.current += 1;
-    setScore(scoreRef.current);
-    setOn(-1);
-    if (scoreRef.current > best) {
-      setBest(scoreRef.current);
-      store.set("cg_bugs_best", scoreRef.current);
-    }
-  };
-  return (
-    <div>
-      <p className="mb-3 text-sm text-muted">Squash the bugs! Tap a bug when it pops up. Missing resets your streak.</p>
-      <div className={`mx-auto grid max-w-[260px] grid-cols-3 gap-2 ${miss ? "opacity-70" : ""}`}>
-        {Array.from({ length: 9 }, (_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => hit(i)}
-            aria-label={i === on ? "Bug" : "Empty hole"}
-            className="grid aspect-square place-items-center rounded-2xl border-2 border-line bg-surface text-3xl active:scale-95"
-          >
-            {i === on ? "🐛" : ""}
-          </button>
-        ))}
-      </div>
-      <p className="mt-3 text-sm font-bold">
-        Streak {score} <span className="font-normal text-muted">· best {best}</span>
-      </p>
-    </div>
-  );
-}
-
-function Quiz({ topic }) {
-  const list = topic === "mix" ? MIX_QUIZ : TOPICS[topic].quiz;
-  const [i, setI] = useState(0);
-  const [picked, setPicked] = useState(null);
-  const [score, setScore] = useState(0);
-  useEffect(() => {
-    setI(Math.floor(Math.random() * list.length));
-    setPicked(null);
-    setScore(0);
-  }, [topic, list.length]);
-  const [q, options, answer] = list[i % list.length];
-  const choose = (n) => {
-    if (picked !== null) return;
-    setPicked(n);
-    if (n === answer) setScore((x) => x + 1);
-    setTimeout(() => {
-      setPicked(null);
-      setI((x) => (x + 1) % list.length);
-    }, 1100);
-  };
-  return (
-    <div>
-      <p className="mb-3 font-bold">{q}</p>
-      <div className="grid gap-2">
-        {options.map((text, n) => {
-          const state = picked === null ? "" : n === answer ? "border-primary bg-primary/10" : n === picked ? "border-bad bg-bad/10" : "opacity-60";
-          return (
-            <button key={text} type="button" onClick={() => choose(n)} className={`rounded-2xl border-2 border-line bg-raised px-4 py-3 text-left text-sm font-semibold ${state}`}>
-              {text}
-            </button>
-          );
-        })}
-      </div>
-      <p className="mt-3 text-sm text-muted">Correct so far: {score}</p>
-    </div>
-  );
-}
-
 export default function WakingScreen() {
   const { waking, failed, startedAt } = useWakeState();
   const [secs, setSecs] = useState(0);
   const [tip, setTip] = useState(0);
-  const [tab, setTab] = useState("quiz");
-  const [topic, setTopic] = useState("mix");
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("cg_wake_topic"); // an explicit choice wins ...
-      const fromCourse = topicForCourse(localStorage.getItem("cg_course")); // ... else the course they were last in
-      setTopic(saved === "mix" || saved in TOPICS ? saved : fromCourse);
-    } catch {}
-  }, []);
-  const pickTopic = (id) => {
-    setTopic(id);
-    setTip(0);
-    try {
-      localStorage.setItem("cg_wake_topic", id);
-    } catch {}
-  };
-  const tips = [...(topic === "mix" ? MIX_TIPS : TOPICS[topic].tips), ...GENERAL_TIPS];
 
   useEffect(() => {
     if (!waking) return;
     const t = setInterval(() => setSecs(Math.floor((Date.now() - startedAt) / 1000)), 500);
-    const r = setInterval(() => setTip((x) => x + 1), 6000);
+    const r = setInterval(() => setTip((x) => (x + 1) % TIPS.length), 6000);
     return () => {
       clearInterval(t);
       clearInterval(r);
@@ -193,42 +196,11 @@ export default function WakingScreen() {
               </div>
             )}
 
-            <label className="mt-6 flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-muted">
-              Quiz topic
-              <select
-                value={topic}
-                onChange={(e) => pickTopic(e.target.value)}
-                className="max-w-[12rem] rounded-full border-2 border-line bg-raised px-3 py-1.5 text-sm font-bold normal-case tracking-normal text-ink"
-              >
-                <option value="mix">🎲 Mix of everything</option>
-                {TOPIC_IDS.map((id) => (
-                  <option key={id} value={id}>
-                    {TOPICS[id].label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="card mt-4 w-full p-4 text-left">
-              <div className="mb-3 flex gap-2">
-                {[
-                  ["quiz", "🧠 Topic quiz"],
-                  ["bugs", "🐛 Squash bugs"],
-                ].map(([id, label]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setTab(id)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-bold ${tab === id ? "bg-primary text-on-primary" : "bg-surface text-muted"}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {tab === "bugs" ? <Bugs /> : <Quiz topic={topic} />}
+            <div className="card mt-6 w-full p-4 text-left">
+              <SymbolMatch />
             </div>
 
-            <p className="mt-5 min-h-[2.5rem] text-sm text-muted">{tips[tip % tips.length]}</p>
+            <p className="mt-5 min-h-[2.5rem] text-sm text-muted">{TIPS[tip]}</p>
           </div>
         </motion.div>
       )}
