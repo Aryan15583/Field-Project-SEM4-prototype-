@@ -82,12 +82,35 @@ export function Mascot(props) {
   return <Codi {...props} />;
 }
 
+// Codi's face for the logo, on the same 16x16 grid as the mascot (see Codi.jsx): white head, dark screen, idle face.
+const px = (list) => list.map(([x, y]) => `M${x} ${y}h1v1h-1z`).join("");
+const rect = (x0, y0, x1, y1) => px(Array.from({ length: (y1 - y0 + 1) * (x1 - x0 + 1) }, (_, i) => [x0 + (i % (x1 - x0 + 1)), y0 + Math.floor(i / (x1 - x0 + 1))]));
+const LOGO_HEAD = rect(3, 2, 12, 2) + rect(2, 3, 13, 10); // crown + head
+const LOGO_SCREEN = rect(3, 4, 12, 9);
+const LOGO_ANTENNA = px([[7, 0], [8, 0], [7, 1], [8, 1]]);
+const LOGO_FACE = px([[5, 6], [6, 6], [5, 7], [6, 7], [9, 6], [10, 6], [9, 7], [10, 7], [7, 9], [8, 9]]); // Codi's idle face: two square eyes and a small mouth
+
+/** The logo mark: Codi's face on a chunky rounded tile with a "pressed button" edge. */
+export function LogoMark({ className = "h-10 w-10" }) {
+  return (
+    <span
+      className={`grid shrink-0 place-items-center rounded-[0.8rem] bg-primary shadow-[0_3px_0_rgb(var(--primary-strong))] ${className}`}
+      aria-hidden="true"
+    >
+      <svg viewBox="1 -0.6 14 12.2" className="h-[72%] w-[72%]" shapeRendering="crispEdges">
+        <path d={LOGO_ANTENNA} fill="rgb(var(--gold))" />
+        <path d={LOGO_HEAD} fill="#fff" />
+        <path d={LOGO_SCREEN} fill="rgb(var(--primary-strong))" />
+        <path d={LOGO_FACE} fill="#fff" />
+      </svg>
+    </span>
+  );
+}
+
 export function Logo({ className = "", compact = false }) {
   return (
-    <span className={`inline-flex items-center gap-2 text-2xl font-black tracking-tight text-primary ${className}`}>
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-on-primary">
-        <Icon name="code" className="h-5 w-5" />
-      </span>
+    <span className={`inline-flex items-center gap-2.5 text-[1.7rem] font-black leading-none tracking-[-0.03em] text-primary ${className}`}>
+      <LogoMark />
       <span className={compact ? "hidden sm:inline" : ""}>codeingo</span>
     </span>
   );
