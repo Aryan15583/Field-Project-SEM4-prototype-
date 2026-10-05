@@ -1,6 +1,7 @@
 "use client";
 
 import { MotionConfig } from "motion/react";
+import WakingScreen from "@/components/WakingScreen";
 import { AuthProvider } from "@/lib/auth";
 import { PwaProvider } from "@/lib/pwa";
 import { ThemeProvider } from "@/lib/theme";
@@ -12,6 +13,7 @@ export default function Providers({ children }) {
       <ThemeProvider>
         <PwaProvider>
           <AuthProvider>{children}</AuthProvider>
+          <WakingScreen />
         </PwaProvider>
       </ThemeProvider>
     </MotionConfig>
