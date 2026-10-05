@@ -151,3 +151,17 @@ def test_admin_can_manage_content_and_it_is_audited(client):
     assert client.post("/api/admin/lessons", json=bad).status_code == 422
     events = [e["event"] for e in client.get("/api/admin/audit").json()]
     assert "admin_lesson_create" in events and "mfa_enabled" in events
+
+
+def test_render_own_hostname_is_always_accepted(monkeypatch):
+    import os
+
+    from fastapi.testclient import TestClient
+
+    from app.main import create_app
+
+    monkeypatch.setenv("RENDER_EXTERNAL_HOSTNAME", "my-api.onrender.com")
+    with TestClient(create_app(), base_url="https://my-api.onrender.com") as c:
+        assert c.get("/api/health").status_code == 200
+    with TestClient(create_app(), base_url="https://evil.example.com") as c:
+        assert c.get("/api/health").status_code == 400

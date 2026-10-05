@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -55,7 +56,14 @@ def create_app() -> FastAPI:
 
     app.add_middleware(BodySizeLimitMiddleware)
     app.add_middleware(GlobalRateLimitMiddleware)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=s.allowed_hosts)
+    # Render tells every web service its own public hostname; always accept it (plus the local addresses its health
+    # checks use), so a mistyped ALLOWED_HOSTS can't lock the service out of its own address.
+    hosts = list(s.allowed_hosts)
+    own = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
+    for extra in (own, "127.0.0.1", "localhost"):
+        if extra and extra not in hosts:
+            hosts.append(extra)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=hosts)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=800)  # the course path JSON is ~13 kB: send it compressed
     # No CORSMiddleware on purpose: the SPA is served from the same origin, so browsers
