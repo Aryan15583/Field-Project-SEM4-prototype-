@@ -32,7 +32,17 @@ const LETTERS = ["A", "B", "C"];
 
 const at = (list, x, y) => list.some((p) => p.x === x && p.y === y);
 
-function newRound(snake, previous) {
+// An orb must never appear in the snake's way: not on the whole row/column it is travelling along (the walls wrap,
+// so "ahead" is the entire line), and not within 2 cells of the head on any side.
+function inPath(snake, dir, x, y) {
+  const head = snake[0];
+  const [dx] = DIRS[dir];
+  const onLine = dx !== 0 ? y === head.y : x === head.x;
+  const near = Math.min(Math.abs(x - head.x), SIZE - Math.abs(x - head.x)) <= 2 && Math.min(Math.abs(y - head.y), SIZE - Math.abs(y - head.y)) <= 2;
+  return onLine || near;
+}
+
+function newRound(snake, previous, dir) {
   let q;
   do q = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
   while (q === previous && QUESTIONS.length > 1);
@@ -43,7 +53,7 @@ function newRound(snake, previous) {
     do {
       x = Math.floor(Math.random() * SIZE);
       y = Math.floor(Math.random() * SIZE);
-    } while (at(snake, x, y) || at(foods, x, y));
+    } while (at(snake, x, y) || at(foods, x, y) || inPath(snake, dir, x, y));
     foods.push({ x, y, letter: LETTERS[n], text: q[1][optionIndex], right: optionIndex === q[2] });
   });
   return { question: q, foods };
@@ -51,7 +61,7 @@ function newRound(snake, previous) {
 
 const fresh = () => {
   const snake = [{ x: 5, y: 6 }, { x: 4, y: 6 }, { x: 3, y: 6 }];
-  return { snake, dir: "right", next: "right", lives: LIVES, score: 0, ...newRound(snake, null) };
+  return { snake, dir: "right", next: "right", lives: LIVES, score: 0, ...newRound(snake, null, "right") };
 };
 
 const shuffle = (a) => {
@@ -93,16 +103,46 @@ function SnakeGame() {
       ctx.roundRect(p.x * CELL + 2, p.y * CELL + 2, CELL - 4, CELL - 4, 6);
       ctx.fill();
     });
-    ctx.font = "800 14px ui-rounded, system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    g.foods.forEach((f) => {
-      ctx.fillStyle = c.gold;
+    // futuristic orbs: glowing cyan core, a rotating dashed scanner ring, four circuit ticks, monospace letter
+    const t = performance.now() / 1000;
+    g.foods.forEach((f, i) => {
+      const cx = f.x * CELL + CELL / 2;
+      const cy = f.y * CELL + CELL / 2;
+      const pulse = 1 + Math.sin(t * 3 + i * 2) * 0.06;
+      const r = (CELL / 2 - 3) * pulse;
+      ctx.save();
+      ctx.shadowColor = "#22d3ee";
+      ctx.shadowBlur = 10 + Math.sin(t * 3 + i * 2) * 4;
+      const core = ctx.createRadialGradient(cx - 3, cy - 3, 1, cx, cy, r);
+      core.addColorStop(0, "#cffafe");
+      core.addColorStop(0.45, "#22d3ee");
+      core.addColorStop(1, "#0e7490");
+      ctx.fillStyle = core;
       ctx.beginPath();
-      ctx.arc(f.x * CELL + CELL / 2, f.y * CELL + CELL / 2, CELL / 2 - 1, 0, Math.PI * 2);
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = c.ink;
-      ctx.fillText(f.letter, f.x * CELL + CELL / 2, f.y * CELL + CELL / 2 + 1);
+      ctx.restore();
+      ctx.strokeStyle = "#083344";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.lineDashOffset = -t * 14;
+      ctx.beginPath();
+      ctx.arc(cx, cy, CELL / 2 - 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineWidth = 1.5;
+      for (let k = 0; k < 4; k++) {
+        const ang = (Math.PI / 2) * k + t * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(ang) * (r - 1), cy + Math.sin(ang) * (r - 1));
+        ctx.lineTo(cx + Math.cos(ang) * (CELL / 2 + 1), cy + Math.sin(ang) * (CELL / 2 + 1));
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#083344";
+      ctx.font = "800 12px ui-monospace, SFMono-Regular, Menlo, monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(f.letter, cx, cy + 1);
     });
   }, []);
 
@@ -115,7 +155,13 @@ function SnakeGame() {
   useEffect(() => {
     readColors();
     setBest(store.get("cg_snake_best"));
-    draw();
+    let raf;
+    const frame = () => {
+      draw(); // every frame, so the orbs can glow and spin
+      raf = requestAnimationFrame(frame);
+    };
+    frame();
+    return () => cancelAnimationFrame(raf);
   }, [draw]);
 
   const turn = useCallback((d) => {
@@ -130,7 +176,6 @@ function SnakeGame() {
     phaseRef.current = "playing";
     setPhase("playing");
     sync();
-    draw();
   };
 
   const loseLife = (g, note) => {
@@ -159,6 +204,7 @@ function SnakeGame() {
         g.snake = g.snake.slice(0, 3);
         g.snake.forEach((p, i) => ((p.x = 5 - i), (p.y = 6)));
         g.dir = g.next = "right";
+        g.foods = newRound(g.snake, g.question, "right").foods.map((f, i) => ({ ...f, text: g.foods[i].text, right: g.foods[i].right }));
       } else {
         const food = g.foods.find((f) => f.x === head.x && f.y === head.y);
         g.snake.unshift(head);
@@ -166,16 +212,15 @@ function SnakeGame() {
         else if (food.right) {
           g.score += 1;
           note = "Correct! 🎉";
-          Object.assign(g, newRound(g.snake, g.question));
+          Object.assign(g, newRound(g.snake, g.question, g.dir));
         } else {
           g.snake.pop();
           const answer = g.foods.find((f) => f.right);
           note = loseLife(g, `Not quite - it was ${answer.letter}: ${answer.text}`);
-          Object.assign(g, newRound(g.snake, g.question));
+          Object.assign(g, newRound(g.snake, g.question, g.dir));
         }
       }
       sync(note);
-      draw();
     };
     const timer = setInterval(step, TICK_MS);
     return () => clearInterval(timer);
@@ -213,7 +258,7 @@ function SnakeGame() {
       <div className="mb-2 grid gap-1 text-sm">
         {view.foods.slice().sort((a, b) => a.letter.localeCompare(b.letter)).map((f) => (
           <p key={f.letter} className="flex items-center gap-2">
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-gold text-xs font-extrabold text-ink">{f.letter}</span>
+            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-cyan-900 bg-[radial-gradient(circle_at_30%_30%,#cffafe,#22d3ee_45%,#0e7490)] font-mono text-xs font-extrabold text-cyan-950 shadow-[0_0_8px_#22d3ee]">{f.letter}</span>
             {f.text}
           </p>
         ))}
