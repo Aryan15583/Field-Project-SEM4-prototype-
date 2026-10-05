@@ -1,0 +1,37 @@
+/*
+ * Questions for the Snake game on the "server is waking up" screen (components/WakingScreen.jsx).
+ * Add as many as you like - each is [question, [3 options], index of the right option]. Mixed languages on purpose,
+ * so it works however many courses exist.
+ */
+export const QUESTIONS = [
+  ["Which symbol starts a comment in Python?", ["#", "//", "<!--"], 0],
+  ["What does HTML stand for?", ["HyperText Markup Language", "High Tech Modern Logic", "Home Tool Making Language"], 0],
+  ["What is 2 + 2 * 3 ?", ["10", "8", "12"], 1],
+  ["Which keyword starts a function in Python?", ["func", "def", "fun"], 1],
+  ["Which command saves a snapshot in Git?", ["git commit", "git cook", "git paint"], 0],
+  ["Which SQL command reads rows?", ["SELECT", "FETCHALL", "READ"], 0],
+  ["What does CSS mostly control?", ["How a page looks", "The database", "Internet speed"], 0],
+  ["Which JavaScript keyword makes a constant?", ["const", "fixed", "let"], 0],
+  ["What does len(\"code\") return in Python?", ["3", "4", "5"], 1],
+  ["Which loop repeats a set number of times?", ["for", "if", "else"], 0],
+  ["What ends a statement in C or Java?", [";", ".", ":"], 0],
+  ["Which tag makes a link in HTML?", ["<a>", "<link>", "<url>"], 0],
+  ["What is true && false ?", ["false", "true", "error"], 0],
+  ["What is true || false ?", ["false", "true", "error"], 1],
+  ["Which one is a list in Python?", ["[1, 2, 3]", "(1 2 3)", "<1, 2, 3>"], 0],
+  ["Which SQL clause filters rows?", ["WHERE", "SORT", "PICK"], 0],
+  ["Which Git command uploads your commits?", ["git push", "git send", "git up"], 0],
+  ["What does == check?", ["If two values are equal", "Assigns a value", "Adds two numbers"], 0],
+  ["Which type is 3.14?", ["float", "int", "str"], 0],
+  ["What does 7 // 2 give in Python?", ["3", "3.5", "4"], 0],
+  ["Which prints in JavaScript?", ["console.log()", "print()", "echo()"], 0],
+  ["What is an array?", ["A list of values", "A type of error", "A web browser"], 0],
+  ["What is a bug?", ["A mistake in code", "A new feature", "A kind of file"], 0],
+  ["Which is a Boolean value?", ["true", "\"true\"", "1.0"], 0],
+  ["What does a function do?", ["Reuses a block of code", "Deletes a file", "Turns off the PC"], 0],
+  ["Which CSS property changes text colour?", ["color", "font-paint", "text-style"], 0],
+  ["Which keyword stops a loop early?", ["break", "stop", "exit"], 0],
+  ["Which symbol is the 'not' operator?", ["!", "?", "~~"], 0],
+  ["What does SQL's COUNT() do?", ["Counts rows", "Adds columns", "Deletes rows"], 0],
+  ["Index of the first item in most languages?", ["0", "1", "-1"], 0],
+];
