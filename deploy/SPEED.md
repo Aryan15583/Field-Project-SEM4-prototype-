@@ -17,3 +17,9 @@ Most of the waiting is **distance and sleeping**, not code. Check these in order
 What the code already does: compressed responses, an in-memory copy of the course structure (refreshed every minute
 and when an admin edits), cached exercise data for answer checking, no needless database writes, and no extra
 connection check before each request.
+
+## Redis is optional on a single server
+If you run ONE API instance (Render free/starter), set `ALLOW_NO_REDIS=true` and leave `REDIS_URL` empty: rate limits
+then live in the server's memory. They reset when the server restarts and aren't shared between several instances -
+add a Redis (`REDIS_URL`) as soon as you scale to more than one instance. (Render's free plan allows only one free
+Key Value per account.)

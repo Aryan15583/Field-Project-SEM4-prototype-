@@ -28,6 +28,7 @@ class Settings(BaseSettings):
 
     # --- database / cache ---
     database_url: str = "sqlite:///./codeingo.db"
+    allow_no_redis: bool = False  # production with a single server instance: keep rate limits in memory instead of Redis
     redis_url: str = ""  # empty -> in-memory rate limiting (single process only)
 
     # --- Google OAuth (OpenID Connect) ---
@@ -137,8 +138,8 @@ class Settings(BaseSettings):
             problems.append("MAIL_OUTBOX_FILE is for development and tests only")
         if self.smtp_security not in ("starttls", "ssl"):
             problems.append("SMTP_SECURITY must be starttls or ssl")
-        if not self.redis_url:
-            problems.append("REDIS_URL is required in production (shared rate limiting)")
+        if not self.redis_url and not self.allow_no_redis:
+            problems.append("REDIS_URL is required in production (shared rate limiting) - or set ALLOW_NO_REDIS=true when running ONE server instance")
         if self.database_url.startswith("sqlite"):
             problems.append("Use PostgreSQL (DATABASE_URL) in production")
         if problems:
