@@ -10,7 +10,7 @@ import { useSyncExternalStore } from "react";
 const LIMIT_MS = 4 * 60 * 1000; // give up after four minutes
 const POLL_MS = 2500;
 
-let state = { waking: false, failed: false, startedAt: 0 };
+let state = { waking: false, failed: false, startedAt: 0, checks: 0, last: "" };
 let running = null;
 const listeners = new Set();
 const set = (next) => {
@@ -27,21 +27,27 @@ export function isWakeResponse(res, path = "") {
 }
 
 async function healthy() {
+  let last = "no answer (network error)";
+  let ok = false;
   try {
     const res = await fetch("/api/health", { cache: "no-store", credentials: "same-origin" });
-    if (!res.ok || isWakeResponse(res, "/api/health")) return false;
-    const data = await res.json().catch(() => null);
-    return data?.status === "ok";
-  } catch {
-    return false;
-  }
+    const type = (res.headers.get("content-type") || "").split(";")[0] || "no content type";
+    last = `${res.status} ${type}`;
+    if (res.ok && !isWakeResponse(res, "/api/health")) {
+      const data = await res.json().catch(() => null);
+      ok = data?.status === "ok";
+      if (!ok) last += " (unexpected reply)";
+    }
+  } catch {}
+  set({ checks: state.checks + 1, last }); // shown on the waking screen so a stuck wait can be diagnosed
+  return ok;
 }
 
 /** Shows the waking screen and resolves once the server answers /api/health. Rejects if it never does. */
 export function ensureAwake() {
   if (running) return running;
   const startedAt = Date.now();
-  set({ waking: true, failed: false, startedAt });
+  set({ waking: true, failed: false, startedAt, checks: 0, last: "" });
   running = (async () => {
     while (Date.now() - startedAt < LIMIT_MS) {
       if (await healthy()) {

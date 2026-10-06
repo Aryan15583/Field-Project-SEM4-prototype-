@@ -316,7 +316,7 @@ const store = {
 };
 
 export default function WakingScreen() {
-  const { waking, failed, startedAt } = useWakeState();
+  const { waking, failed, startedAt, checks, last } = useWakeState();
   const [secs, setSecs] = useState(0);
   const [tip, setTip] = useState(0);
 
@@ -367,6 +367,14 @@ export default function WakingScreen() {
                   <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
                 </div>
                 <p className="mt-1 text-xs text-muted">{secs}s</p>
+                {secs >= 90 && (
+                  <p className="mt-2 text-xs text-muted">
+                    Taking longer than usual.{" "}
+                    <button type="button" onClick={() => window.location.reload()} className="font-bold text-primary underline">
+                      Reload the page
+                    </button>
+                  </p>
+                )}
               </div>
             )}
 
@@ -375,6 +383,11 @@ export default function WakingScreen() {
             </div>
 
             <p className="mt-5 min-h-[2.5rem] text-sm text-muted">{TIPS[tip]}</p>
+            {checks > 0 && (
+              <p className="mt-1 text-[11px] text-muted/70">
+                Server check #{checks}: {last}
+              </p>
+            )}
           </div>
         </motion.div>
       )}
