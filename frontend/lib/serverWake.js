@@ -30,7 +30,9 @@ async function healthy() {
   let last = "no answer (network error)";
   let ok = false;
   try {
-    const res = await fetch("/api/health", { cache: "no-store", credentials: "same-origin" });
+    // a timeout so one hung request (e.g. after the phone changed network) can't freeze the wait; the query string
+    // keeps any proxy or CDN from replaying an old "bad gateway" answer
+    const res = await fetch(`/api/health?t=${Date.now()}`, { cache: "no-store", credentials: "same-origin", signal: AbortSignal.timeout(8000) });
     const type = (res.headers.get("content-type") || "").split(";")[0] || "no content type";
     last = `${res.status} ${type}`;
     if (res.ok && !isWakeResponse(res, "/api/health")) {
@@ -48,18 +50,33 @@ export function ensureAwake() {
   if (running) return running;
   const startedAt = Date.now();
   set({ waking: true, failed: false, startedAt, checks: 0, last: "" });
+  let poke = () => {};
+  const wake = () => poke(); // tab visible again / back online / focused: check right now instead of waiting
+  if (typeof window !== "undefined") {
+    window.addEventListener("online", wake);
+    window.addEventListener("focus", wake);
+    document.addEventListener("visibilitychange", wake);
+  }
   running = (async () => {
     while (Date.now() - startedAt < LIMIT_MS) {
       if (await healthy()) {
         set({ waking: false, failed: false });
         return;
       }
-      await new Promise((r) => setTimeout(r, POLL_MS));
+      await new Promise((r) => {
+        const t = setTimeout(r, POLL_MS);
+        poke = () => (clearTimeout(t), r());
+      });
     }
     set({ failed: true });
     throw new Error("The server isn't responding right now. Please try again in a minute.");
   })().finally(() => {
     running = null;
+    if (typeof window !== "undefined") {
+      window.removeEventListener("online", wake);
+      window.removeEventListener("focus", wake);
+      document.removeEventListener("visibilitychange", wake);
+    }
   });
   return running;
 }
