@@ -22,7 +22,11 @@ jobs:
       - name: Tests
         run: pytest -q
       - name: Static security analysis (bandit)
-        run: bandit -q -r app -ll
+        # The curriculum folder is lesson text that teaches SQL (strings like "INSERT INTO ..."), never executed against
+        # our database, so bandit's SQL-injection check (B608) is skipped there only - everything else is still scanned.
+        run: |
+          bandit -q -r app -ll --exclude app/curriculum
+          bandit -q -r app/curriculum -ll -s B608
       - name: Dependency vulnerabilities (pip-audit)
         run: pip-audit -r requirements.txt
 
