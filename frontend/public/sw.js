@@ -1,10 +1,10 @@
 /* Codeingo service worker: offline page + caching of immutable assets. Never caches the API
  * (progress, answers and sessions always go to the server) or signed-in pages. */
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC = `codeingo-static-${VERSION}`;
 const PRECACHE = ["/offline.html", "/favicon.svg", "/icons/icon-192.png"];
-// content-hashed or versioned files that never change at the same URL
-const IMMUTABLE = [/^\/_next\/static\//, /^\/icons\//, /^\/pyodide\//, /^\/sqljs\//, /^\/typescript\//];
+// content-hashed or versioned files that never change at the same URL (not /icons/: same names, new artwork)
+const IMMUTABLE = [/^\/_next\/static\//, /^\/pyodide\//, /^\/sqljs\//, /^\/typescript\//];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));

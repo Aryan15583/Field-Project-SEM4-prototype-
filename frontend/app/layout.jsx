@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata = {
   title: { default: "Codeingo", template: "%s · Codeingo" },
   description: "Codeingo - learn to code with bite-sized, gamified lessons.",
-  icons: { icon: "/favicon.svg", apple: "/icons/apple-touch-icon.png" },
+  icons: { icon: "/favicon.svg?v=3", apple: "/icons/apple-touch-icon.png?v=3" },
   appleWebApp: { capable: true, title: "Codeingo", statusBarStyle: "default" },
   referrer: "strict-origin-when-cross-origin",
 };
