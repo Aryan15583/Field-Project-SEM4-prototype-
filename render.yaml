@@ -38,6 +38,8 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI # https://YOUR-APP.vercel.app/api/auth/google/callback
         sync: false
+      - key: PROXY_SECRET # random 32+ characters; the SAME value must be set on the website host (Vercel). Stops forged client IPs - see deploy/PROXY_SECRET.md
+        sync: false
       - key: BREVO_API_KEY # sends the codes over HTTPS (Render's free plan blocks SMTP) - see deploy/EMAIL.md
         sync: false
       - key: MAIL_FROM # Codeingo <you@gmail.com> - the sender address verified in Brevo

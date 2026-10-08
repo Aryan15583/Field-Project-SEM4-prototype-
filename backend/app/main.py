@@ -32,6 +32,8 @@ async def lifespan(_: FastAPI):
     ensure_columns()
     with SessionLocal() as db:
         sync_curriculum(db)
+    if get_settings().is_production and not get_settings().proxy_secret:
+        log.warning("PROXY_SECRET is not set: client IPs for rate limiting can be forged with an X-Forwarded-For header")
     task = asyncio.create_task(reminders.loop()) if get_settings().streak_reminders else None
     yield
     if task:

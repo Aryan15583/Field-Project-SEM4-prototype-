@@ -6,6 +6,19 @@ import { NextResponse } from "next/server";
  * it on its own scripts, so only scripts we emitted can run - injected ones (XSS) are refused.
  */
 export function proxy(request) {
+  // API calls: when PROXY_SECRET is set, forward them to the API ourselves and add the secret header. The API then
+  // knows the request came through this site and may believe the visitor's IP that Vercel put in X-Forwarded-For
+  // (anyone calling the API directly can't produce the secret, so they can't forge an IP). Without a secret this
+  // does nothing and next.config.mjs's plain /api rewrite keeps working.
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    const origin = process.env.API_ORIGIN;
+    const secret = process.env.PROXY_SECRET;
+    if (!origin || !secret) return NextResponse.next();
+    const headers = new Headers(request.headers);
+    headers.set("x-proxy-secret", secret);
+    return NextResponse.rewrite(new URL(request.nextUrl.pathname + request.nextUrl.search, origin), { request: { headers } });
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
 
@@ -40,6 +53,7 @@ export function proxy(request) {
 
 export const config = {
   matcher: [
+    { source: "/api/:path*" }, // only to add the proxy secret (see above); API responses keep FastAPI's own headers
     {
       // pages only - not the API (FastAPI sets its own headers) or immutable static assets
       source: "/((?!api|_next/static|_next/image|favicon.svg|runners/|pyodide/|sqljs/|typescript/|icons/|sw.js|offline.html).*)",

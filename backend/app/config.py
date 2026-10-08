@@ -28,6 +28,11 @@ class Settings(BaseSettings):
 
     # --- database / cache ---
     database_url: str = "sqlite:///./codeingo.db"
+    # Shared secret that the website (Vercel) adds to every API call it forwards, so the API can tell "this came
+    # through our site, believe the visitor IP in X-Forwarded-For" from "someone called the API directly, ignore
+    # anything they wrote in that header". Set the SAME random value (32+ chars) on the API and on the website host.
+    # Empty = old behaviour (first X-Forwarded-For entry is believed) - fine behind your own nginx, spoofable otherwise.
+    proxy_secret: str = ""
     allow_no_redis: bool = False  # production with a single server instance: keep rate limits in memory instead of Redis
     redis_url: str = ""  # empty -> in-memory rate limiting (single process only)
 

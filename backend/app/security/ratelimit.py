@@ -1,5 +1,6 @@
 """Fixed-window rate limiter. Uses Redis when REDIS_URL is set (shared across workers/instances),
 otherwise an in-process store (fine for dev/tests, NOT for multi-worker production)."""
+import hmac
 import threading
 import time
 
@@ -60,8 +61,19 @@ def store():
 
 
 def client_ip(request: Request) -> str:
-    # uvicorn's --proxy-headers/--forwarded-allow-ips resolves X-Forwarded-For ONLY from trusted
-    # proxies, so request.client is the real client and cannot be spoofed by a header.
+    """The visitor's IP, for rate limits and the audit log.
+
+    X-Forwarded-For is a list that every proxy adds to, and the part a client writes itself sits on the LEFT, so
+    "believe the first entry" lets anyone dodge per-IP limits by sending a made-up header. With PROXY_SECRET set:
+      - our website (which proves itself with the secret) wrote the first entry from the real connection: trust it;
+      - anyone else: only the LAST entry is real (added by the host's edge from the actual connection).
+    Without PROXY_SECRET we keep uvicorn's resolution (first entry) - only safe behind a proxy you control."""
+    secret = get_settings().proxy_secret
+    forwarded = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+    if secret and forwarded:
+        sent = request.headers.get("x-proxy-secret", "")
+        via_our_site = hmac.compare_digest(sent.encode("utf-8", "replace"), secret.encode("utf-8"))
+        return (forwarded[0] if via_our_site else forwarded[-1])[:64]
     return request.client.host if request.client else "unknown"
 
 

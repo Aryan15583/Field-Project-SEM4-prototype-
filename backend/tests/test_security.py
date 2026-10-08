@@ -165,3 +165,37 @@ def test_render_own_hostname_is_always_accepted(monkeypatch):
         assert c.get("/api/health").status_code == 200
     with TestClient(create_app(), base_url="https://evil.example.com") as c:
         assert c.get("/api/health").status_code == 400
+
+
+def _request(headers: dict[str, str], peer: str = "10.0.0.9"):
+    from starlette.requests import Request
+
+    return Request({"type": "http", "method": "GET", "path": "/", "query_string": b"", "client": (peer, 1234),
+                    "headers": [(k.lower().encode(), v.encode()) for k, v in headers.items()]})
+
+
+def test_client_ip_cannot_be_forged_with_proxy_secret(monkeypatch):
+    from app.config import get_settings
+    from app.security.ratelimit import client_ip
+
+    monkeypatch.setenv("PROXY_SECRET", "s3cret-" + "x" * 30)
+    get_settings.cache_clear()
+    try:
+        # called directly: the client wrote the first entry, the host's edge added the real one last
+        assert client_ip(_request({"x-forwarded-for": "6.6.6.6, 203.0.113.7"})) == "203.0.113.7"
+        # wrong or missing secret is treated the same
+        assert client_ip(_request({"x-forwarded-for": "6.6.6.6, 203.0.113.7", "x-proxy-secret": "guess"})) == "203.0.113.7"
+        # through our website: the first entry is the visitor, written by the website's host
+        ok = {"x-forwarded-for": "198.51.100.4, 76.76.21.9", "x-proxy-secret": "s3cret-" + "x" * 30}
+        assert client_ip(_request(ok)) == "198.51.100.4"
+        # no forwarding header at all: the socket peer
+        assert client_ip(_request({})) == "10.0.0.9"
+    finally:
+        monkeypatch.delenv("PROXY_SECRET")
+        get_settings.cache_clear()
+
+
+def test_client_ip_without_secret_keeps_old_behaviour():
+    from app.security.ratelimit import client_ip
+
+    assert client_ip(_request({"x-forwarded-for": "6.6.6.6"}, peer="1.2.3.4")) == "1.2.3.4"
