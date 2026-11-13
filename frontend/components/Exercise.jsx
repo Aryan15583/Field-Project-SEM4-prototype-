@@ -37,7 +37,7 @@ export default function Exercise({ exercise, value, onChange, result }) {
 }
 
 export function isAnswered(kind, value) {
-  if (kind === "mcq") return Number.isInteger(value);
+  if (kind === "mcq") return typeof value === "string" ? value.length > 0 : Number.isInteger(value);
   if (kind === "order") return Array.isArray(value) && value.length > 0;
   if (kind === "run") return typeof value?.code === "string" && value.code.trim().length > 0;
   return typeof value === "string" && value.trim().length > 0;
@@ -55,10 +55,14 @@ const resultClass = (result) => (result === "right" ? "tile-right" : result === 
 
 function Mcq({ exercise, value, onChange, locked, result }) {
   const options = exercise.data.options || [];
+  // The server shuffles the options every time it sends them and checks the answer by token, not by position.
+  // (Without tokens - an older server - the position is sent, as before.)
+  const tokens = exercise.data.option_tokens;
+  const valueOf = (i) => (tokens ? tokens[i] : i);
   const pick = (i) => {
     if (locked) return;
     sfx.tap();
-    onChange(i);
+    onChange(valueOf(i));
   };
   const pickRef = useRef(pick);
   pickRef.current = pick;
@@ -77,7 +81,7 @@ function Mcq({ exercise, value, onChange, locked, result }) {
       {exercise.code && <pre className="code mb-6">{exercise.code}</pre>}
       <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
         {options.map((opt, i) => {
-          const selected = value === i;
+          const selected = value === valueOf(i);
           return (
             <motion.button
               key={i}

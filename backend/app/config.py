@@ -93,8 +93,11 @@ class Settings(BaseSettings):
     ai_model: str = ""
     ai_timeout_seconds: float = 15.0
 
-    # --- optional sandboxed code runner for Java/C/C++ (self-hosted Piston, private network only) ---
+    # --- optional sandboxed code runner for Java/C/C++ ---
+    # CODE_RUNNER_URL + CODE_RUNNER_KEY: Codeingo's own runner service (the runner/ folder; deploy it as its own service and
+    # give both sides the same key). CODE_RUNNER_URL alone: a self-hosted Piston instance on a private network.
     code_runner_url: str = ""
+    code_runner_key: str = ""
     rate_limit_run_per_minute: int = 12
 
     # --- gamification ---

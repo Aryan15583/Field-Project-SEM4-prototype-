@@ -4,6 +4,7 @@ from sqlalchemy import select
 
 from app.db import SessionLocal
 from app.models import Exercise, LessonAttempt, TestAttempt, User, UserLesson
+from app.services import grading
 
 from .conftest import enroll
 from .test_learning import _answer_for
@@ -29,7 +30,7 @@ def _play_lesson(client, lesson_id):
 
 def _wrong(ex: Exercise):
     if ex.kind == "mcq":
-        return (ex.solution["index"] + 1) % len(ex.data["options"])
+        return grading.option_token(ex.id, (ex.solution["index"] + 1) % len(ex.data["options"]))
     if ex.kind == "order":
         return list(range(len(ex.data["lines"])))[::-1]
     return "definitely wrong ¯\\_(ツ)_/¯"

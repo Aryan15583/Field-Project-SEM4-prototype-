@@ -56,6 +56,23 @@ services:
         sync: false
       - key: SMTP_FROM # Codeingo <you@gmail.com>
         sync: false
+      - key: CODE_RUNNER_URL # https://codeingo-runner.onrender.com - makes Java / C / C++ programs really run; see deploy/RUNNER.md
+        sync: false
+      - key: CODE_RUNNER_KEY # same random value as RUNNER_KEY on the runner service
+        sync: false
+
+  # Runs learners' Java / C / C++ programs. Its own service on purpose: no database, no user data, no secrets except RUNNER_KEY.
+  - type: web
+    name: codeingo-runner
+    region: singapore
+    runtime: docker
+    rootDir: runner
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: RUNNER_KEY # random 32+ characters; the same value as CODE_RUNNER_KEY on codeingo-api
+        sync: false
 
   - type: keyvalue
     name: codeingo-redis

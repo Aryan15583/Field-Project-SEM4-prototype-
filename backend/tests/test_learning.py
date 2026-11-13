@@ -17,7 +17,7 @@ def _answer_for(ex: Exercise):
         # browser languages report outputs; compiled ones fall back to patterns (no runner in tests)
         return {"code": ex.solution["example"], "outputs": ex.solution["expected"]}
     if ex.kind == "mcq":
-        return ex.solution["index"]
+        return grading.option_token(ex.id, ex.solution["index"])  # answers travel as tokens: options are shuffled when sent
     if ex.kind == "fill":
         return ex.solution["accepted"][0]
     if ex.kind == "order":
@@ -293,3 +293,51 @@ def test_admin_debug_mode(client):
 
     off = client.post("/api/admin/debug", json={"on": False}).json()
     assert off["debug"] is False and client.get("/api/certificates").json() == []
+
+
+# ---------------------------------------------------------------- multiple choice: shuffled every time
+def _first_mcq(db):
+    return next(e for e in db.query(Exercise).order_by(Exercise.id) if e.kind == "mcq" and len(e.data["options"]) >= 3 and e.solution["index"] == 0)
+
+
+def test_mcq_options_are_shuffled_and_answered_by_token():
+    from app.schemas import public_exercise
+
+    with SessionLocal() as db:
+        ex = _first_mcq(db)
+        right_text = ex.data["options"][0]  # authors list the correct option first
+        orders, right_positions = set(), set()
+        for _ in range(40):
+            pub = public_exercise(ex)["data"]
+            assert sorted(pub["options"]) == sorted(ex.data["options"])  # same options, never lost or invented
+            orders.add(tuple(pub["options"]))
+            pos = pub["options"].index(right_text)
+            right_positions.add(pos)
+            assert grading.grade(ex, pub["option_tokens"][pos])  # the token of the right option is correct ...
+            assert not grading.grade(ex, pub["option_tokens"][(pos + 1) % len(pub["options"])])  # ... any other is not
+        assert len(orders) > 1 and len(right_positions) > 1  # the right answer is not always in the same place
+        assert not grading.grade(ex, 0) and not grading.grade(ex, ex.solution["index"])  # a bare position never wins
+        assert not grading.grade(ex, "o000000000000") and not grading.grade(ex, None)
+        assert "o" + "0" * 12 not in str(public_exercise(ex)["data"])
+
+
+def test_mcq_tokens_do_not_reveal_the_answer():
+    from app.schemas import public_exercise
+
+    with SessionLocal() as db:
+        ex = _first_mcq(db)
+        pub = public_exercise(ex)
+        assert "solution" not in pub and "index" not in pub["data"]
+        # tokens look random: nothing like the option's position, and different for every option
+        assert len(set(pub["data"]["option_tokens"])) == len(pub["data"]["options"])
+        assert all(t.startswith("o") and len(t) == 13 for t in pub["data"]["option_tokens"])
+
+
+def test_none_of_the_above_stays_last():
+    from types import SimpleNamespace
+
+    ex = SimpleNamespace(id=1, data={"options": ["relative", "absolute", "fixed", "none of these"]}, kind="mcq")
+    for _ in range(30):
+        options, tokens = grading.shuffled_options(ex)
+        assert options[-1] == "none of these"
+        assert sorted(options) == sorted(ex.data["options"]) and len(set(tokens)) == 4

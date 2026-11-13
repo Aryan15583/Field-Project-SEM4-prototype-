@@ -123,6 +123,8 @@ def start_lesson(lesson_id: int, user: CurrentUser, db: DB):
     attempt = LessonAttempt(user_id=user.id, lesson_id=lesson.id)
     db.add(attempt)
     db.commit()
+    if any(e.kind == "run" and (e.data or {}).get("language") in code_runner.SERVER_LANGS for e in lesson.exercises):
+        code_runner.warm()  # a sleeping runner needs up to a minute: start waking it while the learner reads the intro
     return {
         "attempt_id": attempt.id,
         "lesson": {"id": lesson.id, "title": lesson.title, "intro": lesson.intro, "course": course.slug, "course_title": course.title,

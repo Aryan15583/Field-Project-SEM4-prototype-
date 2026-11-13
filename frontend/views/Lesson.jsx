@@ -340,7 +340,7 @@ export default function Lesson({ id }) {
   const askHint = async (level = 1) => {
     setHint((h) => ({ items: h?.items || [], more: false, loading: true }));
     try {
-      const attempt = typeof value === "string" ? value : typeof value?.code === "string" ? value.code : undefined;
+      const attempt = current.kind === "mcq" ? undefined : typeof value === "string" ? value : typeof value?.code === "string" ? value.code : undefined;
       const res = await api("/api/ai/hint", { method: "POST", body: { exercise_id: current.id, attempt, level } });
       setHint((h) => ({ items: [...(h?.items || []), { hint: res.hint, source: res.source }], more: !!res.more, loading: false }));
     } catch (e) {

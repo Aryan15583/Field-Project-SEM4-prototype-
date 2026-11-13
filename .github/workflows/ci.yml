@@ -30,6 +30,20 @@ jobs:
       - name: Dependency vulnerabilities (pip-audit)
         run: pip-audit -r requirements.txt
 
+  runner:
+    # the Java / C / C++ code runner (runner/): compiles and runs real programs, so it needs gcc, g++ and a JDK
+    # (all preinstalled on ubuntu-latest). The root-only isolation tests skip themselves on the non-root CI user.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r runner/requirements.txt pytest httpx
+      - run: pytest runner -q
+      - name: Dependency vulnerabilities (pip-audit)
+        run: pip install pip-audit && pip-audit -r runner/requirements.txt
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

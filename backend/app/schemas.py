@@ -57,6 +57,9 @@ def public_exercise(ex: Exercise) -> dict:
     if ex.kind == "order":
         # Stored in the correct order; only ever sent shuffled.
         data["lines"] = grading.shuffled_lines(ex)
+    if ex.kind == "mcq":
+        # a fresh order on every send; answers travel back as tokens, not positions (see grading.shuffled_options)
+        data["options"], data["option_tokens"] = grading.shuffled_options(ex)
     if ex.kind == "run" and data.get("language") in code_runner.SERVER_LANGS:
         data["server_runner"] = code_runner.configured()
     return {"id": ex.id, "kind": ex.kind, "prompt": ex.prompt, "code": ex.code, "data": data, "has_hint": bool(ex.hint)}

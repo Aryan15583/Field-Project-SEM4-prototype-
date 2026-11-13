@@ -8,10 +8,13 @@ The API process never executes learner code:
 - `run` exercises in compiled languages (Java, C, C++) go to the isolated sandbox runner if one is
   configured, otherwise they fall back to pattern checks.
 """
+import hashlib
+import hmac
 import random
 
 import regex
 
+from ..config import get_settings
 from ..models import Exercise
 from . import code_runner
 
@@ -74,7 +77,9 @@ def grade(ex: Exercise, answer) -> bool:
     sol = ex.solution or {}
     try:
         if ex.kind == "mcq":
-            return isinstance(answer, int) and not isinstance(answer, bool) and answer == sol.get("index")
+            # The learner answers with the opaque token of the option they tapped (see option_token), never a position:
+            # the options are shuffled every time they are sent, so a position means nothing to the server.
+            return isinstance(answer, str) and hmac.compare_digest(answer.encode(), option_token(ex.id, sol.get("index", -1)).encode())
         if ex.kind == "fill":
             return isinstance(answer, str) and len(answer) <= 200 and _norm(answer) in {_norm(a) for a in sol.get("accepted", [])}
         if ex.kind == "order":
@@ -222,6 +227,30 @@ def reveal(ex: Exercise) -> str:
     if ex.kind == "order":
         return "\n".join(ex.data.get("lines", []))
     return sol.get("example", "")
+
+
+# ------------------------------------------------------------------ multiple choice: shuffled every time
+# Authors list the correct option first (92% of the curriculum does), so options are shuffled each time they are sent.
+# Each option gets a token = HMAC(secret, exercise id + the option's ORIGINAL position). The learner sends back the token
+# of the option they picked; the server recomputes the right one. Stateless, nothing about the answer is revealed by the
+# order or by the tokens, and a bare position (e.g. "always pick 0") can no longer win.
+_STAYS_LAST = regex.compile(r"^\s*(all|none|neither) of (the above|these|them)\b|^\s*both\b", regex.IGNORECASE)
+
+
+def option_token(exercise_id: int, index: int) -> str:
+    key = get_settings().secret_key.encode()
+    return "o" + hmac.new(key, f"mcq:{exercise_id}:{index}".encode(), hashlib.sha256).hexdigest()[:12]
+
+
+def shuffled_options(ex: Exercise) -> tuple[list[str], list[str]]:
+    """(option texts, matching tokens) in a fresh random order. "None of the above" style options stay at the end."""
+    options = [str(o) for o in (ex.data or {}).get("options", [])]
+    order = list(range(len(options)))
+    pinned = [i for i in order if _STAYS_LAST.search(options[i])]
+    loose = [i for i in order if i not in pinned]
+    random.SystemRandom().shuffle(loose)
+    order = loose + pinned
+    return [options[i] for i in order], [option_token(ex.id, i) for i in order]
 
 
 def shuffled_lines(ex: Exercise) -> list[dict]:
