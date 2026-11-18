@@ -381,3 +381,38 @@ def test_start_up_sync_runs_on_a_fresh_database(monkeypatch):
     with SessionLocal() as db:
         seed.sync_curriculum(db)
     assert calls == [1]
+
+
+# ---------------------------------------------------------------- only the courses people open are built
+def test_server_builds_only_the_course_a_learner_opens(client):
+    from app.services import catalog
+
+    enroll(client)
+    catalog.invalidate()
+    listing = client.get("/api/courses").json()
+    assert len(listing) >= 10 and all(c["lessons"] > 0 and c["completed"] == 0 for c in listing)  # whole list, from light rows
+    assert catalog._trees == {}  # ...without building a single course tree
+    assert client.get("/api/courses/python").status_code == 200
+    assert set(catalog._trees) == {"python"}  # a Python learner makes the server build Python only
+    with SessionLocal() as db:
+        java_lesson = db.query(Lesson).filter(Lesson.key == "java/1/1").one().id
+        assert catalog.course_of_lesson(db, java_lesson).slug == "java"  # a lesson finds its course, loading just that one
+    assert set(catalog._trees) == {"python", "java"}
+    assert client.get("/api/courses/nope").status_code == 404 and "nope" not in catalog._trees
+
+
+def test_course_counts_follow_learner_progress(client):
+    enroll(client)
+    path = client.get("/api/courses/python").json()
+    first = path["units"][0]["lessons"][0]["id"]
+    start = client.post(f"/api/lessons/{first}/start").json()
+    for e in start["exercises"]:
+        with SessionLocal() as db:
+            ex = db.get(Exercise, e["id"])
+            ans = _answer_for(ex)
+        assert client.post(f"/api/attempts/{start['attempt_id']}/answer", json={"exercise_id": e["id"], "answer": ans}).json()["correct"]
+    _backdate(start["attempt_id"])
+    assert client.post(f"/api/attempts/{start['attempt_id']}/complete").status_code == 200
+    python = next(c for c in client.get("/api/courses").json() if c["slug"] == "python")
+    others = [c for c in client.get("/api/courses").json() if c["slug"] != "python"]
+    assert python["completed"] == 1 and all(c["completed"] == 0 for c in others)

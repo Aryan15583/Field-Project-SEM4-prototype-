@@ -66,13 +66,11 @@ def _load_course(db: Session, course_id: int) -> Course:
 @router.get("/courses")
 def list_courses(user: CurrentUser, db: DB):
     done = _completed_ids(db, user)
-    courses = catalog.courses(db)  # cached structure: no round trips for the course tree
     out = []
-    for c in courses:
-        lessons = _ordered_lessons(c)
+    for c in catalog.overview(db):  # light course list: the lesson trees of the courses nobody opened are never built
         out.append({
             "slug": c.slug, "title": c.title, "description": c.description, "icon": c.icon,
-            "lessons": len(lessons), "completed": sum(1 for l in lessons if l.id in done),
+            "lessons": len(c.lesson_ids), "completed": len(c.lesson_ids & done),
         })
     return out
 

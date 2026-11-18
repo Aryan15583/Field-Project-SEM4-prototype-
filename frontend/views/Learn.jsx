@@ -389,6 +389,30 @@ export default function Learn() {
     };
   }, [slug]);
 
+  // The course you are on is loaded first (above). Once it is on screen, the other courses are fetched quietly one by
+  // one in idle time, so switching later is instant - and a learner who only ever reads one course never waits for the
+  // rest. Skipped when the device asked to save data.
+  useEffect(() => {
+    if (!path || !courses || navigator.connection?.saveData) return;
+    const others = courses.map((c) => c.slug).filter((sl) => sl !== path.slug && !cached(`/api/courses/${encodeURIComponent(sl)}`));
+    let stopped = false;
+    let timer;
+    let i = 0;
+    const next = () => {
+      if (stopped || i >= others.length) return;
+      api(`/api/courses/${encodeURIComponent(others[i++])}`)
+        .catch(() => {})
+        .finally(() => {
+          if (!stopped) timer = setTimeout(next, 1500);
+        });
+    };
+    timer = setTimeout(next, 3000); // let the course you are on finish painting first
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, [path?.slug, courses]);
+
   // Close the popover when tapping anywhere else. (The App Router mounts React on `document`,
   // so stopPropagation can't shield this listener - check the target instead. Taps on a node or
   // its popover are handled by the node itself.)

@@ -43,3 +43,13 @@ Waking a sleeping service = Render starting the container + Python importing the
 Start-up used to also re-check all ~950 lessons against the database (one query each, 1,200 queries in total). It now
 compares one fingerprint of the curriculum and skips that work while the lessons are unchanged (it runs again by
 itself after you deploy changed lessons). Our own Python code is also compiled when the image is built.
+
+## Each learner loads only the course they use
+- **Server:** the course list is a few light rows. The full lesson tree of a course is built only when someone opens that
+  course (and kept for a minute), so a Python learner makes the server build Python, not all ten courses.
+- **Browser:** the course you are on is fetched first. Once it is on screen, the other courses are fetched quietly one at a
+  time in the background (the first after ~3 s, then one every ~1.5 s), so switching later is instant. Skipped when the
+  device asks to save data.
+- **Code runners** already load per language: opening a Python lesson loads Python, a Java lesson wakes the Java runner.
+- **Not per user:** Render runs ONE server process for everybody, so it cannot start "a Python server" for one person and
+  "a C server" for another. What is shared is only the part that has to be (the libraries and database connection).
