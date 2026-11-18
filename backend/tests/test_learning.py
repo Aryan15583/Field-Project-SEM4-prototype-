@@ -161,7 +161,7 @@ def test_run_endpoint_reports_runner_unavailable(client):
 
 def test_curriculum_sync_is_idempotent_and_respects_admin_edits(client):
     from app.models import Lesson
-    from app.seed import sync_curriculum
+    from app.seed import _sync
 
     with SessionLocal() as db:
         before = db.query(Exercise).count()
@@ -169,7 +169,7 @@ def test_curriculum_sync_is_idempotent_and_respects_admin_edits(client):
         lesson.title = "Custom by admin"
         lesson.content_hash = None
         db.commit()
-        sync_curriculum(db)
+        _sync(db)  # the real sync (sync_curriculum skips it when nothing changed - see the next tests)
         assert db.query(Exercise).count() == before
         assert db.query(Lesson).filter(Lesson.key == "python/1/1").one().title == "Custom by admin"
 
@@ -341,3 +341,43 @@ def test_none_of_the_above_stays_last():
         options, tokens = grading.shuffled_options(ex)
         assert options[-1] == "none of these"
         assert sorted(options) == sorted(ex.data["options"]) and len(set(tokens)) == 4
+
+
+def test_start_up_sync_is_skipped_when_the_curriculum_is_unchanged(client, monkeypatch):
+    from app import seed
+
+    calls = []
+    monkeypatch.setattr(seed, "_sync", lambda db: calls.append(1))
+    with SessionLocal() as db:
+        seed.sync_curriculum(db)  # the fixture already synced this exact curriculum: ~950 queries saved on every wake-up
+        seed.sync_curriculum(db)
+    assert calls == []
+
+
+def test_start_up_sync_runs_again_when_the_curriculum_changes(client, monkeypatch):
+    from app import seed
+    from app.models import AppMeta
+
+    calls = []
+    monkeypatch.setattr(seed, "_sync", lambda db: calls.append(1))
+    with SessionLocal() as db:
+        db.get(AppMeta, "curriculum_digest").value = "fingerprint-of-an-older-curriculum"
+        db.commit()
+        seed.sync_curriculum(db)
+        assert calls == [1]
+        assert db.get(AppMeta, "curriculum_digest").value == seed.curriculum_digest()
+        seed.sync_curriculum(db)  # and then it is skipped again
+        assert calls == [1]
+
+
+def test_start_up_sync_runs_on_a_fresh_database(monkeypatch):
+    from app import seed
+    from app.db import Base, SessionLocal, engine
+
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    calls = []
+    monkeypatch.setattr(seed, "_sync", lambda db: calls.append(1))
+    with SessionLocal() as db:
+        seed.sync_curriculum(db)
+    assert calls == [1]

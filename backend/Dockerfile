@@ -4,6 +4,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY app ./app
+# Compile our own code once at build time: the host's tiny CPU then skips that work on every wake-up.
+RUN python -m compileall -q app
 # Run as an unprivileged user
 RUN useradd --system --uid 10001 --no-create-home codeingo
 USER 10001

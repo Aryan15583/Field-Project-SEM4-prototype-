@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .curriculum import CURRICULUM
-from .models import Course, Exercise, Lesson, Unit
+from .models import AppMeta, Course, Exercise, Lesson, Unit
 
 
 def _hash(lesson: dict) -> str:
@@ -32,7 +32,33 @@ def _fill(lesson: Lesson, spec: dict) -> None:
     lesson.content_hash = _hash(spec)
 
 
+# Bump when the sync rules below change, so every database is synced once with the new rules.
+SYNC_VERSION = "1"
+_DIGEST_KEY = "curriculum_digest"
+
+
+def curriculum_digest() -> str:
+    """Fingerprint of the built-in curriculum (plus the sync rules). ~0.02 s for the whole thing."""
+    blob = json.dumps(CURRICULUM, sort_keys=True) + SYNC_VERSION
+    return hashlib.sha256(blob.encode()).hexdigest()
+
+
 def sync_curriculum(db: Session) -> None:
+    # The sync below asks the database one question per lesson (~950 round trips). When the curriculum is exactly the
+    # one we synced last time there is nothing to do, so a cold start (a free host waking up) skips all of it.
+    digest = curriculum_digest()
+    meta = db.get(AppMeta, _DIGEST_KEY)
+    if meta is not None and meta.value == digest:
+        return
+    _sync(db)
+    if meta is None:
+        meta = AppMeta(key=_DIGEST_KEY)
+        db.add(meta)
+    meta.value = digest
+    db.commit()
+
+
+def _sync(db: Session) -> None:
     for ci, spec in enumerate(CURRICULUM):
         course = db.scalar(select(Course).where(Course.slug == spec["slug"]))
         if course is None:

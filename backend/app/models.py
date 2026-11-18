@@ -393,3 +393,12 @@ class AuditLog(Base):
     ip: Mapped[str | None] = mapped_column(String(64))
     detail: Mapped[str] = mapped_column(String(500), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class AppMeta(Base):
+    """Small key/value facts about the installation, e.g. the fingerprint of the curriculum last synced (see seed.py)."""
+
+    __tablename__ = "app_meta"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(String(128), default="")
