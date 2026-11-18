@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { whenAwake } from "@/lib/serverWake";
 import { cancelled, passkeysSupported, signInWithPasskey } from "@/lib/webauthn";
+import Reveal from "@/components/Reveal";
 import { ErrorNote, Icon, Logo, Mascot, ThemeToggle } from "@/components/ui";
 
 const FEATURES = [
@@ -90,25 +91,32 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen text-ink">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
-        <Logo />
-        <ThemeToggle />
+      <header className="mx-auto max-w-6xl px-4 py-5">
+        <Reveal y={-32} duration={1} className="flex items-center justify-between">
+          <Logo />
+          <ThemeToggle />
+        </Reveal>
       </header>
 
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-10 md:grid-cols-2 md:py-16">
-        <div className="order-2 flex justify-center md:order-1">
+        <Reveal y={80} duration={1.4} delay={0.1} className="order-2 flex justify-center md:order-1">
           <div className="relative">
             <div className="absolute inset-0 -z-10 rounded-full bg-primary/15 blur-3xl" />
             <Mascot size={300} mascot="codi" mood={greeting ? "wave" : "idle"} />
           </div>
-        </div>
+        </Reveal>
         <div className="order-1 text-center md:order-2 md:text-left">
-          <h1 className="text-4xl font-black leading-tight md:text-5xl">
-            The free, fun and effective way to <span className="text-primary underline decoration-gold/70 decoration-[0.35rem] underline-offset-[0.35rem]">learn to code!</span>
-          </h1>
-          <p className="mt-4 text-lg text-muted">Short daily lessons, instant feedback and a streak you won't want to break.</p>
+          <Reveal y={56} delay={0.2}>
+            <h1 className="text-4xl font-black leading-tight md:text-5xl">
+              The free, fun and effective way to <span className="text-primary underline decoration-gold/70 decoration-[0.35rem] underline-offset-[0.35rem]">learn to code!</span>
+            </h1>
+          </Reveal>
+          <Reveal y={48} delay={0.4}>
+            <p className="mt-4 text-lg text-muted">Short daily lessons, instant feedback and a streak you won't want to break.</p>
+          </Reveal>
 
-          <div className="mx-auto mt-8 flex max-w-sm flex-col gap-3 md:mx-0">
+          <Reveal y={48} delay={0.6} className="mx-auto mt-8 max-w-sm md:mx-0">
+          <div className="flex flex-col gap-3">
             <a
               href="/api/auth/google/login"
               aria-disabled={config?.google === false}
@@ -160,15 +168,16 @@ export default function Landing() {
               </form>
             )}
           </div>
+          </Reveal>
         </div>
       </section>
 
       <section className="border-y-2 border-line bg-surface/70">
         <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-3 px-4 py-6">
           {LANGS.map((l, i) => (
-            <span key={l} className={`chip border-2 border-primary/30 bg-primary/10 text-primary ${CHIP_TINTS[i % CHIP_TINTS.length]}`}>
-              {l}
-            </span>
+            <Reveal key={l} y={28} duration={0.9} delay={i * 0.06}>
+              <span className={`chip border-2 border-primary/30 bg-primary/10 text-primary ${CHIP_TINTS[i % CHIP_TINTS.length]}`}>{l}</span>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -177,27 +186,31 @@ export default function Landing() {
         {FEATURES.map((f0, i) => {
           const f = { ...f0, title: f0.title.replace("{buddy}", buddy), text: f0.text.replace("{buddy}", buddy) };
           return (
-          <div key={f.title} className={`card card-accent p-6 ${CHIP_TINTS[(i * 2 + 1) % CHIP_TINTS.length]}`}>
+          <Reveal key={f.title} y={64} duration={1.2} delay={(i % 4) * 0.14} className="h-full">
+          <div className={`card card-accent h-full p-6 ${CHIP_TINTS[(i * 2 + 1) % CHIP_TINTS.length]}`}>
             <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-primary/15 text-primary">
               <Icon name={f.icon} className="h-6 w-6" />
             </span>
             <h3 className="text-lg font-extrabold">{f.title}</h3>
             <p className="mt-1 text-sm text-muted">{f.text}</p>
           </div>
+          </Reveal>
           );
         })}
       </section>
 
       <footer className="border-t-2 border-line py-8 text-center text-sm text-muted">
-        © {new Date().getFullYear()} Codeingo · Learn to code, one lesson a day.
-        <span className="mt-2 flex justify-center gap-4 font-bold">
-          <Link href="/privacy" className="btn-link">
-            Privacy
-          </Link>
-          <Link href="/terms" className="btn-link">
-            Terms
-          </Link>
-        </span>
+        <Reveal y={28} duration={1}>
+          © {new Date().getFullYear()} Codeingo · Learn to code, one lesson a day.
+          <span className="mt-2 flex justify-center gap-4 font-bold">
+            <Link href="/privacy" className="btn-link">
+              Privacy
+            </Link>
+            <Link href="/terms" className="btn-link">
+              Terms
+            </Link>
+          </span>
+        </Reveal>
       </footer>
     </div>
   );
