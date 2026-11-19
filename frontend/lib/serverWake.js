@@ -10,7 +10,9 @@ import { useSyncExternalStore } from "react";
 const LIMIT_MS = 4 * 60 * 1000; // give up after four minutes
 const POLL_MS = 2500;
 
-let state = { waking: false, failed: false, startedAt: 0, checks: 0, last: "" };
+// blocking: a full-screen wait (the user clicked something that needs the server right now). Otherwise the page stays
+// visible and usable and only a small notice shows - the data simply arrives when the server does.
+let state = { waking: false, failed: false, startedAt: 0, checks: 0, last: "", blocking: false };
 let running = null;
 const listeners = new Set();
 const set = (next) => {
@@ -46,10 +48,13 @@ async function healthy() {
 }
 
 /** Shows the waking screen and resolves once the server answers /api/health. Rejects if it never does. */
-export function ensureAwake() {
-  if (running) return running;
+export function ensureAwake(blocking = false) {
+  if (running) {
+    if (blocking && !state.blocking) set({ blocking: true }); // someone now really needs it: promote the notice to the full screen
+    return running;
+  }
   const startedAt = Date.now();
-  set({ waking: true, failed: false, startedAt, checks: 0, last: "" });
+  set({ waking: true, failed: false, startedAt, checks: 0, last: "", blocking });
   let poke = () => {};
   const wake = () => poke(); // tab visible again / back online / focused: check right now instead of waiting
   if (typeof window !== "undefined") {
@@ -60,7 +65,7 @@ export function ensureAwake() {
   running = (async () => {
     while (Date.now() - startedAt < LIMIT_MS) {
       if (await healthy()) {
-        set({ waking: false, failed: false });
+        set({ waking: false, failed: false, blocking: false });
         return;
       }
       await new Promise((r) => {
@@ -81,15 +86,15 @@ export function ensureAwake() {
   return running;
 }
 
-/** Resolves once the API is up (shows the waking screen if it was asleep). Use before leaving the site for a full-page /api navigation. */
+/** Resolves once the API is up (full-screen wait if it was asleep). Use before leaving the site for a full-page /api navigation. */
 export async function whenAwake() {
   if (await healthy()) return;
-  await ensureAwake();
+  await ensureAwake(true);
 }
 
 /** "Try again" on the failed screen. */
 export function retryWake() {
-  return ensureAwake().catch(() => {});
+  return ensureAwake(state.blocking).catch(() => {});
 }
 
 export function useWakeState() {

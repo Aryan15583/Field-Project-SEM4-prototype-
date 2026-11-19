@@ -316,9 +316,14 @@ const store = {
 };
 
 export default function WakingScreen() {
-  const { waking, failed, startedAt, checks, last } = useWakeState();
+  const { waking, failed, startedAt, checks, last, blocking } = useWakeState();
+  const [playing, setPlaying] = useState(false); // the learner opened the game from the small notice
   const [secs, setSecs] = useState(0);
   const [tip, setTip] = useState(0);
+
+  useEffect(() => {
+    if (!waking) setPlaying(false);
+  }, [waking]);
 
   useEffect(() => {
     if (!waking) return;
@@ -334,9 +339,39 @@ export default function WakingScreen() {
   const progress = Math.min(92, (1 - Math.exp(-secs / 28)) * 100); // eases towards 92% - never claims to be done
   const again = useCallback(() => retryWake(), []);
 
+  const full = waking && (blocking || playing);
+
   return (
     <AnimatePresence>
-      {waking && (
+      {waking && !full && (
+        // Not blocking: the page underneath stays visible and usable. A small notice (above the phone's bottom bar) says
+        // the data will arrive in a moment, with a way into the game for anyone who wants to wait that way.
+        // (centred by a plain wrapper: a CSS translate would be overridden by the animation's own transform)
+        <div key="waking-notice" className="pointer-events-none fixed inset-x-0 bottom-24 z-[90] flex justify-center px-4 sm:bottom-6">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            role="status"
+            aria-live="polite"
+            className="pointer-events-auto flex max-w-full items-center gap-3 rounded-full border-2 border-line bg-raised py-2 pl-4 pr-2 text-sm font-bold shadow-lg"
+          >
+            <span aria-hidden className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-primary" />
+            <span className="min-w-0 truncate">{failed ? "The server isn't responding" : `Waking the server up… ${secs}s`}</span>
+            {failed ? (
+              <button type="button" onClick={again} className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-extrabold text-on-primary">
+                Try again
+              </button>
+            ) : (
+              <button type="button" onClick={() => setPlaying(true)} className="shrink-0 rounded-full bg-surface px-3 py-1.5 text-xs font-extrabold text-primary">
+                Play a game
+              </button>
+            )}
+          </motion.div>
+        </div>
+      )}
+      {full && (
         <motion.div
           key="waking"
           initial={{ opacity: 0 }}
@@ -381,6 +416,12 @@ export default function WakingScreen() {
             <div className="card mt-4 w-full p-3 text-left">
               <SnakeGame />
             </div>
+
+            {!blocking && (
+              <button type="button" onClick={() => setPlaying(false)} className="mt-4 text-sm font-bold text-primary underline">
+                Back to the page
+              </button>
+            )}
 
             <p className="mt-5 min-h-[2.5rem] text-sm text-muted">{TIPS[tip]}</p>
             {checks > 0 && (
