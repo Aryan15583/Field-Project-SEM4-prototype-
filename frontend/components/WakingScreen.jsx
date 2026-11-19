@@ -336,7 +336,7 @@ export default function WakingScreen() {
     };
   }, [waking, startedAt]);
 
-  const progress = Math.min(92, (1 - Math.exp(-secs / 28)) * 100); // eases towards 92% - never claims to be done
+  const progress = Math.min(96, (secs / 60) * 100); // fills over the one minute we allow; never claims to be done early
   const again = useCallback(() => retryWake(), []);
 
   const full = waking && (blocking || playing);
@@ -384,11 +384,11 @@ export default function WakingScreen() {
           <div className="mx-auto flex min-h-full max-w-md flex-col items-center justify-center px-4 py-4 text-center">
             <Codi size={64} mood={failed ? "sad" : "think"} />
             <h1 className="mt-2 text-2xl font-extrabold">
-              {failed ? "Still asleep…" : "Waking the server up"}
+              {failed ? "Taking longer than a minute…" : "Waking the server up"}
             </h1>
             <p className="mt-1 text-sm text-muted">
               {failed
-                ? "It's taking longer than usual."
+                ? "The server is still waking up. Try again - it usually works on the second go."
                 : "It naps when nobody is around. This takes up to a minute - play while you wait!"}
             </p>
 
@@ -402,7 +402,7 @@ export default function WakingScreen() {
                   <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
                 </div>
                 <p className="mt-1 text-xs text-muted">{secs}s</p>
-                {secs >= 90 && (
+                {secs >= 45 && (
                   <p className="mt-2 text-xs text-muted">
                     Taking longer than usual.{" "}
                     <button type="button" onClick={() => window.location.reload()} className="font-bold text-primary underline">

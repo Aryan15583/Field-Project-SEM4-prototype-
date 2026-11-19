@@ -7,7 +7,12 @@ import { useSyncExternalStore } from "react";
  * While that happens the website shows a "waking up" screen (components/WakingScreen.jsx), keeps asking the
  * server whether it is ready, and then carries on by itself. This module holds that state and does the waiting.
  */
-const LIMIT_MS = 4 * 60 * 1000; // give up after four minutes
+// The wait is capped at one minute: after that the screen says it is taking longer and offers "Try again" (which starts
+// another minute). A cold start of the free host takes about 30-60 s.
+const LIMIT_MS = 60 * 1000;
+// true: the full loading screen (with the game) while the server wakes - the page waits for it.
+// false: the page stays visible and only a small notice shows (see WakingScreen). Callers can still choose per call.
+const BLOCK_PAGE_WHILE_WAKING = true;
 const POLL_MS = 2500;
 
 // blocking: a full-screen wait (the user clicked something that needs the server right now). Otherwise the page stays
@@ -48,7 +53,12 @@ async function healthy() {
 }
 
 /** Shows the waking screen and resolves once the server answers /api/health. Rejects if it never does. */
-export function ensureAwake(blocking = false) {
+const wakeTimeout = () => Object.assign(new Error("The server is taking longer than a minute to wake up. Please try again."), { wake: true });
+
+export function ensureAwake(blocking = BLOCK_PAGE_WHILE_WAKING, force = false) {
+  // After the minute is up we stay on "taking longer" until the learner presses Try again (force): other requests that
+  // fail meanwhile must not quietly start another wait behind their back.
+  if (state.failed && !force) return Promise.reject(wakeTimeout());
   if (running) {
     if (blocking && !state.blocking) set({ blocking: true }); // someone now really needs it: promote the notice to the full screen
     return running;
@@ -74,7 +84,7 @@ export function ensureAwake(blocking = false) {
       });
     }
     set({ failed: true });
-    throw new Error("The server isn't responding right now. Please try again in a minute.");
+    throw wakeTimeout();
   })().finally(() => {
     running = null;
     if (typeof window !== "undefined") {
@@ -94,7 +104,10 @@ export async function whenAwake() {
 
 /** "Try again" on the failed screen. */
 export function retryWake() {
-  return ensureAwake(state.blocking).catch(() => {});
+  // once the server answers, load the page afresh so every part of it asks again (the calls that gave up are not resumed)
+  return ensureAwake(true, true)
+    .then(() => typeof window !== "undefined" && window.location.reload())
+    .catch(() => {});
 }
 
 export function useWakeState() {

@@ -49,6 +49,7 @@ export function AuthProvider({ children }) {
         return me;
       } catch (e) {
         if (e?.status === 401 || e?.status === 403) break;
+        if (e?.wake) return null; // still waking after a minute: not a logout. The loading screen offers "Try again" (a fresh load).
         await new Promise((r) => setTimeout(r, 3000));
       }
     }
