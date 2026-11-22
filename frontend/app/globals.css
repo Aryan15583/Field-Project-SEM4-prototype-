@@ -114,6 +114,10 @@ html { font-size: 100%; }
 @media (min-width: 2400px) { html { font-size: 125%; } }     /* 20px - QHD 2560x1440 */
 @media (min-width: 3200px) { html { font-size: 150%; } }     /* 24px - 4K at 100% scaling */
 html { -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+/* Lenis (eased scrolling on the landing page) needs the browser's own smooth-scroll switched off while it runs */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
 body {
   font-family: var(--font-nunito), ui-rounded, "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;

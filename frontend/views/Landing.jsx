@@ -7,7 +7,8 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { whenAwake } from "@/lib/serverWake";
 import { cancelled, passkeysSupported, signInWithPasskey } from "@/lib/webauthn";
-import Reveal from "@/components/Reveal";
+import Reveal, { Parallax, ScrollProgress, Word, Words } from "@/components/Reveal";
+import SmoothScroll from "@/components/SmoothScroll";
 import { ErrorNote, Icon, Logo, Mascot, ThemeToggle } from "@/components/ui";
 
 const FEATURES = [
@@ -91,6 +92,8 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen text-ink">
+      <SmoothScroll />
+      <ScrollProgress />
       <header className="mx-auto max-w-6xl px-4 py-5">
         <Reveal y={-32} duration={1} className="flex items-center justify-between">
           <Logo />
@@ -100,17 +103,22 @@ export default function Landing() {
 
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-10 md:grid-cols-2 md:py-16">
         <Reveal y={80} duration={1.4} delay={0.1} className="order-2 flex justify-center md:order-1">
-          <div className="relative">
-            <div className="absolute inset-0 -z-10 rounded-full bg-primary/15 blur-3xl" />
-            <Mascot size={300} mascot="codi" mood={greeting ? "wave" : "idle"} />
-          </div>
+          <Parallax distance={110}>
+            <div className="relative">
+              <div className="absolute inset-0 -z-10 rounded-full bg-primary/15 blur-3xl" />
+              <Mascot size={300} mascot="codi" mood={greeting ? "wave" : "idle"} />
+            </div>
+          </Parallax>
         </Reveal>
         <div className="order-1 text-center md:order-2 md:text-left">
-          <Reveal y={56} delay={0.2}>
-            <h1 className="text-4xl font-black leading-tight md:text-5xl">
-              The free, fun and effective way to <span className="text-primary underline decoration-gold/70 decoration-[0.35rem] underline-offset-[0.35rem]">learn to code!</span>
-            </h1>
-          </Reveal>
+          <h1 className="text-4xl font-black leading-tight md:text-5xl" aria-label="The free, fun and effective way to learn to code!">
+            <span aria-hidden="true">
+              <Words delay={0.25}>The free, fun and effective way to</Words>{" "}
+              <Word delay={0.25 + 7 * 0.075} className="text-primary underline decoration-gold/70 decoration-[0.35rem] underline-offset-[0.35rem]">
+                learn to code!
+              </Word>
+            </span>
+          </h1>
           <Reveal y={48} delay={0.4}>
             <p className="mt-4 text-lg text-muted">Short daily lessons, instant feedback and a streak you won't want to break.</p>
           </Reveal>
@@ -176,7 +184,7 @@ export default function Landing() {
         <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-3 px-4 py-6">
           {LANGS.map((l, i) => (
             <Reveal key={l} y={28} duration={0.9} delay={i * 0.06}>
-              <span className={`chip border-2 border-primary/30 bg-primary/10 text-primary ${CHIP_TINTS[i % CHIP_TINTS.length]}`}>{l}</span>
+              <span className={`chip border-2 border-primary/30 bg-primary/10 text-primary transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:scale-105 ${CHIP_TINTS[i % CHIP_TINTS.length]}`}>{l}</span>
             </Reveal>
           ))}
         </div>
@@ -187,7 +195,7 @@ export default function Landing() {
           const f = { ...f0, title: f0.title.replace("{buddy}", buddy), text: f0.text.replace("{buddy}", buddy) };
           return (
           <Reveal key={f.title} y={64} duration={1.2} delay={(i % 4) * 0.14} className="h-full">
-          <div className={`card card-accent h-full p-6 ${CHIP_TINTS[(i * 2 + 1) % CHIP_TINTS.length]}`}>
+          <div className={`card card-accent h-full p-6 transition-[transform,box-shadow] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2 hover:shadow-2xl ${CHIP_TINTS[(i * 2 + 1) % CHIP_TINTS.length]}`}>
             <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-primary/15 text-primary">
               <Icon name={f.icon} className="h-6 w-6" />
             </span>
